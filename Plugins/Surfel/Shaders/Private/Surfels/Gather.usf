@@ -1,0 +1,58 @@
+#include "/Engine/Public/Platform.ush"
+#include "/Engine/Private/Common.ush"
+#include "/Engine/Private/DeferredShadingCommon.ush"
+
+uint2 ViewRectMin;
+uint2 ViewRectMax;
+
+uint SurfelBudget;
+float SurfelRadius;
+
+RWStructuredBuffer<uint> SurfelCount;
+RWStructuredBuffer<float4> SurfelPositionAndRadius;
+RWStructuredBuffer<float4> SurfelNormalAndFlags;
+
+[numthreads(THREADS_X, THREADS_Y, THREADS_Z)]
+void MainCS(uint3 DispatchThreadId : SV_DispatchThreadID)
+{
+    uint2 PixelPos = ViewRectMin + DispatchThreadId.xy;
+
+    if (any(PixelPos >= ViewRectMax))
+    {
+        return;
+    }
+
+    // NOTE:
+    // every thread's pixel is treated as uncovered, so I spawn surfel naively
+    // will be replaced by a real tile-min reduction aka the Scatter pass
+    
+    int3 LoadPos = int3(PixelPos, 0);
+
+    float DeviceZ = SceneDepthTexture.Load(LoadPos).r;
+
+    // Skip the sky
+    if (DeviceZ <= 0.0f)
+    {
+        return;
+    }
+    
+    // Get Normal
+    float4 GBufferA = GBufferATexture.Load(LoadPos);
+    float3 WorldNormal = normalize(GBufferA.xyz * 2.0f - 1.0f);
+
+    float4 SvPosition = float4(PixelPos + 0.5f, DeviceZ, 1.0f);
+    float3 TranslatedWorldPosition = SvPositionToTranslatedWorld(SvPosition);
+    float3 WorldPosition = TranslatedWorldPosition;
+    
+    uint SurfelIndex;
+    InterlockedAdd(SurfelCount[0], 1, SurfelIndex);
+
+    if (SurfelIndex >= SurfelBudget)
+    {
+        InterlockedAdd(SurfelCount[0], -1);
+        return;
+    }
+
+    SurfelPositionAndRadius[SurfelIndex] = float4(WorldPosition, SurfelRadius);
+    SurfelNormalAndFlags[SurfelIndex] = float4(WorldNormal, 0.0f);
+}

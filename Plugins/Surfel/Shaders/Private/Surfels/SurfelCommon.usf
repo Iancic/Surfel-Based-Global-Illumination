@@ -1,3 +1,5 @@
+#include "/Engine/Public/Platform.ush"
+
 StructuredBuffer<uint> SurfelCounter;
 StructuredBuffer<float4> SurfelPositionAndRadius;
 StructuredBuffer<float4> SurfelNormalAndFlags;

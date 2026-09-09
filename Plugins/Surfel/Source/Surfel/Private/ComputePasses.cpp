@@ -6,6 +6,7 @@
 #include "SystemTextures.h"
 #include "PostProcess/PostProcessMaterialInputs.h"
 
+// CVar Utilities
 static TAutoConsoleVariable<int32> CVarSurfelMode(
 	TEXT("r.Surfel.Mode"),
 	0,
@@ -35,22 +36,45 @@ static TAutoConsoleVariable<float> CVarSurfelDepthScale(
 	TEXT("Far distance in world units mapped to white in depth visualization."),
 	ECVF_RenderThreadSafe);
 
-// note: explaining nomenclature
-// called scatter because one surfel writes to many pixels
-// gather because one pixel from many in a tile finds the worst value
+static TAutoConsoleVariable<int> CVarSurfelEnable(
+	TEXT("r.Surfel.Enable"),
+	0,
+	TEXT("Is surfel system enabled or not."),
+	ECVF_RenderThreadSafe
+	);
 
-// Scatter answers this question:
-// Where on the screen are no surfels? So I know where to spawn more
-// To store this I use a coverage texture used in the gather step (where surfels get spawned)
-// Scatter is a screen space pass even though surfels are spawned and exist in world-space
+static TAutoConsoleVariable<int> CVarSurfelBudget(
+	TEXT("r.Surfel.Budget"),
+	50000,
+	TEXT("Surfel Budget."),
+	ECVF_RenderThreadSafe
+	);
 
-// Get every surfel we can see that exists, make the coverage map to detect gaps where we can spawn more
-// It's an iterative hole filler because every frame I found holes to fill until budget is done of we filled it.
+static TAutoConsoleVariable<int> CVarSurfelRadius(
+	TEXT("r.Surfel.Radius"),
+	50,
+	TEXT("Surfel Radius."),
+	ECVF_RenderThreadSafe
+	);
 
-// When a frame has everywhere 0 coverage (first ever frame)
-// Make sure first time it runs I use blue noise to make the first surfel un-uniform. 
-
-// One thread per surfel and see where it lands on screen
+/**
+ * note: explaining nomenclature
+ * called scatter because one surfel writes to many pixels
+ * gather because one pixel from many in a tile finds the worst value
+ *
+ * Scatter answers this question:
+ * Where on the screen are no surfels? So I know where to spawn more
+ * To store this I use a coverage texture used in the gather step (where surfels get spawned)
+ * Scatter is a screen space pass even though surfels are spawned and exist in world-space
+ *
+ * Get every surfel we can see that exists, make the coverage map to detect gaps where we can spawn more
+ * It's an iterative hole filler because every frame I found holes to fill until budget is done of we filled it.
+ *
+ * When a frame has everywhere 0 coverage (first ever frame)
+ * Make sure first time it runs I use blue noise to make the first surfel un-uniform. 
+ *
+ * One thread per surfel and see where it lands on screen
+ */
 class FScatterSurfelPass : public FGlobalShader
 {
 public:
@@ -58,8 +82,10 @@ public:
 	SHADER_USE_PARAMETER_STRUCT(FScatterSurfelPass, FGlobalShader);
 
 	BEGIN_SHADER_PARAMETER_STRUCT(FParameters, )
-		// Write to texture with pixel coverage for gather step
-		// Read surfel buffer for every alive surfel
+		/**
+		 * Write to texture with pixel coverage for gather step
+		 * Read surfel buffer for every alive surfel
+		 */
 	END_SHADER_PARAMETER_STRUCT()
 
 	static bool ShouldCompilePermutation(const FGlobalShaderPermutationParameters& Parameters)
@@ -71,23 +97,28 @@ public:
 	{
 		FGlobalShader::ModifyCompilationEnvironment(Parameters, OutEnvironment);
 	
-		OutEnvironment.SetDefine(TEXT("THREADS_X"), 16); // Research what's the best dispatch size
+		/** Research what's the best dispatch size */
+		OutEnvironment.SetDefine(TEXT("THREADS_X"), 16);
 		OutEnvironment.SetDefine(TEXT("THREADS_Y"), 1);
 		OutEnvironment.SetDefine(TEXT("THREADS_Z"), 1);
 	}
 };
 
-// 2D dispatch of 16x16
-// Gather Pass
+IMPLEMENT_GLOBAL_SHADER(FScatterSurfelPass, "/Surfel/Surfels/Scatter.usf", "MainCS", SF_Compute);
 
-// Find the tile minimum and it's pixel coordinate (tile min reduction)
-// Using that pixel coordinate of the worst pixel, sample the GBuffer for depth and normal.
-// Depth: GBuffer is not enough as a position, I need to reconstruct to world position + depth + inverse VP
-// Normal: is good as is just read
-
-// With this gathered data I can spawn (not really spawn since it's allocated already, more like modify) a surfel from the pool buffer
-// e.g.: {pos, normal, radius, radiance = 0) in Pool[index]
-// index can be InterlockedAdd
+/**
+ * 2D dispatch of 16x16
+ * Gather Pass
+ *
+ * Find the tile minimum and it's pixel coordinate (tile min reduction)
+ * Using that pixel coordinate of the worst pixel, sample the GBuffer for depth and normal.
+ * Depth: GBuffer is not enough as a position, I need to reconstruct to world position + depth + inverse VP
+ * Normal: is good as is just read
+ *
+ * With this gathered data I can spawn (not really spawn since it's allocated already, more like modify) a surfel from the pool buffer
+ * e.g.: {pos, normal, radius, radiance = 0) in Pool[index]
+ * index can be InterlockedAdd
+ */
 class FGatherSurfelPass : public FGlobalShader
 {
 public:
@@ -95,11 +126,35 @@ public:
 	SHADER_USE_PARAMETER_STRUCT(FGatherSurfelPass, FGlobalShader);
 
 	BEGIN_SHADER_PARAMETER_STRUCT(FParameters, )
-		// Read texture with texture coverage
-		// Read depth GBuffer
-		// Read normal GBuffer
-		// Read and write surfel buffers
-		// Write surfel structure
+		/**
+		 * Read depth GBuffer
+		 * Read normal GBuffer
+		 * Read and write surfel buffers
+		 * Write surfel structure
+		 *
+		 * TODO: read texture with pixel coverage once Scatter writes one; for now
+		 * every dispatched pixel is treated as uncovered and always spawns.
+		 */
+		SHADER_PARAMETER_RDG_BUFFER_UAV(RWStructuredBuffer<uint>, SurfelCount)
+		SHADER_PARAMETER_RDG_BUFFER_UAV(RWStructuredBuffer<float4>, SurfelPositionAndRadius)
+		SHADER_PARAMETER_RDG_BUFFER_UAV(RWStructuredBuffer<float4>, SurfelNormalAndFlags)
+	
+		SHADER_PARAMETER_RDG_TEXTURE(Texture2D, GBufferATexture)
+		SHADER_PARAMETER_RDG_TEXTURE(Texture2D, GBufferBTexture)
+		SHADER_PARAMETER_RDG_TEXTURE(Texture2D, GBufferCTexture)
+		SHADER_PARAMETER_RDG_TEXTURE(Texture2D, GBufferDTexture)
+		SHADER_PARAMETER_RDG_TEXTURE(Texture2D, GBufferETexture)
+		SHADER_PARAMETER_RDG_TEXTURE(Texture2D, GBufferFTexture)
+	
+		SHADER_PARAMETER_RDG_TEXTURE(Texture2D, SceneDepthTexture)
+	
+		SHADER_PARAMETER_STRUCT_REF(FViewUniformShaderParameters, View)
+		SHADER_PARAMETER(FUintVector2, ViewRectMin)
+		SHADER_PARAMETER(FUintVector2, ViewRectMax)
+
+		SHADER_PARAMETER(uint32, SurfelBudget)
+		SHADER_PARAMETER(float, SurfelRadius) // Temporarily from the CVar
+	
 	END_SHADER_PARAMETER_STRUCT()
 
 	static bool ShouldCompilePermutation(const FGlobalShaderPermutationParameters& Parameters)
@@ -117,23 +172,27 @@ public:
 	}
 };
 
-// Note: after one scatter and one gather, doing scatter again will be done with the newly spawned surfel
-// meaning the scatter step won't detect that place as unoccupied so it finds the next worse covered spot
+IMPLEMENT_GLOBAL_SHADER(FGatherSurfelPass, "/Surfel/Surfels/Gather.usf", "MainCS", SF_Compute);
 
-// 1D Dispatch: runs per surfel
-
-// Because my solution is for low-end
-// Must be implemented with ray marching because hardware RT is not on most devices
-
-// What happens per surfel
-// Trace visibility ray. Is this shadowed? If not store irradiance.
-// RECURSIVE 
-	// Trace from a hemisphere (still researching what's the best algorithm for mitigating light leaking)
-	// and using the global SDF and ray marching (origin + direction * distance) 
-	// I can find a position which I query to find a surfel (which stores more irradiance)
-	// from that surfel I can keep doing it
-
-// This pass updates all the radiance values from the surfels
+/**
+ * Note: after one scatter and one gather, doing scatter again will be done with the newly spawned surfel
+ * meaning the scatter step won't detect that place as unoccupied so it finds the next worse covered spot
+ *
+ * 1D Dispatch: runs per surfel
+ *
+ * Because my solution is for low-end
+ * Must be implemented with ray marching because hardware RT is not on most devices
+ *
+ * What happens per surfel
+ * Trace visibility ray. Is this shadowed? If not store irradiance.
+ * RECURSIVE
+ *     Trace from a hemisphere (still researching what's the best algorithm for mitigating light leaking)
+ *     and using the global SDF and ray marching (origin + direction * distance)
+ *     I can find a position which I query to find a surfel (which stores more irradiance)
+ *     from that surfel I can keep doing it
+ *
+ * This pass updates all the radiance values from the surfels
+ */
 class FSurfelIrradiancePass : public FGlobalShader
 {
 public:
@@ -141,8 +200,10 @@ public:
 	SHADER_USE_PARAMETER_STRUCT(FSurfelIrradiancePass, FGlobalShader);
 
 	BEGIN_SHADER_PARAMETER_STRUCT(FParameters, )
-		// Read and write surfel buffers
-		// Read structure with surfels
+		/**
+		 * Read and write surfel buffers
+		 * Read structure with surfels
+		 */
 	END_SHADER_PARAMETER_STRUCT()
 
 	static bool ShouldCompilePermutation(const FGlobalShaderPermutationParameters& Parameters)
@@ -160,10 +221,14 @@ public:
 	}
 };
 
-// 2D Dispatch
-// Lookup in the grid for surfel in the buffer. 
-// From depth buffer (using inverse vp) I can do a lookup in the structure that holds surfels to find what surfels are there.
-// Using this I write to a irradiance texture I can use in a composite pass.
+IMPLEMENT_GLOBAL_SHADER(FSurfelIrradiancePass, "/Surfel/Surfels/SurfelIrradiance.usf", "MainCS", SF_Compute);
+
+/**
+ * 2D Dispatch
+ * Lookup in the grid for surfel in the buffer.
+ * From depth buffer (using inverse vp) I can do a lookup in the structure that holds surfels to find what surfels are there.
+ * Using this I write to a irradiance texture I can use in a composite pass.
+ */
 class FTextureIrradiancePass : public FGlobalShader
 {
 public:
@@ -171,10 +236,12 @@ public:
 	SHADER_USE_PARAMETER_STRUCT(FTextureIrradiancePass, FGlobalShader);
 
 	BEGIN_SHADER_PARAMETER_STRUCT(FParameters, )
-		// Write irradiance texture
-		// Read depth 
-		// Read surfel buffers
-		// Read and Write surfel structure
+		/**
+		 * Write irradiance texture
+		 * Read depth
+		 * Read surfel buffers
+		 * Read and Write surfel structure
+		 */
 	END_SHADER_PARAMETER_STRUCT()
 
 	static bool ShouldCompilePermutation(const FGlobalShaderPermutationParameters& Parameters)
@@ -192,7 +259,9 @@ public:
 	}
 };
 
-// Composites the Irradiance texture
+IMPLEMENT_GLOBAL_SHADER(FTextureIrradiancePass, "/Surfel/Surfels/TextureIrradiance.usf", "MainCS", SF_Compute);
+
+/** Composites the Irradiance texture */
 class FCompositePass : public FGlobalShader
 {
 public:
@@ -200,9 +269,11 @@ public:
 	SHADER_USE_PARAMETER_STRUCT(FCompositePass, FGlobalShader);
 
 	BEGIN_SHADER_PARAMETER_STRUCT(FParameters, )
-		// Read irradiance texture
-		// Read the framebuffer without post process
-		// Write new framebuffer image to be displayed
+		/**
+		 * Read irradiance texture
+		 * Read the framebuffer without post process
+		 * Write new framebuffer image to be displayed
+		 */
 	END_SHADER_PARAMETER_STRUCT()
 
 	static bool ShouldCompilePermutation(const FGlobalShaderPermutationParameters& Parameters)
@@ -220,7 +291,9 @@ public:
 	}
 };
 
-// Visualize surfels
+IMPLEMENT_GLOBAL_SHADER(FCompositePass, "/Surfel/Surfels/Composite.usf", "MainCS", SF_Compute);
+
+/** Visualize surfels */
 class FSurfelVisualizeCoverage : public FGlobalShader
 {
 public:
@@ -249,7 +322,9 @@ public:
 	}
 };
 
-// Color Filter Compute Shader
+IMPLEMENT_GLOBAL_SHADER(FSurfelVisualizeCoverage, "/Surfel/Surfels/Visualize.usf", "MainCS", SF_Compute);
+
+/** Color Filter Compute Shader */
 class FSurfelFullscreenCS : public FGlobalShader
 {
 public:
@@ -280,7 +355,7 @@ public:
 
 IMPLEMENT_GLOBAL_SHADER(FSurfelFullscreenCS, "/Surfel/FullscreenCS.usf", "MainCS", SF_Compute);
 
-// GBuffer Visualization Compute Shader
+/** GBuffer Visualization Compute Shader */
 class FSurfelGBufferVisualizeCS : public FGlobalShader
 {
 public:
@@ -299,7 +374,7 @@ public:
 		SHADER_PARAMETER_RDG_TEXTURE(Texture2D, GBufferFTexture)
 		SHADER_PARAMETER_RDG_TEXTURE(Texture2D, SceneDepthTexture)
 
-		// Needed by ConvertFromDeviceZ() inside Common.ush.
+		/** Needed by ConvertFromDeviceZ() inside Common.ush. */
 		SHADER_PARAMETER_STRUCT_REF(FViewUniformShaderParameters, View)
 
 		SHADER_PARAMETER(int32, VisualizeMode)
@@ -330,14 +405,14 @@ FComputePasses::FComputePasses(const FAutoRegister& AutoRegister)
 	UE_LOG(LogTemp, Log, TEXT("Surfel: SceneViewExtension registered"));
 }
 
-// Where should my defined passes hook into the pipeline
+/** Where should my defined passes hook into the pipeline */
 void FComputePasses::SubscribeToPostProcessingPass(
 	EPostProcessingPass PassId,
 	const FSceneView& View,
 	FAfterPassCallbackDelegateArray& InOutPassCallbacks,
 	bool bIsPassEnabled)
 {	
-	// Runs only before the ... pass (MotionBlur now)
+	/** Runs only before the ... pass (MotionBlur now) */
 	if (PassId != EPostProcessingPass::MotionBlur)
 	{
 		return;
@@ -376,7 +451,105 @@ static FRDGTextureRef CreateOutputLike(FRDGBuilder& GraphBuilder, FRDGTextureRef
 void FComputePasses::PostRenderBasePassDeferred_RenderThread(FRDGBuilder& GraphBuilder, FSceneView& InView,
 	const FRenderTargetBindingSlots& RenderTargets, TRDGUniformBufferRef<FSceneTextureUniformParameters> SceneTextures)
 {
+	// For RenderDoc
+	RDG_EVENT_SCOPE(GraphBuilder, "Surfel Gather Pass");
 
+	// Are surfel enabled? Is view valid? Are the GBuffers?
+	if (!CVarSurfelEnable.GetValueOnRenderThread() || !InView.State || !SceneTextures)
+	{
+		return;
+	}
+
+	// Get GBuffers
+	const FSceneTextureUniformParameters GBufferTextures = *SceneTextures->GetContents();
+
+	// Check if normal and depth are available
+	if (!GBufferTextures.GBufferATexture || !GBufferTextures.SceneDepthTexture)
+	{
+		return;
+	}
+
+	uint32 ViewKey = InView.State->GetViewKey();
+
+	// Get all the data for the surfels from omap
+	FSurfelViewState& SurfelState = ViewStates.FindOrAdd(ViewKey);
+
+	uint32 CVarBudget = FMath::Max(1024, CVarSurfelBudget.GetValueOnRenderThread());
+	if (SurfelState.Budget != CVarBudget)
+	{
+		// Budget changed through CVar
+		// Recreated the SurfelState below at the new size.
+		SurfelState.SurfelPositionAndRadius.SafeRelease();
+		SurfelState.SurfelNormalAndFlags.SafeRelease();
+		SurfelState.SurfelCounter.SafeRelease();
+		SurfelState.Budget = CVarBudget;
+	}
+
+	// Create buffers (SurfelState) if there are none, otherwise pull the cached ones from last frame into these RDG buffers
+	FRDGBufferRef SurfelPositionAndRadiusBuffer;
+	FRDGBufferRef SurfelNormalAndFlagsBuffer;
+	FRDGBufferRef SurfelCounterBuffer;
+
+	if (SurfelState.SurfelPositionAndRadius.IsValid())
+	{
+		SurfelPositionAndRadiusBuffer = GraphBuilder.RegisterExternalBuffer(SurfelState.SurfelPositionAndRadius);
+		SurfelNormalAndFlagsBuffer    = GraphBuilder.RegisterExternalBuffer(SurfelState.SurfelNormalAndFlags);
+		SurfelCounterBuffer           = GraphBuilder.RegisterExternalBuffer(SurfelState.SurfelCounter);
+	}
+	else // Create them if they are not there
+	{
+		SurfelPositionAndRadiusBuffer = GraphBuilder.CreateBuffer(
+			FRDGBufferDesc::CreateStructuredDesc(sizeof(FVector4f), CVarBudget),
+			TEXT("Surfel.PositionAndRadius"));
+
+		SurfelNormalAndFlagsBuffer = GraphBuilder.CreateBuffer(
+			FRDGBufferDesc::CreateStructuredDesc(sizeof(FVector4f), CVarBudget),
+			TEXT("Surfel.NormalAndFlags"));
+
+		SurfelCounterBuffer = GraphBuilder.CreateBuffer(
+			FRDGBufferDesc::CreateStructuredDesc(sizeof(uint32), 1),
+			TEXT("Surfel.Counter"));
+
+		AddClearUAVPass(GraphBuilder, GraphBuilder.CreateUAV(SurfelCounterBuffer), 0u);
+	}
+
+	// Allocate memory for GatherPass parameters
+	FGatherSurfelPass::FParameters* PassParameters =
+		GraphBuilder.AllocParameters<FGatherSurfelPass::FParameters>();
+	
+	FRDGTextureRef BlackDummy = GSystemTextures.GetBlackDummy(GraphBuilder);
+	PassParameters->GBufferATexture   = GBufferTextures.GBufferATexture;
+	PassParameters->GBufferBTexture   = GBufferTextures.GBufferBTexture ? GBufferTextures.GBufferBTexture : BlackDummy;
+	PassParameters->GBufferCTexture   = GBufferTextures.GBufferCTexture ? GBufferTextures.GBufferCTexture : BlackDummy;
+	PassParameters->GBufferDTexture   = GBufferTextures.GBufferDTexture ? GBufferTextures.GBufferDTexture : BlackDummy;
+	PassParameters->GBufferETexture   = GBufferTextures.GBufferETexture ? GBufferTextures.GBufferETexture : BlackDummy;
+	PassParameters->GBufferFTexture   = GBufferTextures.GBufferFTexture ? GBufferTextures.GBufferFTexture : BlackDummy;
+	PassParameters->SceneDepthTexture = GBufferTextures.SceneDepthTexture;
+
+	PassParameters->View = InView.ViewUniformBuffer;
+	// InView.UnscaledViewRect is important otherwise the imagine will be smaller because Unreal has upscaling somewhere
+	PassParameters->ViewRectMin = FUintVector2(InView.UnscaledViewRect.Min.X, InView.UnscaledViewRect.Min.Y);
+	PassParameters->ViewRectMax = FUintVector2(InView.UnscaledViewRect.Max.X, InView.UnscaledViewRect.Max.Y);
+
+	PassParameters->SurfelBudget =  CVarBudget;
+	PassParameters->SurfelRadius = CVarSurfelRadius.GetValueOnRenderThread();
+
+	PassParameters->SurfelCount              = GraphBuilder.CreateUAV(SurfelCounterBuffer);
+	PassParameters->SurfelPositionAndRadius  = GraphBuilder.CreateUAV(SurfelPositionAndRadiusBuffer);
+	PassParameters->SurfelNormalAndFlags     = GraphBuilder.CreateUAV(SurfelNormalAndFlagsBuffer);
+
+	// Add compute shader pass
+	TShaderMapRef<FGatherSurfelPass> ComputeShader(GetGlobalShaderMap(InView.GetFeatureLevel()));
+	// InView.UnscaledViewRect is important otherwise the imagine will be smaller because Unreal has upscaling somewhere
+	FComputeShaderUtils::AddPass(GraphBuilder, RDG_EVENT_NAME("Surfel Gather"), ComputeShader, PassParameters, FComputeShaderUtils::GetGroupCount(InView.UnscaledViewRect.Size(), FIntPoint(16, 16)));
+
+	UE_LOG(LogTemp, Log, TEXT("Surfel: gather ran, budget %u"), CVarBudget);
+	
+	// Convert from RDG to the SurfelState struct from the map so surfels are persistent per frame
+	// Otherwise RDG resources get freed here
+	SurfelState.SurfelPositionAndRadius = GraphBuilder.ConvertToExternalBuffer(SurfelPositionAndRadiusBuffer);
+	SurfelState.SurfelNormalAndFlags = GraphBuilder.ConvertToExternalBuffer(SurfelNormalAndFlagsBuffer);
+	SurfelState.SurfelCounter = GraphBuilder.ConvertToExternalBuffer(SurfelCounterBuffer);
 }
 
 // Pass for the procedural effect
@@ -386,7 +559,7 @@ FScreenPassTexture FComputePasses::RunFullscreenPass(
 	const FPostProcessMaterialInputs& Inputs)
 {
 	// Scene color can arrive as a slice of a texture array (e.g. instanced stereo),
-	// so normalise it to a plain 2D texture first.
+	// so normalize it to a plain 2D texture first.
 	const FScreenPassTexture SceneColor =
 		FScreenPassTexture::CopyFromSlice(GraphBuilder, Inputs.GetInput(EPostProcessMaterialInput::SceneColor));
 

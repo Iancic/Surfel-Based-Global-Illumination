@@ -16,6 +16,6 @@ public:
 
 private:
 	
-	// Surfel plugin - keeps the SceneViewExtension alive for the engine's lifetime.
+	// Surfel plugin keeps the SceneViewExtension alive for the engine's lifetime.
 	TSharedPtr<FComputePasses, ESPMode::ThreadSafe> SurfelSceneViewExtension;
 };
