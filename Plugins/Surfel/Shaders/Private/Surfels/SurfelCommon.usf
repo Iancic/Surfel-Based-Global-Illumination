@@ -1,0 +1,14 @@
+StructuredBuffer<uint> SurfelCounter;
+StructuredBuffer<float4> SurfelPositionAndRadius;
+StructuredBuffer<float4> SurfelNormalAndFlags;
+
+// StructuredBuffer SurfelIrradiancePrev
+// StructuredBuffer SurfelIrradianceCurrent
+
+struct FSurfel
+{
+	float3 position;
+	float radius;
+	float3 normal;
+	uint flags;
+};
