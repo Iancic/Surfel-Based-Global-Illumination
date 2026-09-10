@@ -8,6 +8,19 @@ uint2 ViewRectMax;
 uint SurfelBudget;
 float SurfelRadius;
 
+// Stopgap until Scatter coverage exists: one thread per GridSize x GridSize pixel
+// block, sampling the block's center pixel, so surfels land spread out on a coarse
+// screen-space grid instead of piling up on every visible pixel.
+uint GridSize;
+
+// --- TEMP (this session): stand-in for the not-yet-implemented Scatter coverage pass. ---
+// World-space distance under which a candidate spawn point is considered "already
+// covered" by an existing surfel, so Gather stops spawning once an area is filled
+// and only adds surfels for newly-revealed geometry (e.g. after moving the camera).
+// Remove/replace once Scatter writes a real screen-space coverage texture.
+float CoverageRadius;
+// --- END TEMP ---
+
 RWStructuredBuffer<uint> SurfelCount;
 RWStructuredBuffer<float4> SurfelPositionAndRadius;
 RWStructuredBuffer<float4> SurfelNormalAndFlags;
@@ -15,9 +28,12 @@ RWStructuredBuffer<float4> SurfelNormalAndFlags;
 [numthreads(THREADS_X, THREADS_Y, THREADS_Z)]
 void MainCS(uint3 DispatchThreadId : SV_DispatchThreadID)
 {
-    uint2 PixelPos = ViewRectMin + DispatchThreadId.xy;
+    // DispatchThreadId here indexes grid cells, not pixels; map to the pixel at
+    // the center of that cell.
+    uint2 CellMin = ViewRectMin + DispatchThreadId.xy * GridSize;
+    uint2 PixelPos = min(CellMin + GridSize / 2, ViewRectMax - 1);
 
-    if (any(PixelPos >= ViewRectMax))
+    if (any(CellMin >= ViewRectMax))
     {
         return;
     }
@@ -40,10 +56,32 @@ void MainCS(uint3 DispatchThreadId : SV_DispatchThreadID)
     float4 GBufferA = GBufferATexture.Load(LoadPos);
     float3 WorldNormal = normalize(GBufferA.xyz * 2.0f - 1.0f);
 
+    // Surfels persist across frames, but PrimaryView.PreViewTranslation shifts every
+    // frame with the camera. Store true (untranslated) world position so re-projecting
+    // next frame with a different PreViewTranslation doesn't drag surfels along
+    // with the camera instead of leaving them fixed in the world.
     float4 SvPosition = float4(PixelPos + 0.5f, DeviceZ, 1.0f);
     float3 TranslatedWorldPosition = SvPositionToTranslatedWorld(SvPosition);
-    float3 WorldPosition = TranslatedWorldPosition;
-    
+    float3 WorldPosition = DFFastSubtractDemote(TranslatedWorldPosition, PrimaryView.PreViewTranslation);
+
+    // --- TEMP (this session): brute-force coverage check standing in for Scatter. ---
+    // Skip spawning if an existing surfel is already close enough to this candidate
+    // point. Without this, Gather re-spawns on every visible cell every frame and
+    // burns through the whole budget on the first frame, so moving the camera to
+    // reveal new geometry never gets a chance to spawn anything (budget's already spent).
+    // O(ExistingSurfelCount) per candidate cell - fine at current grid/budget sizes,
+    // but should be replaced by a real screen-space coverage texture from Scatter.
+    uint ExistingCount = min(SurfelCount[0], SurfelBudget);
+    for (uint i = 0; i < ExistingCount; i++)
+    {
+        float3 ExistingPosition = SurfelPositionAndRadius[i].xyz;
+        if (distance(ExistingPosition, WorldPosition) < CoverageRadius)
+        {
+            return;
+        }
+    }
+    // --- END TEMP ---
+
     uint SurfelIndex;
     InterlockedAdd(SurfelCount[0], 1, SurfelIndex);
 

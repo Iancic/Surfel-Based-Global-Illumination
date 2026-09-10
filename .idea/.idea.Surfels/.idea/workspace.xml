@@ -16,16 +16,10 @@
   <component name="ChangeListManager">
     <list default="true" id="44150427-159c-4207-9acb-656e0022a28f" name="Changes" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/.idea.Surfels/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/.idea.Surfels/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Plugins/Surfel/Shaders/Private/Surfels/Composite.usf" beforeDir="false" afterPath="$PROJECT_DIR$/Plugins/Surfel/Shaders/Private/Surfels/Composite.usf" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Plugins/Surfel/Shaders/Private/FullscreenCS.usf" beforeDir="false" afterPath="$PROJECT_DIR$/Plugins/Surfel/Shaders/Private/FullscreenCS.usf" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Plugins/Surfel/Shaders/Private/Surfels/Gather.usf" beforeDir="false" afterPath="$PROJECT_DIR$/Plugins/Surfel/Shaders/Private/Surfels/Gather.usf" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Plugins/Surfel/Shaders/Private/Surfels/Scatter.usf" beforeDir="false" afterPath="$PROJECT_DIR$/Plugins/Surfel/Shaders/Private/Surfels/Scatter.usf" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Plugins/Surfel/Shaders/Private/Surfels/SurfelCommon.usf" beforeDir="false" afterPath="$PROJECT_DIR$/Plugins/Surfel/Shaders/Private/Surfels/SurfelCommon.usf" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Plugins/Surfel/Shaders/Private/Surfels/SurfelIrradiance.usf" beforeDir="false" afterPath="$PROJECT_DIR$/Plugins/Surfel/Shaders/Private/Surfels/SurfelIrradiance.usf" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Plugins/Surfel/Shaders/Private/Surfels/TextureIrradiance.usf" beforeDir="false" afterPath="$PROJECT_DIR$/Plugins/Surfel/Shaders/Private/Surfels/TextureIrradiance.usf" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Plugins/Surfel/Shaders/Private/Surfels/Visualize.usf" beforeDir="false" afterPath="$PROJECT_DIR$/Plugins/Surfel/Shaders/Private/Surfels/Visualize.usf" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Plugins/Surfel/Source/Surfel/Private/ComputePasses.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Plugins/Surfel/Source/Surfel/Private/ComputePasses.cpp" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Plugins/Surfel/Source/Surfel/Public/ComputePasses.h" beforeDir="false" afterPath="$PROJECT_DIR$/Plugins/Surfel/Source/Surfel/Public/ComputePasses.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Plugins/Surfel/Source/Surfel/Public/SurfelSubsystem.h" beforeDir="false" afterPath="$PROJECT_DIR$/Plugins/Surfel/Source/Surfel/Public/SurfelSubsystem.h" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -41,6 +35,7 @@
   <component name="HighlightingSettingsPerFile">
     <setting file="file://$PROJECT_DIR$/../../../../../Program Files/Epic Games/UE_5.8/Engine/Source/Runtime/Engine/Public/SceneViewExtension.h" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/Plugins/Surfel/Intermediate/Build/Win64/x64/UnrealGame/Development/Surfel/Module.Surfel.cpp" root0="SKIP_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/Saved/ShaderDebugInfo/PCD3D_SM6/Global/FTextureIrradiancePass/0/TextureIrradiance.usf" root0="FORCE_HIGHLIGHTING" />
   </component>
   <component name="McpProjectServerCommands">
     <commands />
@@ -49,61 +44,61 @@
   <component name="MetaFilesCheckinStateConfiguration" checkMetaFiles="true" />
   <component name="NextEditCompletionFeaturesState">
     <decayedCancelled>
-      <entry key="MS100" value="1.000000000007276" />
-      <entry key="MS500" value="1.0060903864481774" />
-      <entry key="S2" value="1.4611724103519494" />
-      <entry key="S5" value="2.383176171920007" />
-      <entry key="S10" value="3.4541876727219467" />
-      <entry key="S30" value="8.426018853102942" />
-      <entry key="S60" value="13.030746805059191" />
-      <entry key="M2" value="17.549626714722432" />
-      <entry key="M5" value="28.117709371250022" />
-      <entry key="M10" value="48.50718154166365" />
-      <entry key="M15" value="71.21247668578752" />
-      <entry key="M30" value="146.15852218837114" />
-      <entry key="H1" value="299.7006831300566" />
-      <entry key="H2" value="581.9663133787943" />
-      <entry key="H4" value="982.557094264107" />
-      <entry key="D1" value="1768.7728277697138" />
-      <entry key="W1" value="1987.1434628009317" />
+      <entry key="MS100" value="1.0" />
+      <entry key="MS500" value="1.0000088724658063" />
+      <entry key="S2" value="1.1171337053754555" />
+      <entry key="S5" value="1.8149372991756887" />
+      <entry key="S10" value="2.5632752940678065" />
+      <entry key="S30" value="5.6704636426360855" />
+      <entry key="S60" value="19.075636096702286" />
+      <entry key="M2" value="44.445865263354996" />
+      <entry key="M5" value="77.18718429218765" />
+      <entry key="M10" value="97.68124357837638" />
+      <entry key="M15" value="114.30365237958056" />
+      <entry key="M30" value="173.50045534288228" />
+      <entry key="H1" value="313.472396657552" />
+      <entry key="H2" value="591.508981622673" />
+      <entry key="H4" value="1004.6317479432316" />
+      <entry key="D1" value="1852.8412050453687" />
+      <entry key="W1" value="2094.632875153053" />
     </decayedCancelled>
     <decayedSelected>
-      <entry key="MS100" value="3.0257360471370333E-149" />
-      <entry key="MS500" value="1.9777263864585454E-30" />
-      <entry key="S2" value="3.75008880227781E-8" />
-      <entry key="S5" value="0.0010705738247364502" />
-      <entry key="S10" value="0.03271962445897644" />
-      <entry key="S30" value="0.3198424499796831" />
-      <entry key="S60" value="0.5655461520659244" />
-      <entry key="M2" value="0.7520553685395355" />
-      <entry key="M5" value="0.9523749833542111" />
-      <entry key="M10" value="1.9994764856823244" />
-      <entry key="M15" value="4.108304588477269" />
-      <entry key="M30" value="11.80773862677219" />
-      <entry key="H1" value="23.153930384360304" />
-      <entry key="H2" value="34.39893075457217" />
-      <entry key="H4" value="43.19410302387882" />
-      <entry key="D1" value="54.10345580741475" />
-      <entry key="W1" value="56.56555358098648" />
+      <entry key="MS100" value="0.0" />
+      <entry key="MS500" value="0.0" />
+      <entry key="S2" value="3.3567589507238325E-305" />
+      <entry key="S5" value="1.6231851553381422E-122" />
+      <entry key="S10" value="1.2740428388944134E-61" />
+      <entry key="S30" value="5.0318537552375386E-21" />
+      <entry key="S60" value="7.093556059827206E-11" />
+      <entry key="M2" value="8.422631351162751E-6" />
+      <entry key="M5" value="0.009965226395310427" />
+      <entry key="M10" value="0.2045294716380246" />
+      <entry key="M15" value="0.8985778275364797" />
+      <entry key="M30" value="5.522214384924799" />
+      <entry key="H1" value="15.834267921292202" />
+      <entry key="H2" value="28.44667927241385" />
+      <entry key="H4" value="39.279665095949774" />
+      <entry key="D1" value="53.253590233406534" />
+      <entry key="W1" value="56.43775627603651" />
     </decayedSelected>
     <decayedShown>
-      <entry key="MS100" value="3.5983932415787077E-9" />
-      <entry key="MS500" value="0.02098022043160253" />
-      <entry key="S2" value="0.6859222302304774" />
-      <entry key="S5" value="1.8886490488122312" />
-      <entry key="S10" value="3.1765763627437016" />
-      <entry key="S30" value="8.588688402731915" />
-      <entry key="S60" value="13.49465206255559" />
-      <entry key="M2" value="18.239275233370616" />
-      <entry key="M5" value="29.027052556126858" />
-      <entry key="M10" value="50.45857443343778" />
-      <entry key="M15" value="75.26598222438126" />
-      <entry key="M30" value="157.90435275542995" />
-      <entry key="H1" value="322.7971503574101" />
-      <entry key="H2" value="616.3138698099585" />
-      <entry key="H4" value="1025.7079361460515" />
-      <entry key="D1" value="1822.8629039737934" />
-      <entry key="W1" value="2043.7068534520106" />
+      <entry key="MS100" value="2.3348695385025752E-26" />
+      <entry key="MS500" value="1.2935328440377796E-5" />
+      <entry key="S2" value="0.15036013911890495" />
+      <entry key="S5" value="1.0628894303688552" />
+      <entry key="S10" value="2.05865849023316" />
+      <entry key="S30" value="5.457424510060273" />
+      <entry key="S60" value="18.954885452566035" />
+      <entry key="M2" value="44.37712326794617" />
+      <entry key="M5" value="77.16560474811958" />
+      <entry key="M10" value="97.86449108131333" />
+      <entry key="M15" value="115.1791335629778" />
+      <entry key="M30" value="178.98805466034278" />
+      <entry key="H1" value="329.2645084763538" />
+      <entry key="H2" value="619.9117396897252" />
+      <entry key="H4" value="1043.8713523771848" />
+      <entry key="D1" value="1906.081505588599" />
+      <entry key="W1" value="2151.0684562003044" />
     </decayedShown>
   </component>
   <component name="ProblemsViewState">
@@ -118,31 +113,31 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent"><![CDATA[{
-  "keyToString": {
-    "C/C++ Project.Surfels.executor": "Run",
-    "ModuleVcsDetector.initialDetectionPerformed": "true",
-    "RunOnceActivity.MCP Project settings loaded": "true",
-    "RunOnceActivity.ShowReadmeOnStart": "true",
-    "RunOnceActivity.cidr.known.project.marker": "true",
-    "RunOnceActivity.git.unshallow": "true",
-    "RunOnceActivity.readMode.enableVisualFormatting": "true",
-    "RunOnceActivity.typescript.service.memoryLimit.init": "true",
-    "cidr.known.project.marker": "true",
-    "codeWithMe.voiceChat.enabledByDefault": "false",
-    "com.intellij.ml.llm.matterhorn.ej.ui.settings.DefaultModelSelectionForGA.v1": "true",
-    "com.jetbrains.opentelemetry.toolwindow.stripe.promo": "true",
-    "ignore.virus.scanning.warn.message": "true",
-    "junie.onboarding.icon.badge.shown": "true",
-    "node.js.detected.package.eslint": "true",
-    "node.js.detected.package.tslint": "true",
-    "node.js.selected.package.eslint": "(autodetect)",
-    "node.js.selected.package.tslint": "(autodetect)",
-    "nodejs_package_manager_path": "npm",
-    "settings.editor.selected.configurable": "preferences.pluginManager",
-    "to.speed.mode.migration.done": "true"
+  <component name="PropertiesComponent">{
+  &quot;keyToString&quot;: {
+    &quot;C/C++ Project.Surfels.executor&quot;: &quot;Run&quot;,
+    &quot;ModuleVcsDetector.initialDetectionPerformed&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.MCP Project settings loaded&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.cidr.known.project.marker&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.git.unshallow&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.readMode.enableVisualFormatting&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.typescript.service.memoryLimit.init&quot;: &quot;true&quot;,
+    &quot;cidr.known.project.marker&quot;: &quot;true&quot;,
+    &quot;codeWithMe.voiceChat.enabledByDefault&quot;: &quot;false&quot;,
+    &quot;com.intellij.ml.llm.matterhorn.ej.ui.settings.DefaultModelSelectionForGA.v1&quot;: &quot;true&quot;,
+    &quot;com.jetbrains.opentelemetry.toolwindow.stripe.promo&quot;: &quot;true&quot;,
+    &quot;ignore.virus.scanning.warn.message&quot;: &quot;true&quot;,
+    &quot;junie.onboarding.icon.badge.shown&quot;: &quot;true&quot;,
+    &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
+    &quot;node.js.detected.package.tslint&quot;: &quot;true&quot;,
+    &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
+    &quot;node.js.selected.package.tslint&quot;: &quot;(autodetect)&quot;,
+    &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;,
+    &quot;settings.editor.selected.configurable&quot;: &quot;preferences.pluginManager&quot;,
+    &quot;to.speed.mode.migration.done&quot;: &quot;true&quot;
   }
-}]]></component>
+}</component>
   <component name="RunManager" selected="C/C++ Project.Surfels">
     <configuration name="Surfels" type="CppProject" factoryName="C++ Project">
       <configuration_1 setup="1">

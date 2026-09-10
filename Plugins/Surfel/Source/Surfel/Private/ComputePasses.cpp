@@ -52,10 +52,47 @@ static TAutoConsoleVariable<int> CVarSurfelBudget(
 
 static TAutoConsoleVariable<int> CVarSurfelRadius(
 	TEXT("r.Surfel.Radius"),
-	50,
-	TEXT("Surfel Radius."),
+	15,
+	TEXT("Surfel Radius, in world units (cm)."),
 	ECVF_RenderThreadSafe
 	);
+
+static TAutoConsoleVariable<float> CVarSurfelDebugRadiusScale(
+	TEXT("r.Surfel.DebugRadiusScale"),
+	0.25f,
+	TEXT("Fraction of the true surfel radius drawn by the fullscreen debug visualization (Mode 1).\n")
+	TEXT("Keeps r.Surfel.Radius meaningful for spawning/coverage while keeping individual surfels visually distinguishable."),
+	ECVF_RenderThreadSafe
+	);
+
+static TAutoConsoleVariable<int> CVarSurfelGridSize(
+	TEXT("r.Surfel.GridSize"),
+	32,
+	TEXT("Gather dispatches one thread per NxN pixel block instead of per pixel, spacing spawned surfels out on a coarse screen-space grid.\n")
+	TEXT("Stopgap until the Scatter coverage pass is implemented."),
+	ECVF_RenderThreadSafe
+	);
+
+// TEMP (this session): stand-in for Scatter's coverage texture. See CoverageRadius
+// comment in Gather.usf for why this exists and when to remove it.
+static TAutoConsoleVariable<float> CVarSurfelCoverageRadius(
+	TEXT("r.Surfel.CoverageRadius"),
+	40.0f,
+	TEXT("TEMP stand-in for Scatter coverage: world-space distance (cm) under which Gather considers a spot already covered by an existing surfel and skips spawning.\n")
+	TEXT("Lets old surfels persist and budget only get spent on newly-revealed geometry (e.g. after moving the camera). Remove once Scatter provides real coverage."),
+	ECVF_RenderThreadSafe
+	);
+
+// Bumped by r.Surfel.Refresh; Gather clears and respawns from scratch when this changes.
+static int32 GSurfelRefreshRequestId = 0;
+
+static FAutoConsoleCommand CVarSurfelRefreshCmd(
+	TEXT("r.Surfel.Refresh"),
+	TEXT("Clears all spawned surfels so they respawn from scratch on the current grid."),
+	FConsoleCommandDelegate::CreateLambda([]()
+	{
+		++GSurfelRefreshRequestId;
+	}));
 
 /**
  * note: explaining nomenclature
@@ -106,6 +143,7 @@ public:
 
 IMPLEMENT_GLOBAL_SHADER(FScatterSurfelPass, "/Surfel/Surfels/Scatter.usf", "MainCS", SF_Compute);
 
+
 /**
  * 2D dispatch of 16x16
  * Gather Pass
@@ -154,7 +192,16 @@ public:
 
 		SHADER_PARAMETER(uint32, SurfelBudget)
 		SHADER_PARAMETER(float, SurfelRadius) // Temporarily from the CVar
-	
+
+		// Stopgap until Scatter coverage exists: one thread per GridSize x GridSize
+		// pixel block (sampling the block's center pixel) instead of one thread per pixel,
+		// so spawned surfels land spread out instead of piling up on every visible pixel.
+		SHADER_PARAMETER(uint32, GridSize)
+
+		// TEMP (this session): stand-in for Scatter coverage. See CoverageRadius
+		// comment in Gather.usf.
+		SHADER_PARAMETER(float, CoverageRadius)
+
 	END_SHADER_PARAMETER_STRUCT()
 
 	static bool ShouldCompilePermutation(const FGlobalShaderPermutationParameters& Parameters)
@@ -332,10 +379,22 @@ public:
 	SHADER_USE_PARAMETER_STRUCT(FSurfelFullscreenCS, FGlobalShader);
 
 	BEGIN_SHADER_PARAMETER_STRUCT(FParameters, )
+		
+		// Surfels to visualize
+		SHADER_PARAMETER_RDG_BUFFER_UAV(RWStructuredBuffer<uint>, SurfelCount)
+		SHADER_PARAMETER_RDG_BUFFER_UAV(RWStructuredBuffer<float4>, SurfelPositionAndRadius)
+		SHADER_PARAMETER_RDG_BUFFER_UAV(RWStructuredBuffer<float4>, SurfelNormalAndFlags)
+	
 		SHADER_PARAMETER_RDG_TEXTURE(Texture2D, InputSceneColor)
 		SHADER_PARAMETER_STRUCT(FScreenPassTextureViewportParameters, InputViewport)
 		SHADER_PARAMETER(float, Intensity)
 		SHADER_PARAMETER_RDG_TEXTURE_UAV(RWTexture2D<float4>, OutRenderTarget)
+
+		// Needed to project each surfel's world position back to screen space.
+		SHADER_PARAMETER_STRUCT_REF(FViewUniformShaderParameters, View)
+
+		// Fraction of the true surfel radius drawn, so individual surfels stay distinguishable.
+		SHADER_PARAMETER(float, DebugRadiusScale)
 	END_SHADER_PARAMETER_STRUCT()
 
 	static bool ShouldCompilePermutation(const FGlobalShaderPermutationParameters& Parameters)
@@ -475,14 +534,16 @@ void FComputePasses::PostRenderBasePassDeferred_RenderThread(FRDGBuilder& GraphB
 	FSurfelViewState& SurfelState = ViewStates.FindOrAdd(ViewKey);
 
 	uint32 CVarBudget = FMath::Max(1024, CVarSurfelBudget.GetValueOnRenderThread());
-	if (SurfelState.Budget != CVarBudget)
+	const bool bRefreshRequested = SurfelState.LastRefreshRequestId != GSurfelRefreshRequestId;
+	if (SurfelState.Budget != CVarBudget || bRefreshRequested)
 	{
-		// Budget changed through CVar
-		// Recreated the SurfelState below at the new size.
+		// Budget changed through CVar, or r.Surfel.Refresh was run.
+		// Recreated the SurfelState below at the new size / from scratch.
 		SurfelState.SurfelPositionAndRadius.SafeRelease();
 		SurfelState.SurfelNormalAndFlags.SafeRelease();
 		SurfelState.SurfelCounter.SafeRelease();
 		SurfelState.Budget = CVarBudget;
+		SurfelState.LastRefreshRequestId = GSurfelRefreshRequestId;
 	}
 
 	// Create buffers (SurfelState) if there are none, otherwise pull the cached ones from last frame into these RDG buffers
@@ -534,6 +595,10 @@ void FComputePasses::PostRenderBasePassDeferred_RenderThread(FRDGBuilder& GraphB
 	PassParameters->SurfelBudget =  CVarBudget;
 	PassParameters->SurfelRadius = CVarSurfelRadius.GetValueOnRenderThread();
 
+	const uint32 GridSize = FMath::Max(1, CVarSurfelGridSize.GetValueOnRenderThread());
+	PassParameters->GridSize = GridSize;
+	PassParameters->CoverageRadius = FMath::Max(0.0f, CVarSurfelCoverageRadius.GetValueOnRenderThread());
+
 	PassParameters->SurfelCount              = GraphBuilder.CreateUAV(SurfelCounterBuffer);
 	PassParameters->SurfelPositionAndRadius  = GraphBuilder.CreateUAV(SurfelPositionAndRadiusBuffer);
 	PassParameters->SurfelNormalAndFlags     = GraphBuilder.CreateUAV(SurfelNormalAndFlagsBuffer);
@@ -541,7 +606,12 @@ void FComputePasses::PostRenderBasePassDeferred_RenderThread(FRDGBuilder& GraphB
 	// Add compute shader pass
 	TShaderMapRef<FGatherSurfelPass> ComputeShader(GetGlobalShaderMap(InView.GetFeatureLevel()));
 	// InView.UnscaledViewRect is important otherwise the imagine will be smaller because Unreal has upscaling somewhere
-	FComputeShaderUtils::AddPass(GraphBuilder, RDG_EVENT_NAME("Surfel Gather"), ComputeShader, PassParameters, FComputeShaderUtils::GetGroupCount(InView.UnscaledViewRect.Size(), FIntPoint(16, 16)));
+	// One thread per grid cell rather than per pixel, so dispatch is sized in cells (ViewSize / GridSize), not pixels.
+	const FIntPoint ViewSize = InView.UnscaledViewRect.Size();
+	const FIntPoint GridDispatchSize(
+		FMath::DivideAndRoundUp(ViewSize.X, (int32)GridSize),
+		FMath::DivideAndRoundUp(ViewSize.Y, (int32)GridSize));
+	FComputeShaderUtils::AddPass(GraphBuilder, RDG_EVENT_NAME("Surfel Gather"), ComputeShader, PassParameters, FComputeShaderUtils::GetGroupCount(GridDispatchSize, FIntPoint(16, 16)));
 
 	UE_LOG(LogTemp, Log, TEXT("Surfel: gather ran, budget %u"), CVarBudget);
 	
@@ -570,6 +640,13 @@ FScreenPassTexture FComputePasses::RunFullscreenPass(
 
 	RDG_EVENT_SCOPE(GraphBuilder, "Surfel Fullscreen CS");
 
+	// Views without persistent state (e.g. some scene captures/thumbnails) have no
+	// ViewKey to look up a surfel pool with, so there is nothing to visualize.
+	if (!View.State)
+	{
+		return SceneColor;
+	}
+
 	const FScreenPassTextureViewport SceneColorViewport(SceneColor);
 	const FIntPoint PassSize = SceneColor.ViewRect.Size();
 
@@ -582,7 +659,62 @@ FScreenPassTexture FComputePasses::RunFullscreenPass(
 	PassParameters->InputViewport   = GetScreenPassTextureViewportParameters(SceneColorViewport);
 	PassParameters->Intensity       = CVarSurfelIntensity.GetValueOnRenderThread();
 	PassParameters->OutRenderTarget = GraphBuilder.CreateUAV(FRDGTextureUAVDesc(OutputTexture));
+	PassParameters->View            = View.ViewUniformBuffer;
+	PassParameters->DebugRadiusScale = FMath::Max(0.0f, CVarSurfelDebugRadiusScale.GetValueOnRenderThread());
 
+	// Send surfels to visualize
+	//---------------------------------------------------------------------------------------------------------------------------------------------
+
+	uint32 ViewKey = View.State->GetViewKey();
+
+	// Get all the data for the surfels from omap
+	FSurfelViewState& SurfelState = ViewStates.FindOrAdd(ViewKey);
+
+	uint32 CVarBudget = FMath::Max(1024, CVarSurfelBudget.GetValueOnRenderThread());
+	if (SurfelState.Budget != CVarBudget)
+	{
+		// Budget changed through CVar
+		// Recreated the SurfelState below at the new size.
+		SurfelState.SurfelPositionAndRadius.SafeRelease();
+		SurfelState.SurfelNormalAndFlags.SafeRelease();
+		SurfelState.SurfelCounter.SafeRelease();
+		SurfelState.Budget = CVarBudget;
+	}
+
+	// Create buffers (SurfelState) if there are none, otherwise pull the cached ones from last frame into these RDG buffers
+	FRDGBufferRef SurfelPositionAndRadiusBuffer;
+	FRDGBufferRef SurfelNormalAndFlagsBuffer;
+	FRDGBufferRef SurfelCounterBuffer;
+
+	if (SurfelState.SurfelPositionAndRadius.IsValid())
+	{
+		SurfelPositionAndRadiusBuffer = GraphBuilder.RegisterExternalBuffer(SurfelState.SurfelPositionAndRadius);
+		SurfelNormalAndFlagsBuffer    = GraphBuilder.RegisterExternalBuffer(SurfelState.SurfelNormalAndFlags);
+		SurfelCounterBuffer           = GraphBuilder.RegisterExternalBuffer(SurfelState.SurfelCounter);
+	}
+	else // Create them if they are not there
+	{
+		SurfelPositionAndRadiusBuffer = GraphBuilder.CreateBuffer(
+			FRDGBufferDesc::CreateStructuredDesc(sizeof(FVector4f), CVarBudget),
+			TEXT("Surfel.PositionAndRadius"));
+
+		SurfelNormalAndFlagsBuffer = GraphBuilder.CreateBuffer(
+			FRDGBufferDesc::CreateStructuredDesc(sizeof(FVector4f), CVarBudget),
+			TEXT("Surfel.NormalAndFlags"));
+
+		SurfelCounterBuffer = GraphBuilder.CreateBuffer(
+			FRDGBufferDesc::CreateStructuredDesc(sizeof(uint32), 1),
+			TEXT("Surfel.Counter"));
+
+		AddClearUAVPass(GraphBuilder, GraphBuilder.CreateUAV(SurfelCounterBuffer), 0u);
+	}
+
+	PassParameters->SurfelCount              = GraphBuilder.CreateUAV(SurfelCounterBuffer);
+	PassParameters->SurfelPositionAndRadius  = GraphBuilder.CreateUAV(SurfelPositionAndRadiusBuffer);
+	PassParameters->SurfelNormalAndFlags     = GraphBuilder.CreateUAV(SurfelNormalAndFlagsBuffer);
+
+	//---------------------------------------------------------------------------------------------------------------------------------------------
+	
 	TShaderMapRef<FSurfelFullscreenCS> ComputeShader(GetGlobalShaderMap(View.GetFeatureLevel()));
 
 	FComputeShaderUtils::AddPass(

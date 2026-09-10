@@ -48,6 +48,7 @@ public:
 		FVector PreviousPreViewTranslation = FVector::ZeroVector;
 		uint32 Budget = 0;
 		uint32 LastFrameSeen = 0;
+		int32 LastRefreshRequestId = 0;
 	};
 
 	// The SVE is owned by an UEngineSubsystem, so it outlives individual worlds and PIE sessions 

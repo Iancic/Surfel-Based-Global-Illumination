@@ -5,17 +5,35 @@
 #include "/Engine/Private/Common.ush"
 #include "/Engine/Private/ScreenPass.ush"
 
-// The scene color produced by the renderer up to this point.
 Texture2D InputSceneColor;
 
-// Viewport metadata (Min/Max/Extent/ExtentInverse) for the scene color texture.
 SCREEN_PASS_TEXTURE_VIEWPORT(InputViewport)
 
-// A scalar we drive from C++ so we can see data flowing CPU -> GPU.
 float Intensity;
 
-// The texture we write into. RW = read/write = a UAV.
+// Fraction of the true surfel radius drawn, so individual surfels stay distinguishable
+// even when r.Surfel.Radius is sized for spawning/coverage rather than debug display.
+float DebugRadiusScale;
+
 RWTexture2D<float4> OutRenderTarget;
+
+RWStructuredBuffer<uint> SurfelCount;
+RWStructuredBuffer<float4> SurfelPositionAndRadius;
+RWStructuredBuffer<float4> SurfelNormalAndFlags;
+
+// Hash -> stable per-surfel debug color so each surfel is visually distinct.
+float3 HashColor(uint Seed)
+{
+    uint H = Seed * 747796405u + 2891336453u;
+    H = ((H >> ((H >> 28u) + 4u)) ^ H) * 277803737u;
+    H = (H >> 22u) ^ H;
+
+    float3 Color;
+    Color.x = float((H      ) & 0xFF) / 255.0f;
+    Color.y = float((H >> 8 ) & 0xFF) / 255.0f;
+    Color.z = float((H >> 16) & 0xFF) / 255.0f;
+    return saturate(Color * 0.7f + 0.3f);
+}
 
 [numthreads(THREADS_X, THREADS_Y, THREADS_Z)]
 void MainCS(uint3 DispatchThreadId : SV_DispatchThreadID)
@@ -36,16 +54,61 @@ void MainCS(uint3 DispatchThreadId : SV_DispatchThreadID)
 
     float4 SceneColor = InputSceneColor.SampleLevel(GlobalPointClampedSampler, UV, 0);
 
-    // Normalised 0..1 position inside the viewport, for the gradient.
-    float2 ViewportUV = (float2(DispatchThreadId.xy) + 0.5f)
-                      / float2(InputViewport_ViewportMax - InputViewport_ViewportMin);
+    float3 Result = SceneColor.rgb;
 
-    // A vignette-ish radial gradient, obviously not a "real" effect - just proof
-    // that every pixel is being touched by our own code.
-    float Radius = length(ViewportUV - 0.5f) * 2.0f;
-    float3 Tint = lerp(float3(0.0f, 0.0f, 0.0f), float3(1.0f, 0.2f, 0.1f), saturate(Radius));
+    // Naive brute-force scatter: every thread (pixel) loops over every live surfel
+    // and asks "does my pixel fall inside your projected screen radius?".
+    // O(NumPixels * NumSurfels) - purely a first correctness pass, not meant to scale.
+    uint NumSurfels = SurfelCount[0];
 
-    float3 Result = lerp(SceneColor.rgb, SceneColor.rgb * Tint, saturate(Intensity));
+    float ClosestSceneDepth = 1e20f;
 
-    OutRenderTarget[PixelPos] = float4(Result, SceneColor.a);
+    for (uint SurfelIndex = 0; SurfelIndex < NumSurfels; SurfelIndex++)
+    {
+        float4 PositionAndRadius = SurfelPositionAndRadius[SurfelIndex];
+        float3 WorldPosition = PositionAndRadius.xyz;
+        float SurfelRadius = PositionAndRadius.w * DebugRadiusScale;
+
+        // Surfels are stored in true world space; re-translate into this frame's
+        // translated-world space (PrimaryView.PreViewTranslation shifts with the
+        // camera every frame) before projecting, otherwise surfels appear to stick
+        // to the screen instead of staying fixed in the world.
+        float3 TranslatedWorldPosition = DFFastAddDemote(WorldPosition, PrimaryView.PreViewTranslation);
+
+        // Project the surfel's world position into clip space, then screen pixels.
+        float4 ClipPosition = mul(float4(TranslatedWorldPosition, 1.0f), View.TranslatedWorldToClip);
+
+        // Behind the camera: skip.
+        if (ClipPosition.w <= 0.0f)
+        {
+            continue;
+        }
+
+        float2 ScreenUV = (ClipPosition.xy / ClipPosition.w) * float2(0.5f, -0.5f) + 0.5f;
+        float2 SurfelPixelPos = ScreenUV * View.ViewSizeAndInvSize.xy + View.ViewRectMin.xy;
+
+        // Approximate the surfel's on-screen radius by projecting a world-space
+        // offset point alongside it and measuring the resulting pixel distance.
+        float4 EdgeClipPosition = mul(float4(TranslatedWorldPosition + View.ViewRight * SurfelRadius, 1.0f), View.TranslatedWorldToClip);
+        float PixelRadius = 1.0f;
+        if (EdgeClipPosition.w > 0.0f)
+        {
+            float2 EdgeScreenUV = (EdgeClipPosition.xy / EdgeClipPosition.w) * float2(0.5f, -0.5f) + 0.5f;
+            float2 EdgePixelPos = EdgeScreenUV * View.ViewSizeAndInvSize.xy + View.ViewRectMin.xy;
+            PixelRadius = max(1.0f, length(EdgePixelPos - SurfelPixelPos));
+        }
+
+        if (length(float2(PixelPos) + 0.5f - SurfelPixelPos) <= PixelRadius)
+        {
+            // Keep whichever surfel is nearest the camera so overlapping surfels
+            // don't just flicker to whichever index happened to run last.
+            if (ClipPosition.w < ClosestSceneDepth)
+            {
+                ClosestSceneDepth = ClipPosition.w;
+                Result = HashColor(SurfelIndex);
+            }
+        }
+    }
+
+    OutRenderTarget[PixelPos] = float4(lerp(SceneColor.rgb, Result, saturate(Intensity)), SceneColor.a);
 }
