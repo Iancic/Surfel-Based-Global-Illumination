@@ -18,12 +18,12 @@ RWStructuredBuffer<float4> SurfelNormalAndFlags;
 [numthreads(THREADS_X, THREADS_Y, THREADS_Z)]
 void MainCS(uint3 DispatchThreadId : SV_DispatchThreadID)
 {
-	// One thread per surfel
+	// One thread per surfel ALIVE
 	uint SurfelIdx = DispatchThreadId.x;
-	if (SurfelIdx >= SurfelBudget) return;
+	if (SurfelIdx >= min(SurfelCount[0], SurfelBudget)) return;
 	
 	float3 SurfelPosition = SurfelPositionAndRadius[SurfelIdx].xyz;
-	int3 Cell = int3(floor(SurfelPosition - GridPosition) * CellSize);
+	int3 Cell = int3(floor((SurfelPosition - GridPosition) / CellSize));
 	
 	if (any(Cell < 0) || any(Cell >= (int)CellResolution)) return;
 

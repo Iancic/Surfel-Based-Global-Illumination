@@ -29,6 +29,28 @@ public:
 
 		// Fraction of the true surfel radius drawn, so individual surfels stay distinguishable.
 		SHADER_PARAMETER(float, DebugRadiusScale)
+	
+		// For grid
+		SHADER_PARAMETER_RDG_BUFFER_UAV(RWStructuredBuffer<uint32>, GridCellEntries)
+		SHADER_PARAMETER_RDG_BUFFER_UAV(RWStructuredBuffer<uint32>, GridCounter)
+		SHADER_PARAMETER(FVector3f, GridPosition)
+		SHADER_PARAMETER(uint32, GridCellCount)
+		SHADER_PARAMETER(uint32, CellResolution)
+		SHADER_PARAMETER(uint32, CellCapacity)
+		SHADER_PARAMETER(uint32, CellSize)
+
+		// 0 = brute-force loop over every surfel (fallback), 1 = query the grid above.
+		SHADER_PARAMETER(uint32, bUseGrid)
+
+		// For depth
+		SHADER_PARAMETER_RDG_TEXTURE(Texture2D, GBufferATexture)
+		SHADER_PARAMETER_RDG_TEXTURE(Texture2D, GBufferBTexture)
+		SHADER_PARAMETER_RDG_TEXTURE(Texture2D, GBufferCTexture)
+		SHADER_PARAMETER_RDG_TEXTURE(Texture2D, GBufferDTexture)
+		SHADER_PARAMETER_RDG_TEXTURE(Texture2D, GBufferETexture)
+		SHADER_PARAMETER_RDG_TEXTURE(Texture2D, GBufferFTexture)
+		SHADER_PARAMETER_RDG_TEXTURE(Texture2D, SceneDepthTexture)
+
 	END_SHADER_PARAMETER_STRUCT()
 
 	static bool ShouldCompilePermutation(const FGlobalShaderPermutationParameters& Parameters)

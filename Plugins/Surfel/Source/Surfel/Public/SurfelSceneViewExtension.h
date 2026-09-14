@@ -41,12 +41,23 @@ public:
 		uint32 LastFrameSeen = 0;
 		int32 LastRefreshRequestId = 0;
 	};
-	
 
+	// Transient per-frame handle to the grid GridAllocation builds in
+	// PostRenderBasePassDeferred_RenderThread, so RunFullscreenPass - a separate
+	// callback that runs later in the same frame's render graph - can query it.
+	// Not persisted across frames: the grid is rebuilt from scratch every frame,
+	// then read here before that same FRDGBuilder executes.
+	struct FGridFrameData
+	{
+		FRDGBufferRef GridCellEntries = nullptr;
+		FRDGBufferRef GridCounter = nullptr;
+		FVector3f GridPosition = FVector3f::ZeroVector;
+	};
+	TMap<uint32, FGridFrameData> GridFrameDataByViewKey;
 
-	// The SVE is owned by an UEngineSubsystem, so it outlives individual worlds and PIE sessions 
+	// The SVE is owned by an UEngineSubsystem, so it outlives individual worlds and PIE sessions
 	// state must therefore be keyed, not global, or PIE restarts will inherit stale surfels from the previous run.
-	
+
 	// keyed by view key so PIE restarts and multiple viewports get distinct pools
 	TMap<uint32, FSurfelViewState> ViewStates;
 	

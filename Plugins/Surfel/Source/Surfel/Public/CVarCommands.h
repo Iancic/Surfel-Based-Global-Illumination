@@ -69,6 +69,14 @@ static TAutoConsoleVariable<float> CVarSurfelCoverageRadius(
 	ECVF_RenderThreadSafe
 	);
 
+static TAutoConsoleVariable<int32> CVarSurfelUseGrid(
+	TEXT("r.Surfel.UseGrid"),
+	1,
+	TEXT("1: fullscreen visualize queries the uniform grid instead of brute-force looping every surfel.\n")
+	TEXT("0: brute-force fallback (loop every surfel per pixel) - useful for A/B verifying the grid query is correct."),
+	ECVF_RenderThreadSafe
+	);
+
 // Bumped by r.Surfel.Refresh; Gather clears and respawns from scratch when this changes.
 static int32 GSurfelRefreshRequestId = 0;
 

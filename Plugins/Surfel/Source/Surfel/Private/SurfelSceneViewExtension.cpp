@@ -170,7 +170,7 @@ void FSurfelSceneViewExtension::PostRenderBasePassDeferred_RenderThread(FRDGBuil
 	
 	// Position of the grid is always where the camera is
 	FVector CameraPosition = InView.ViewLocation;
-	FInt32Point GridExtent = FUniformGridViewState::CellResolution * FUniformGridViewState::CellSize;
+	const float GridExtent = static_cast<float>(FUniformGridViewState::CellResolution * FUniformGridViewState::CellSize);
 	FVector GridPosition = CameraPosition - FVector(GridExtent * 0.5f);
 	
 	GridPassParameters->GridPosition = FVector3f(GridPosition);
@@ -184,15 +184,21 @@ void FSurfelSceneViewExtension::PostRenderBasePassDeferred_RenderThread(FRDGBuil
 	GridPassParameters->SurfelCount              = GraphBuilder.CreateUAV(SurfelCounterBuffer);
 	GridPassParameters->SurfelPositionAndRadius  = GraphBuilder.CreateUAV(SurfelPositionAndRadiusBuffer);
 	GridPassParameters->SurfelNormalAndFlags     = GraphBuilder.CreateUAV(SurfelNormalAndFlagsBuffer);
-	PassParameters->SurfelBudget =  CVarBudget;
-	PassParameters->SurfelRadius = CVarSurfelRadius.GetValueOnRenderThread();
+	GridPassParameters->SurfelBudget = CVarBudget;
+	GridPassParameters->SurfelRadius = CVarSurfelRadius.GetValueOnRenderThread();
 	
 	// Dispatch Compute
 	TShaderMapRef<FGridAllocationPass> ComputeShaderGrid(GetGlobalShaderMap(InView.GetFeatureLevel()));
 	FComputeShaderUtils::AddPass(GraphBuilder, RDG_EVENT_NAME("Surfel Grid"), ComputeShaderGrid, GridPassParameters, FComputeShaderUtils::GetGroupCount(FIntPoint(int(CVarBudget), 1), FIntPoint(64, 1)));
 		
 	UE_LOG(LogTemp, Log, TEXT("Surfel: grid allocation ran, budget %u"), CVarBudget);
-	
+
+	// Hand the grid this frame's buffers off to RunFullscreenPass, which runs later
+	// in the same frame's render graph (same GraphBuilder) but is a separate callback
+	// with no access to these locals. Not persisted across frames - overwritten here
+	// every frame before it's read.
+	GridFrameDataByViewKey.Add(ViewKey, FGridFrameData{ GridCellEntriesBuffer, GridCounterBuffer, GridPassParameters->GridPosition });
+
 	// Convert from RDG to the SurfelState struct from the map so surfels are persistent per frame
 	// Otherwise RDG resources get freed here
 	SurfelState.SurfelPositionAndRadius = GraphBuilder.ConvertToExternalBuffer(SurfelPositionAndRadiusBuffer);
@@ -292,7 +298,57 @@ FScreenPassTexture FSurfelSceneViewExtension::RunFullscreenPass(
 	PassParameters->SurfelNormalAndFlags     = GraphBuilder.CreateUAV(SurfelNormalAndFlagsBuffer);
 
 	//---------------------------------------------------------------------------------------------------------------------------------------------
-	
+
+	// Depth is needed to reconstruct each pixel's world position, which is what
+	// the grid query needs to find which cell a pixel falls into.
+	FRDGTextureRef BlackDummy = GSystemTextures.GetBlackDummy(GraphBuilder);
+	PassParameters->SceneDepthTexture = BlackDummy;
+
+	TRDGUniformBufferRef<FSceneTextureUniformParameters> SceneTexturesUB =
+		Inputs.SceneTextures.SceneTextures.GetUniformBuffer();
+
+	if (SceneTexturesUB)
+	{
+		const FSceneTextureUniformParameters& SceneTextures = *SceneTexturesUB->GetContents();
+		if (SceneTextures.SceneDepthTexture)
+		{
+			PassParameters->SceneDepthTexture = SceneTextures.SceneDepthTexture;
+		}
+	}
+
+	// Grid: pull in whatever GridAllocation built for this view earlier this same
+	// frame. If it's not there yet (first frame, or the grid feature is off), fall
+	// back to the brute-force loop with small dummy buffers just to keep the
+	// shader parameters valid.
+	const FGridFrameData* GridFrameData = GridFrameDataByViewKey.Find(ViewKey);
+	const bool bUseGrid = GridFrameData != nullptr && CVarSurfelUseGrid.GetValueOnRenderThread() != 0;
+
+	if (bUseGrid)
+	{
+		PassParameters->GridCellEntries = GraphBuilder.CreateUAV(GridFrameData->GridCellEntries);
+		PassParameters->GridCounter     = GraphBuilder.CreateUAV(GridFrameData->GridCounter);
+		PassParameters->GridPosition    = GridFrameData->GridPosition;
+	}
+	else
+	{
+		FRDGBufferRef DummyGridBuffer = GraphBuilder.CreateBuffer(
+			FRDGBufferDesc::CreateStructuredDesc(sizeof(uint32), 1),
+			TEXT("Grid.Dummy"));
+		AddClearUAVPass(GraphBuilder, GraphBuilder.CreateUAV(DummyGridBuffer), 0u);
+
+		PassParameters->GridCellEntries = GraphBuilder.CreateUAV(DummyGridBuffer);
+		PassParameters->GridCounter     = GraphBuilder.CreateUAV(DummyGridBuffer);
+		PassParameters->GridPosition    = FVector3f::ZeroVector;
+	}
+
+	PassParameters->GridCellCount  = FUniformGridViewState::GridCellCount;
+	PassParameters->CellResolution = FUniformGridViewState::CellResolution;
+	PassParameters->CellCapacity   = FUniformGridViewState::CellCapacity;
+	PassParameters->CellSize       = FUniformGridViewState::CellSize;
+	PassParameters->bUseGrid       = bUseGrid ? 1u : 0u;
+
+	//---------------------------------------------------------------------------------------------------------------------------------------------
+
 	TShaderMapRef<FSurfelFullscreenCS> ComputeShader(GetGlobalShaderMap(View.GetFeatureLevel()));
 
 	FComputeShaderUtils::AddPass(
