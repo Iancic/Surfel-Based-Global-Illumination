@@ -1,7 +1,38 @@
 #include "/Engine/Public/Platform.ush"
 
+RWStructuredBuffer<uint> GridCellEntries;
+RWStructuredBuffer<uint> GridCounter;
+
+float3 GridPosition;
+uint GridCellCount;
+uint CellResolution;
+uint CellCapacity;
+uint CellSize;
+
+uint SurfelBudget;
+float SurfelRadius;
+RWStructuredBuffer<uint> SurfelCount;
+RWStructuredBuffer<float4> SurfelPositionAndRadius;
+RWStructuredBuffer<float4> SurfelNormalAndFlags;
+
 [numthreads(THREADS_X, THREADS_Y, THREADS_Z)]
 void MainCS(uint3 DispatchThreadId : SV_DispatchThreadID)
 {
+	// One thread per surfel
+	uint SurfelIdx = DispatchThreadId.x;
+	if (SurfelIdx >= SurfelBudget) return;
 	
+	float3 SurfelPosition = SurfelPositionAndRadius[SurfelIdx].xyz;
+	int3 Cell = int3(floor(SurfelPosition - GridPosition) * CellSize);
+	
+	if (any(Cell < 0) || any(Cell >= (int)CellResolution)) return;
+
+	uint CellIdx = Cell.x + Cell.y * CellResolution + Cell.z * CellResolution * CellResolution;
+
+	uint Slot;
+	InterlockedAdd(GridCounter[CellIdx], 1u, Slot);
+	if (Slot < CellCapacity) // Every cell has a max amount of surfels it can hold
+	{
+		GridCellEntries[CellIdx * CellCapacity + Slot] = SurfelIdx;
+	}
 }
