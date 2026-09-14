@@ -3,6 +3,19 @@
 #include "ShaderParameterStruct.h"
 #include "Runtime/Engine/Public/SceneView.h"
 
+
+class FUniformGridViewState
+{
+public:
+	TRefCountPtr<FRDGPooledBuffer> GridCellEntries;
+	TRefCountPtr<FRDGPooledBuffer> GridCounter;
+		
+	FVector3f GridPosition;
+	inline static uint32 CellResolution = 32;
+	inline static uint32 GridCellCount = CellResolution * CellResolution * CellResolution;
+	inline static uint32 CellCapacity = 32; 
+	inline static uint32 CellSize = 32; // Measured in World Units per cell
+};
 class FGridAllocationPass : public FGlobalShader
 {
 public:
@@ -19,12 +32,13 @@ public:
 		SHADER_PARAMETER(float, SurfelRadius)
 	
 		// For grid
-		SHADER_PARAMETER_RDG_BUFFER_UAV(RWStructuredBuffer<uint>, GridCellEntries)
-		SHADER_PARAMETER_RDG_BUFFER_UAV(RWStructuredBuffer<uint>, GridCounter)
+		SHADER_PARAMETER_RDG_BUFFER_UAV(RWStructuredBuffer<uint32>, GridCellEntries)
+		SHADER_PARAMETER_RDG_BUFFER_UAV(RWStructuredBuffer<uint32>, GridCounter)
 		SHADER_PARAMETER(FVector3f, GridPosition)
-		SHADER_PARAMETER(uint32, CellResolution)
 		SHADER_PARAMETER(uint32, GridCellCount)
+		SHADER_PARAMETER(uint32, CellResolution)
 		SHADER_PARAMETER(uint32, CellCapacity)
+		SHADER_PARAMETER(uint32, CellSize)
 	
 	END_SHADER_PARAMETER_STRUCT()
 

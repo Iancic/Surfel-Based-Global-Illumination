@@ -8,6 +8,7 @@
 #include "PostProcess/PostProcessMaterialInputs.h"
 #include "CVarCommands.h"
 #include "ComputePasses/GatherPass.h"
+#include "ComputePasses/GridAllocationPass.h"
 #include "ComputePasses/VisualizePass.h"
 
 FSurfelSceneViewExtension::FSurfelSceneViewExtension(const FAutoRegister& AutoRegister)
@@ -145,7 +146,51 @@ void FSurfelSceneViewExtension::PostRenderBasePassDeferred_RenderThread(FRDGBuil
 	UE_LOG(LogTemp, Log, TEXT("Surfel: gather ran, budget %u"), CVarBudget);
 	
 	// Grid allocation after gather pass
+	// For RenderDoc
+	RDG_EVENT_SCOPE(GraphBuilder, "Grid Allocation Pass");
 	
+	// Create RDG Buffers for the grid
+	FRDGBufferRef GridCellEntriesBuffer = GraphBuilder.CreateBuffer(
+			FRDGBufferDesc::CreateStructuredDesc(sizeof(uint32), FUniformGridViewState::GridCellCount),
+			TEXT("Grid.GridCellEntries"));
+
+	FRDGBufferRef GridCounterBuffer = GraphBuilder.CreateBuffer(
+		FRDGBufferDesc::CreateStructuredDesc(sizeof(uint32), FUniformGridViewState::GridCellCount),
+		TEXT("Grid.GridCounter"));
+	
+	AddClearUAVPass(GraphBuilder, GraphBuilder.CreateUAV(GridCounterBuffer), 0u);
+	
+	// Allocate memory for GridPass parameters
+	FGridAllocationPass::FParameters* GridPassParameters =
+		GraphBuilder.AllocParameters<FGridAllocationPass::FParameters>();
+	
+	// Set Parameters For Grid
+	GridPassParameters->GridCellEntries = GraphBuilder.CreateUAV(GridCellEntriesBuffer);
+	GridPassParameters->GridCounter = GraphBuilder.CreateUAV(GridCounterBuffer);
+	
+	// Position of the grid is always where the camera is
+	FVector CameraPosition = InView.ViewLocation;
+	FInt32Point GridExtent = FUniformGridViewState::CellResolution * FUniformGridViewState::CellSize;
+	FVector GridPosition = CameraPosition - FVector(GridExtent * 0.5f);
+	
+	GridPassParameters->GridPosition = FVector3f(GridPosition);
+	GridPassParameters->GridCellCount = FUniformGridViewState::GridCellCount;
+	GridPassParameters->CellResolution = FUniformGridViewState::CellResolution;
+	GridPassParameters->CellCapacity = FUniformGridViewState::CellCapacity;
+	GridPassParameters->CellSize = FUniformGridViewState::CellSize;
+	
+	// Set Parameters For Surfels
+	// Already above just create a new UAV
+	GridPassParameters->SurfelCount              = GraphBuilder.CreateUAV(SurfelCounterBuffer);
+	GridPassParameters->SurfelPositionAndRadius  = GraphBuilder.CreateUAV(SurfelPositionAndRadiusBuffer);
+	GridPassParameters->SurfelNormalAndFlags     = GraphBuilder.CreateUAV(SurfelNormalAndFlagsBuffer);
+	PassParameters->SurfelBudget =  CVarBudget;
+	PassParameters->SurfelRadius = CVarSurfelRadius.GetValueOnRenderThread();
+	
+	// Dispatch Compute
+	TShaderMapRef<FGridAllocationPass> ComputeShaderGrid(GetGlobalShaderMap(InView.GetFeatureLevel()));
+	FComputeShaderUtils::AddPass(GraphBuilder, RDG_EVENT_NAME("Surfel Grid"), ComputeShaderGrid, GridPassParameters, FComputeShaderUtils::GetGroupCount(FIntPoint(int(CVarBudget), 1), FIntPoint(64, 1)));
+		
 	UE_LOG(LogTemp, Log, TEXT("Surfel: grid allocation ran, budget %u"), CVarBudget);
 	
 	// Convert from RDG to the SurfelState struct from the map so surfels are persistent per frame
