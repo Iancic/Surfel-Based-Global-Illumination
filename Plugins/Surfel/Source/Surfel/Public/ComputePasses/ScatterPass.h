@@ -1,4 +1,5 @@
 ﻿#pragma once
+#include "GlobalShader.h"
 #include "ShaderParameterStruct.h"
 
 /**
@@ -41,9 +42,8 @@ public:
 	{
 		FGlobalShader::ModifyCompilationEnvironment(Parameters, OutEnvironment);
 	
-		/** Research what's the best dispatch size */
 		OutEnvironment.SetDefine(TEXT("THREADS_X"), 16);
-		OutEnvironment.SetDefine(TEXT("THREADS_Y"), 1);
+		OutEnvironment.SetDefine(TEXT("THREADS_Y"), 16);
 		OutEnvironment.SetDefine(TEXT("THREADS_Z"), 1);
 	}
 };

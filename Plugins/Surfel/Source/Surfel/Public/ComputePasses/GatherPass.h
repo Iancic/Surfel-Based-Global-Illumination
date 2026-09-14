@@ -1,5 +1,7 @@
 ﻿#pragma once
+#include "GlobalShader.h"
 #include "ShaderParameterStruct.h"
+#include "Runtime/Engine/Public/SceneView.h"
 
 /**
  * 2D dispatch of 16x16

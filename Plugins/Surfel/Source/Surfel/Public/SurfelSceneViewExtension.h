@@ -41,6 +41,17 @@ public:
 		uint32 LastFrameSeen = 0;
 		int32 LastRefreshRequestId = 0;
 	};
+	
+	struct FUniformGridViewState
+	{
+		TRefCountPtr<FRDGPooledBuffer> GridCellEntries;
+		TRefCountPtr<FRDGPooledBuffer> GridCounter;
+		
+		FVector3f GridPosition;
+		uint32 CellResolution = 128;
+		uint32 GridCellCount = CellResolution * CellResolution * CellResolution;
+		uint32 CellCapacity = 128; 
+	};
 
 	// The SVE is owned by an UEngineSubsystem, so it outlives individual worlds and PIE sessions 
 	// state must therefore be keyed, not global, or PIE restarts will inherit stale surfels from the previous run.

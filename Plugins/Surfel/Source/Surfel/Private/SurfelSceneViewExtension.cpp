@@ -144,6 +144,10 @@ void FSurfelSceneViewExtension::PostRenderBasePassDeferred_RenderThread(FRDGBuil
 
 	UE_LOG(LogTemp, Log, TEXT("Surfel: gather ran, budget %u"), CVarBudget);
 	
+	// Grid allocation after gather pass
+	
+	UE_LOG(LogTemp, Log, TEXT("Surfel: grid allocation ran, budget %u"), CVarBudget);
+	
 	// Convert from RDG to the SurfelState struct from the map so surfels are persistent per frame
 	// Otherwise RDG resources get freed here
 	SurfelState.SurfelPositionAndRadius = GraphBuilder.ConvertToExternalBuffer(SurfelPositionAndRadiusBuffer);
