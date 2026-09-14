@@ -3,7 +3,7 @@
 #include "Subsystems/EngineSubsystem.h"
 #include "SurfelSubsystem.generated.h"
 
-class FComputePasses;
+class FSurfelSceneViewExtension;
 
 UCLASS()
 class SURFEL_API USurfelSubsystem : public UEngineSubsystem
@@ -16,6 +16,5 @@ public:
 
 private:
 	
-	// Surfel plugin keeps the SceneViewExtension alive for the engine's lifetime.
-	TSharedPtr<FComputePasses, ESPMode::ThreadSafe> SurfelSceneViewExtension;
+	TSharedPtr<FSurfelSceneViewExtension, ESPMode::ThreadSafe> SurfelSceneViewExtension;
 };

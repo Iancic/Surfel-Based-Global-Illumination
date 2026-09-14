@@ -1,20 +1,17 @@
-#include "Surfel.h"
+#include "SurfelModule.h"
 #include "Interfaces/IPluginManager.h"
 
 #define LOCTEXT_NAMESPACE "FSurfelModule"
 
 void FSurfelModule::StartupModule()
 {
-	// Map the virtual adress of the shaders in this plugin
+	// Map the virtual address of the shaders in this plugin
 	AddShaderSourceDirectoryMapping(
 		TEXT("/Surfel"), 
 		IPluginManager::Get().FindPlugin("Surfel")->GetBaseDir() + "/Shaders/Private");
 }
 
-void FSurfelModule::ShutdownModule()
-{
-	
-}
+void FSurfelModule::ShutdownModule() { }
 
 #undef LOCTEXT_NAMESPACE
 	

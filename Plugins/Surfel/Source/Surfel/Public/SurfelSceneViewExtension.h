@@ -1,24 +1,15 @@
 #pragma once
 #include "CoreMinimal.h"
-#include "SceneViewExtension.h"
-#include "ScreenPass.h"
+#include "Runtime/Engine/Public/SceneViewExtension.h"
+#include "RenderGraphResources.h"
+#include "RenderGraphUtils.h"
+#include "ComputePasses/GatherPass.h"
+#include "ComputePasses/VisualizePass.h"
 
-enum class EGBufferVisualizeMode : int32
-{
-	SceneColor   = 0,
-	BaseColor    = 1,
-	WorldNormal  = 2,
-	Metallic     = 3,
-	Roughness    = 4,
-	Specular     = 5,
-	Depth        = 6,
-	ShadingModel = 7,
-};
-
-class FComputePasses : public FSceneViewExtensionBase
+class FSurfelSceneViewExtension : public FSceneViewExtensionBase
 {
 public:
-	FComputePasses(const FAutoRegister& AutoRegister);
+	FSurfelSceneViewExtension(const FAutoRegister& AutoRegister);
 
 	virtual void SetupViewFamily(FSceneViewFamily& InViewFamily) override {}
 	virtual void SetupView(FSceneViewFamily& InViewFamily, FSceneView& InView) override {}
@@ -30,7 +21,7 @@ public:
 		const FSceneView& View,
 		FAfterPassCallbackDelegateArray& InOutPassCallbacks,
 		bool bIsPassEnabled) override;
-	
+
 	// Called once after the deferred pass has been completed so I can register a callback for a dispatch
 	virtual void PostRenderBasePassDeferred_RenderThread(
 		FRDGBuilder& GraphBuilder,
@@ -56,15 +47,23 @@ public:
 	
 	// keyed by view key so PIE restarts and multiple viewports get distinct pools
 	TMap<uint32, FSurfelViewState> ViewStates;
+	
+	// Utility to create UAV for the scene
+	static FRDGTextureRef CreateOutputLike(FRDGBuilder& GraphBuilder, FRDGTextureRef SceneColorTexture, const TCHAR* Name)
+	{
+		FRDGTextureDesc Desc = SceneColorTexture->Desc;
 
+		// Strip state we do not want, add the UAV flag so a compute shader can write it.
+		Desc.Reset();
+		Desc.Flags |= TexCreate_UAV;
+		Desc.Flags &= ~(TexCreate_RenderTargetable | TexCreate_FastVRAM);
+		Desc.ClearValue = FClearValueBinding(FLinearColor::Transparent);
+
+		return GraphBuilder.CreateTexture(Desc, Name);
+	}
 
 private:
 	FScreenPassTexture RunFullscreenPass(
-		FRDGBuilder& GraphBuilder,
-		const FSceneView& View,
-		const FPostProcessMaterialInputs& Inputs);
-
-	FScreenPassTexture RunGBufferPass(
 		FRDGBuilder& GraphBuilder,
 		const FSceneView& View,
 		const FPostProcessMaterialInputs& Inputs);

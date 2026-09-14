@@ -1,21 +1,19 @@
 #include "SurfelSubsystem.h"
-#include "ComputePasses.h"
+#include "SurfelSceneViewExtension.h"
 #include "SceneViewExtension.h"
-
-// Surfel plugin - keeps the SceneViewExtension alive for the engine's lifetime.
 
 void USurfelSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 {
-	SurfelSceneViewExtension = FSceneViewExtensions::NewExtension<FComputePasses>();
+	SurfelSceneViewExtension = FSceneViewExtensions::NewExtension<FSurfelSceneViewExtension>();
 	UE_LOG(LogTemp, Log, TEXT("Surfel: subsystem initialized"));
 }
 
 void USurfelSubsystem::Deinitialize()
 {
+	// Force the extension inactive before dropping it, so the render thread
+	// stops calling into an object that is about to be destroyed.
 	if (SurfelSceneViewExtension.IsValid())
 	{
-		// Force the extension inactive before dropping it, so the render thread
-		// stops calling into an object that is about to be destroyed.
 		SurfelSceneViewExtension->IsActiveThisFrameFunctions.Empty();
 
 		FSceneViewExtensionIsActiveFunctor IsActiveFunctor;
