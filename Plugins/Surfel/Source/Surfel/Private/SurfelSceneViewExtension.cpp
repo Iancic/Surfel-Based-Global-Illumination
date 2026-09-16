@@ -40,6 +40,8 @@ void FSurfelSceneViewExtension::SubscribeToPostProcessingPass(
 void FSurfelSceneViewExtension::PostRenderBasePassDeferred_RenderThread(FRDGBuilder& GraphBuilder, FSceneView& InView,
 	const FRenderTargetBindingSlots& RenderTargets, TRDGUniformBufferRef<FSceneTextureUniformParameters> SceneTextures)
 {
+	
+	// FVIewInfo
 	// For RenderDoc
 	RDG_EVENT_SCOPE(GraphBuilder, "Surfel Gather Pass");
 
@@ -50,13 +52,20 @@ void FSurfelSceneViewExtension::PostRenderBasePassDeferred_RenderThread(FRDGBuil
 	}
 
 	// Get GBuffers
-	const FSceneTextureUniformParameters GBufferTextures = *SceneTextures->GetContents();
+	FSceneTextureUniformParameters GBufferTextures = *SceneTextures->GetContents();
+
+	// This callback runs inside the base pass, before the engine adds the GBuffers to SceneTextures,
+	// so GBufferATexture in there is still a black placeholder (never null). Every surfel would get
+	// the normal normalize(-1,-1,-1). The real GBufferA is one of the base pass render targets.
+	const int32 GBufferAIndex = FSceneTexturesConfig::Get().GBufferBindings[GBL_Default].GBufferA.Index;
+	FRDGTextureRef GBufferA = GBufferAIndex >= 0 ? RenderTargets.Output[GBufferAIndex].GetTexture() : nullptr;
 
 	// Check if normal and depth are available
-	if (!GBufferTextures.GBufferATexture || !GBufferTextures.SceneDepthTexture)
+	if (!GBufferA || !GBufferTextures.SceneDepthTexture)
 	{
 		return;
 	}
+	GBufferTextures.GBufferATexture = GBufferA;
 
 	uint32 ViewKey = InView.State->GetViewKey();
 
@@ -125,22 +134,15 @@ void FSurfelSceneViewExtension::PostRenderBasePassDeferred_RenderThread(FRDGBuil
 	PassParameters->SurfelBudget =  CVarBudget;
 	PassParameters->SurfelRadius = CVarSurfelRadius.GetValueOnRenderThread();
 
-	const uint32 GridSize = FMath::Max(1, CVarSurfelGridSize.GetValueOnRenderThread());
-	PassParameters->GridSize = GridSize;
-	PassParameters->CoverageRadius = FMath::Max(0.0f, CVarSurfelCoverageRadius.GetValueOnRenderThread());
-
 	PassParameters->SurfelCount              = GraphBuilder.CreateUAV(SurfelCounterBuffer);
 	PassParameters->SurfelPositionAndRadius  = GraphBuilder.CreateUAV(SurfelPositionAndRadiusBuffer);
 	PassParameters->SurfelNormalAndFlags     = GraphBuilder.CreateUAV(SurfelNormalAndFlagsBuffer);
 
 	// Add compute shader pass
 	TShaderMapRef<FGatherSurfelPass> ComputeShader(GetGlobalShaderMap(InView.GetFeatureLevel()));
-	// InView.UnscaledViewRect is important otherwise the imagine will be smaller because Unreal has upscaling somewhere
-	// One thread per grid cell rather than per pixel, so dispatch is sized in cells (ViewSize / GridSize), not pixels.
+	
 	const FIntPoint ViewSize = InView.UnscaledViewRect.Size();
-	const FIntPoint GridDispatchSize(
-		FMath::DivideAndRoundUp(ViewSize.X, (int32)GridSize),
-		FMath::DivideAndRoundUp(ViewSize.Y, (int32)GridSize));
+	const FIntPoint GridDispatchSize(ViewSize.X, ViewSize.Y);
 	FComputeShaderUtils::AddPass(GraphBuilder, RDG_EVENT_NAME("Surfel Gather"), ComputeShader, PassParameters, FComputeShaderUtils::GetGroupCount(GridDispatchSize, FIntPoint(16, 16)));
 
 	UE_LOG(LogTemp, Log, TEXT("Surfel: gather ran, budget %u"), CVarBudget);
@@ -151,7 +153,7 @@ void FSurfelSceneViewExtension::PostRenderBasePassDeferred_RenderThread(FRDGBuil
 	
 	// Create RDG Buffers for the grid
 	FRDGBufferRef GridCellEntriesBuffer = GraphBuilder.CreateBuffer(
-			FRDGBufferDesc::CreateStructuredDesc(sizeof(uint32), FUniformGridViewState::GridCellCount),
+			FRDGBufferDesc::CreateStructuredDesc(sizeof(uint32), FUniformGridViewState::GridCellCount * FUniformGridViewState::CellCapacity),
 			TEXT("Grid.GridCellEntries"));
 
 	FRDGBufferRef GridCounterBuffer = GraphBuilder.CreateBuffer(
@@ -186,7 +188,7 @@ void FSurfelSceneViewExtension::PostRenderBasePassDeferred_RenderThread(FRDGBuil
 	GridPassParameters->SurfelNormalAndFlags     = GraphBuilder.CreateUAV(SurfelNormalAndFlagsBuffer);
 	GridPassParameters->SurfelBudget = CVarBudget;
 	GridPassParameters->SurfelRadius = CVarSurfelRadius.GetValueOnRenderThread();
-	
+
 	// Dispatch Compute
 	TShaderMapRef<FGridAllocationPass> ComputeShaderGrid(GetGlobalShaderMap(InView.GetFeatureLevel()));
 	FComputeShaderUtils::AddPass(GraphBuilder, RDG_EVENT_NAME("Surfel Grid"), ComputeShaderGrid, GridPassParameters, FComputeShaderUtils::GetGroupCount(FIntPoint(int(CVarBudget), 1), FIntPoint(64, 1)));
@@ -244,10 +246,8 @@ FScreenPassTexture FSurfelSceneViewExtension::RunFullscreenPass(
 	PassParameters->Intensity       = CVarSurfelIntensity.GetValueOnRenderThread();
 	PassParameters->OutRenderTarget = GraphBuilder.CreateUAV(FRDGTextureUAVDesc(OutputTexture));
 	PassParameters->View            = View.ViewUniformBuffer;
-	PassParameters->DebugRadiusScale = FMath::Max(0.0f, CVarSurfelDebugRadiusScale.GetValueOnRenderThread());
 
 	// Send surfels to visualize
-	//---------------------------------------------------------------------------------------------------------------------------------------------
 
 	uint32 ViewKey = View.State->GetViewKey();
 
@@ -297,12 +297,13 @@ FScreenPassTexture FSurfelSceneViewExtension::RunFullscreenPass(
 	PassParameters->SurfelPositionAndRadius  = GraphBuilder.CreateUAV(SurfelPositionAndRadiusBuffer);
 	PassParameters->SurfelNormalAndFlags     = GraphBuilder.CreateUAV(SurfelNormalAndFlagsBuffer);
 
-	//---------------------------------------------------------------------------------------------------------------------------------------------
-
 	// Depth is needed to reconstruct each pixel's world position, which is what
-	// the grid query needs to find which cell a pixel falls into.
+	// the grid query and the disc test need.
+	// Normal keeps discs on surfaces facing the same way as the surfel.
 	FRDGTextureRef BlackDummy = GSystemTextures.GetBlackDummy(GraphBuilder);
 	PassParameters->SceneDepthTexture = BlackDummy;
+	PassParameters->GBufferATexture   = BlackDummy;
+	PassParameters->bHasGBufferNormal = 0u;
 
 	TRDGUniformBufferRef<FSceneTextureUniformParameters> SceneTexturesUB =
 		Inputs.SceneTextures.SceneTextures.GetUniformBuffer();
@@ -313,6 +314,11 @@ FScreenPassTexture FSurfelSceneViewExtension::RunFullscreenPass(
 		if (SceneTextures.SceneDepthTexture)
 		{
 			PassParameters->SceneDepthTexture = SceneTextures.SceneDepthTexture;
+		}
+		if (SceneTextures.GBufferATexture)
+		{
+			PassParameters->GBufferATexture   = SceneTextures.GBufferATexture;
+			PassParameters->bHasGBufferNormal = 1u;
 		}
 	}
 
@@ -346,7 +352,6 @@ FScreenPassTexture FSurfelSceneViewExtension::RunFullscreenPass(
 	PassParameters->CellCapacity   = FUniformGridViewState::CellCapacity;
 	PassParameters->CellSize       = FUniformGridViewState::CellSize;
 	PassParameters->bUseGrid       = bUseGrid ? 1u : 0u;
-
 	//---------------------------------------------------------------------------------------------------------------------------------------------
 
 	TShaderMapRef<FSurfelFullscreenCS> ComputeShader(GetGlobalShaderMap(View.GetFeatureLevel()));

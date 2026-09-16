@@ -18,21 +18,40 @@ RWStructuredBuffer<float4> SurfelNormalAndFlags;
 [numthreads(THREADS_X, THREADS_Y, THREADS_Z)]
 void MainCS(uint3 DispatchThreadId : SV_DispatchThreadID)
 {
-	// One thread per surfel ALIVE
+	// One thread per ALIVE surfel 
 	uint SurfelIdx = DispatchThreadId.x;
 	if (SurfelIdx >= min(SurfelCount[0], SurfelBudget)) return;
-	
-	float3 SurfelPosition = SurfelPositionAndRadius[SurfelIdx].xyz;
-	int3 Cell = int3(floor((SurfelPosition - GridPosition) / CellSize));
-	
-	if (any(Cell < 0) || any(Cell >= (int)CellResolution)) return;
 
-	uint CellIdx = Cell.x + Cell.y * CellResolution + Cell.z * CellResolution * CellResolution;
+	float4 PositionAndRadius = SurfelPositionAndRadius[SurfelIdx];
 
-	uint Slot;
-	InterlockedAdd(GridCounter[CellIdx], 1u, Slot);
-	if (Slot < CellCapacity) // Every cell has a max amount of surfels it can hold
+	// Same radius the fullscreen pass draws, so the surfel is in every cell a pixel could see it from
+	float FinalSurfelRadius = PositionAndRadius.w;
+
+	// Insert Surfel In Grid
+	float3 LocalPosition = PositionAndRadius.xyz - GridPosition;
+
+	int3 MaxIndex = int3((int)CellResolution - 1, (int)CellResolution - 1, (int)CellResolution - 1);
+	int3 MinCell = max(int3(floor((LocalPosition - FinalSurfelRadius) / CellSize)), int3(0, 0, 0));
+	int3 MaxCell = min(int3(floor((LocalPosition + FinalSurfelRadius) / CellSize)), MaxIndex);
+
+	// Insert into every cell the surfel's sphere overlaps, not just the one holding its center
+	for (int z = MinCell.z; z <= MaxCell.z; z++)
+	for (int y = MinCell.y; y <= MaxCell.y; y++)
+	for (int x = MinCell.x; x <= MaxCell.x; x++)
 	{
-		GridCellEntries[CellIdx * CellCapacity + Slot] = SurfelIdx;
+		// Skip corner cells of the bounding box the sphere doesn't actually touch
+		float3 CellMin = float3(x, y, z) * CellSize;
+		float3 Closest = clamp(LocalPosition, CellMin, CellMin + CellSize);
+		float3 ToClosest = Closest - LocalPosition;
+		if (dot(ToClosest, ToClosest) > FinalSurfelRadius * FinalSurfelRadius) continue;
+
+		uint CellIdx = x + y * CellResolution + z * CellResolution * CellResolution;
+
+		uint Slot;
+		InterlockedAdd(GridCounter[CellIdx], 1u, Slot);
+		if (Slot < CellCapacity) // Every cell has a max amount of surfels it can hold
+		{
+			GridCellEntries[CellIdx * CellCapacity + Slot] = SurfelIdx;
+		}
 	}
 }

@@ -1,0 +1,174 @@
+#include "/Engine/Public/Platform.ush"
+#include "/Engine/Private/Common.ush"
+#include "/Engine/Private/ScreenPass.ush"
+
+Texture2D InputSceneColor;
+Texture2D SceneDepthTexture;
+Texture2D GBufferATexture;
+
+SCREEN_PASS_TEXTURE_VIEWPORT(InputViewport)
+
+float Intensity;
+
+RWTexture2D<float4> OutRenderTarget;
+
+RWStructuredBuffer<uint> SurfelCount;
+RWStructuredBuffer<float4> SurfelPositionAndRadius;
+RWStructuredBuffer<float4> SurfelNormalAndFlags;
+
+RWStructuredBuffer<uint> GridCellEntries;
+RWStructuredBuffer<uint> GridCounter;
+float3 GridPosition;
+uint GridCellCount;
+uint CellResolution;
+uint CellCapacity;
+uint CellSize;
+
+uint bUseGrid; // 1 = grid
+uint bHasGBufferNormal;
+
+static const float DiscThickness = 0.25f; // How far a pixel can be off the surfel's plane and still count as on the disc, as a fraction of the radius
+static const float MinNormalAlignment = 0.5f; // Pixel and surfel normals must be within ~60 degrees, so a floor surfel doesn't bleed onto the wall next to it
+
+// Generated with Claude
+float3 HashColor(uint Seed)
+{
+    float S = (float)Seed;
+    float3 Color = frac(sin(float3(S * 12.9898f, S * 78.233f, S * 39.425f)) * 43758.5453f);
+    return saturate(Color * 0.7f + 0.3f);
+}
+
+struct FSurfelHit
+{
+    uint Index;
+    float DistanceRatio; // Distance from the surfel center divided by its radius: 0 = center, 1 = rim
+};
+
+// Generated with Claude
+// Tests whether a pixel on a surface lies on one surfel's disc.
+// The disc lies on the surface, so seen at an angle it shows up as an ellipse on screen,
+// and geometry in front of it hides it because the pixel position comes from scene depth.
+void TestSurfel(uint SurfelIndex, float3 PixelWorldPosition, float3 PixelNormal, inout FSurfelHit Hit)
+{
+    float4 PositionAndRadius = SurfelPositionAndRadius[SurfelIndex];
+    float Radius = PositionAndRadius.w;
+    if (Radius <= 0.0f)
+    {
+        return;
+    }
+
+    float3 SurfelNormal = SurfelNormalAndFlags[SurfelIndex].xyz;
+    float3 ToPixel = PixelWorldPosition - PositionAndRadius.xyz;
+
+    // Inside the surfel's sphere. Same shape GridAllocation uses to pick cells,
+    // so a pixel that passes here is always in a cell that holds this surfel
+    float DistanceRatio = length(ToPixel) / Radius;
+    if (DistanceRatio > 1.0f)
+    {
+        return;
+    }
+
+    // Close to the surfel's plane: flattens the sphere into a disc
+    if (abs(dot(ToPixel, SurfelNormal)) > Radius * DiscThickness)
+    {
+        return;
+    }
+
+    if (bHasGBufferNormal != 0 && dot(PixelNormal, SurfelNormal) < MinNormalAlignment)
+    {
+        return;
+    }
+
+    // Keep the surfel whose center is closest, so overlapping discs split the surface cleanly.
+    // On an exact tie pick the lower index: grid entries are inserted in a different order
+    // every frame, so "first one wins" would swap between tied surfels frame to frame.
+    bool bCloser = DistanceRatio < Hit.DistanceRatio;
+    bool bTieWon = DistanceRatio == Hit.DistanceRatio && SurfelIndex < Hit.Index;
+    if (bCloser || bTieWon)
+    {
+        Hit.Index = SurfelIndex;
+        Hit.DistanceRatio = DistanceRatio;
+    }
+}
+
+[numthreads(THREADS_X, THREADS_Y, THREADS_Z)]
+void MainCS(uint3 DispatchThreadId : SV_DispatchThreadID)
+{
+    // We dispatch in whole groups, so the last group runs past the edge.
+    // Threads outside the viewport must do nothing.
+    if (any(DispatchThreadId.xy >= (uint2)InputViewport_ViewportMax))
+    {
+        return;
+    }
+
+    // Pixel coordinate inside the full texture (viewport may be offset in it).
+    uint2 PixelPos = (uint2)InputViewport_ViewportMin + DispatchThreadId.xy;
+
+    // UV in [0,1] across the texture, sampled at the pixel centre (+0.5).
+    float2 UV = (float2(InputViewport_ViewportMin) + (float2(DispatchThreadId.xy) + 0.5f))
+              * InputViewport_ExtentInverse;
+
+    float4 SceneColor = InputSceneColor.SampleLevel(GlobalPointClampedSampler, UV, 0);
+    
+    float2 ViewportUV = (float2(PixelPos - (uint2)InputViewport_ViewportMin) + 0.5f) * InputViewport_ViewportSizeInverse;
+    float2 RenderPixelPos = View.ViewRectMin.xy + ViewportUV * View.ViewSizeAndInvSize.xy;
+
+    int3 LoadPos = int3(RenderPixelPos, 0);
+    float DeviceZ = SceneDepthTexture.Load(LoadPos).r;
+
+    // Sky: no surface for a disc to lie on
+    if (DeviceZ <= 0.0f)
+    {
+        OutRenderTarget[PixelPos] = SceneColor;
+        return;
+    }
+
+    // Reconstruct this pixel's true world position (same space surfels are stored in)
+    float4 SvPosition = float4(RenderPixelPos, DeviceZ, 1.0f);
+    float3 TranslatedWorldPosition = SvPositionToTranslatedWorld(SvPosition);
+    float3 PixelWorldPosition = DFFastSubtractDemote(TranslatedWorldPosition, PrimaryView.PreViewTranslation);
+    float3 PixelNormal = normalize(GBufferATexture.Load(LoadPos).xyz * 2.0f - 1.0f);
+
+    FSurfelHit Hit;
+    Hit.Index = 0xFFFFFFFF;
+    Hit.DistanceRatio = 2.0f; // Above 1 = no surfel found yet
+
+    int3 PixelCell = int3(floor((PixelWorldPosition - GridPosition) / CellSize));
+    bool bInsideGrid = bUseGrid != 0 && all(PixelCell >= 0) && all(PixelCell < (int)CellResolution);
+
+    if (bInsideGrid)
+    {
+        // Only the pixel's own cell - GridAllocation inserts every surfel into
+        // all the cells it overlaps, so no neighbor check is needed.
+        uint CellIdx = (uint)PixelCell.x
+            + (uint)PixelCell.y * CellResolution
+            + (uint)PixelCell.z * CellResolution * CellResolution;
+
+        // Insertion is fixed-capacity: a cell's counter can exceed
+        // CellCapacity if it overflowed, so clamp the read.
+        uint EntryCount = min(GridCounter[CellIdx], CellCapacity);
+        for (uint i = 0; i < EntryCount; i++)
+        {
+            TestSurfel(GridCellEntries[CellIdx * CellCapacity + i], PixelWorldPosition, PixelNormal, Hit);
+        }
+    }
+    else // Brute test
+    {
+        uint NumSurfels = SurfelCount[0];
+        for (uint SurfelIndex = 0; SurfelIndex < NumSurfels; SurfelIndex++)
+        {
+            TestSurfel(SurfelIndex, PixelWorldPosition, PixelNormal, Hit);
+        }
+    }
+
+    float3 Result = SceneColor.rgb;
+    
+    // If surfel was hit color it
+    if (Hit.DistanceRatio <= 1.0f)
+    {
+        // Blend between random color, scene color and an intensity value
+        Result = lerp(SceneColor.rgb, HashColor(Hit.Index), saturate(Intensity));
+    }
+
+    OutRenderTarget[PixelPos] = float4(Result, SceneColor.a);
+}

@@ -42,8 +42,9 @@ public:
 		// 0 = brute-force loop over every surfel (fallback), 1 = query the grid above.
 		SHADER_PARAMETER(uint32, bUseGrid)
 
-		// For depth
+		// For depth and normals
 		SHADER_PARAMETER_RDG_TEXTURE(Texture2D, GBufferATexture)
+		SHADER_PARAMETER(uint32, bHasGBufferNormal) // 0 = GBufferATexture is a dummy, skip the normal test
 		SHADER_PARAMETER_RDG_TEXTURE(Texture2D, GBufferBTexture)
 		SHADER_PARAMETER_RDG_TEXTURE(Texture2D, GBufferCTexture)
 		SHADER_PARAMETER_RDG_TEXTURE(Texture2D, GBufferDTexture)

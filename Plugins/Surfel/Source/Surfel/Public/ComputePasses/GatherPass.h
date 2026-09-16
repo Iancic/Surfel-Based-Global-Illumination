@@ -28,9 +28,6 @@ public:
 		 * Read normal GBuffer
 		 * Read and write surfel buffers
 		 * Write surfel structure
-		 *
-		 * TODO: read texture with pixel coverage once Scatter writes one; for now
-		 * every dispatched pixel is treated as uncovered and always spawns.
 		 */
 		SHADER_PARAMETER_RDG_BUFFER_UAV(RWStructuredBuffer<uint>, SurfelCount)
 		SHADER_PARAMETER_RDG_BUFFER_UAV(RWStructuredBuffer<float4>, SurfelPositionAndRadius)
@@ -51,15 +48,6 @@ public:
 
 		SHADER_PARAMETER(uint32, SurfelBudget)
 		SHADER_PARAMETER(float, SurfelRadius) // Temporarily from the CVar
-
-		// Stopgap until Scatter coverage exists: one thread per GridSize x GridSize
-		// pixel block (sampling the block's center pixel) instead of one thread per pixel,
-		// so spawned surfels land spread out instead of piling up on every visible pixel.
-		SHADER_PARAMETER(uint32, GridSize)
-
-		// TEMP (this session): stand-in for Scatter coverage. See CoverageRadius
-		// comment in Gather.usf.
-		SHADER_PARAMETER(float, CoverageRadius)
 
 	END_SHADER_PARAMETER_STRUCT()
 

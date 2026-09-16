@@ -15,7 +15,19 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="33aded25-df80-4819-a209-c77824e12478" name="Changes" comment="">
+      <change afterPath="$PROJECT_DIR$/Plugins/Surfel/Shaders/Private/Surfels/Visualize.usf" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/.idea.Surfels/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/.idea.Surfels/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Plugins/Surfel/Shaders/Private/Surfels/FullscreenCS.usf" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Plugins/Surfel/Shaders/Private/Surfels/Gather.usf" beforeDir="false" afterPath="$PROJECT_DIR$/Plugins/Surfel/Shaders/Private/Surfels/Gather.usf" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Plugins/Surfel/Shaders/Private/Surfels/GridAllocation.usf" beforeDir="false" afterPath="$PROJECT_DIR$/Plugins/Surfel/Shaders/Private/Surfels/GridAllocation.usf" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Plugins/Surfel/Shaders/Private/Surfels/Scatter.usf" beforeDir="false" afterPath="$PROJECT_DIR$/Plugins/Surfel/Shaders/Private/Surfels/Scatter.usf" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Plugins/Surfel/Source/Surfel/Private/SurfelSceneViewExtension.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Plugins/Surfel/Source/Surfel/Private/SurfelSceneViewExtension.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Plugins/Surfel/Source/Surfel/Public/CVarCommands.h" beforeDir="false" afterPath="$PROJECT_DIR$/Plugins/Surfel/Source/Surfel/Public/CVarCommands.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Plugins/Surfel/Source/Surfel/Public/ComputePasses/GatherPass.h" beforeDir="false" afterPath="$PROJECT_DIR$/Plugins/Surfel/Source/Surfel/Public/ComputePasses/GatherPass.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Plugins/Surfel/Source/Surfel/Public/ComputePasses/GridAllocationPass.h" beforeDir="false" afterPath="$PROJECT_DIR$/Plugins/Surfel/Source/Surfel/Public/ComputePasses/GridAllocationPass.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Plugins/Surfel/Source/Surfel/Public/ComputePasses/ScatterPass.h" beforeDir="false" afterPath="$PROJECT_DIR$/Plugins/Surfel/Source/Surfel/Public/ComputePasses/ScatterPass.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Plugins/Surfel/Source/Surfel/Public/ComputePasses/SurfelIrradiancePass.h" beforeDir="false" afterPath="$PROJECT_DIR$/Plugins/Surfel/Source/Surfel/Public/ComputePasses/SurfelIrradiancePass.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Plugins/Surfel/Source/Surfel/Public/ComputePasses/VisualizePass.h" beforeDir="false" afterPath="$PROJECT_DIR$/Plugins/Surfel/Source/Surfel/Public/ComputePasses/VisualizePass.h" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -29,14 +41,12 @@
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
   </component>
   <component name="HighlightingSettingsPerFile">
+    <setting file="file://$PROJECT_DIR$/../../../../../Program Files/Epic Games/UE_5.8/Engine/Source/Runtime/RenderCore/Private/RenderGraphBuilder.cpp" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/../../../../../Program Files/Epic Games/UE_5.8/Engine/Source/Runtime/RenderCore/Public/GlobalShader.h" root0="FORCE_HIGHLIGHTING" />
-    <setting file="file://$PROJECT_DIR$/Plugins/Surfel/Shaders/Private/Surfels/GridAllocation.usf.cpp" root0="FORCE_HIGHLIGHTING" />
-    <setting file="file://$PROJECT_DIR$/Plugins/Surfel/Shaders/Private/Surfels/GridAllocation.usf.h" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/Plugins/Surfel/Source/Surfel/Private/CVarCommands.cpp" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/Plugins/Surfel/Source/Surfel/Private/ComputePasses/CompositePass.cpp" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/Plugins/Surfel/Source/Surfel/Private/ComputePasses/GatherPass.cpp" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/Plugins/Surfel/Source/Surfel/Private/ComputePasses/GridAllocationPass.cpp" root0="FORCE_HIGHLIGHTING" />
-    <setting file="file://$PROJECT_DIR$/Plugins/Surfel/Source/Surfel/Private/ComputePasses/GridAllocationPass.h" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/Plugins/Surfel/Source/Surfel/Private/ComputePasses/ScatterPass.cpp" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/Plugins/Surfel/Source/Surfel/Private/ComputePasses/SurfelIrradiance.cpp" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/Plugins/Surfel/Source/Surfel/Private/ComputePasses/SurfelIrradiancePass.cpp" root0="FORCE_HIGHLIGHTING" />
@@ -48,61 +58,61 @@
   </component>
   <component name="NextEditCompletionFeaturesState">
     <decayedCancelled>
-      <entry key="MS100" value="1.0000000001581837" />
-      <entry key="MS500" value="1.017586682529386" />
-      <entry key="S2" value="1.7059225799876776" />
-      <entry key="S5" value="2.6359848858235" />
-      <entry key="S10" value="3.2036268467141427" />
-      <entry key="S30" value="3.7034593096018567" />
-      <entry key="S60" value="3.847422553661834" />
-      <entry key="M2" value="3.926320277149926" />
-      <entry key="M5" value="4.38644590826382" />
-      <entry key="M10" value="6.33837499619022" />
-      <entry key="M15" value="9.046096757757974" />
-      <entry key="M30" value="22.393262538053776" />
-      <entry key="H1" value="64.88112848669653" />
-      <entry key="H2" value="153.25925746743218" />
-      <entry key="H4" value="262.3051628069788" />
-      <entry key="D1" value="434.7591638853036" />
-      <entry key="W1" value="476.5779068601117" />
+      <entry key="MS100" value="1.0000000000000004" />
+      <entry key="MS500" value="1.0008442746458197" />
+      <entry key="S2" value="1.1732732260567358" />
+      <entry key="S5" value="1.8340799826618095" />
+      <entry key="S10" value="3.90894754843233" />
+      <entry key="S30" value="12.18743823740471" />
+      <entry key="S60" value="18.603435345563767" />
+      <entry key="M2" value="23.919713463727646" />
+      <entry key="M5" value="31.369392521129434" />
+      <entry key="M10" value="49.408082945064535" />
+      <entry key="M15" value="73.93750967920356" />
+      <entry key="M30" value="152.070914086652" />
+      <entry key="H1" value="264.02083879048786" />
+      <entry key="H2" value="387.12162934039674" />
+      <entry key="H4" value="539.534898921017" />
+      <entry key="D1" value="958.8712034468784" />
+      <entry key="W1" value="1111.4226516669721" />
     </decayedCancelled>
     <decayedSelected>
       <entry key="MS100" value="0.0" />
       <entry key="MS500" value="0.0" />
-      <entry key="S2" value="0.0" />
-      <entry key="S5" value="2.578503081E-314" />
-      <entry key="S10" value="2.13902352791015E-157" />
-      <entry key="S30" value="1.054700427195592E-52" />
-      <entry key="S60" value="1.9640369062373595E-26" />
-      <entry key="M2" value="2.9919456543038296E-13" />
-      <entry key="M5" value="2.5406745135007933E-5" />
-      <entry key="M10" value="0.0114027094125959" />
-      <entry key="M15" value="0.09104672803771473" />
-      <entry key="M30" value="0.8958893258573805" />
-      <entry key="H1" value="3.953772847511405" />
-      <entry key="H2" value="10.508996159687722" />
-      <entry key="H4" value="19.037221861769247" />
-      <entry key="D1" value="33.61072320124153" />
-      <entry key="W1" value="37.33229382741484" />
+      <entry key="S2" value="1.2042549292596722E-176" />
+      <entry key="S5" value="5.572888267861948E-71" />
+      <entry key="S10" value="1.0195244907381359E-35" />
+      <entry key="S30" value="3.4648853776990196E-12" />
+      <entry key="S60" value="2.9121427342314812E-6" />
+      <entry key="M2" value="0.0031616622612735813" />
+      <entry key="M5" value="0.2857759094499006" />
+      <entry key="M10" value="1.7391549224820069" />
+      <entry key="M15" value="3.4778806794395147" />
+      <entry key="M30" value="7.41360881349034" />
+      <entry key="H1" value="11.198610039510886" />
+      <entry key="H2" value="14.768035736922469" />
+      <entry key="H4" value="21.188565823560708" />
+      <entry key="D1" value="47.140119282330176" />
+      <entry key="W1" value="57.8726097880373" />
     </decayedSelected>
     <decayedShown>
-      <entry key="MS100" value="0.07588718030857719" />
-      <entry key="MS500" value="0.6091932124908839" />
-      <entry key="S2" value="1.5007558431240238" />
-      <entry key="S5" value="2.4884890067964696" />
-      <entry key="S10" value="3.10679704393628" />
-      <entry key="S30" value="3.6639060411340707" />
-      <entry key="S60" value="3.8265598734260773" />
-      <entry key="M2" value="3.9155330024219888" />
-      <entry key="M5" value="4.380153085612817" />
-      <entry key="M10" value="6.343091703478044" />
-      <entry key="M15" value="9.13003684659803" />
-      <entry key="M30" value="23.279974402739523" />
-      <entry key="H1" value="68.8214712224251" />
-      <entry key="H2" value="163.7526032259561" />
-      <entry key="H4" value="281.32915468971066" />
-      <entry key="D1" value="468.3662618826291" />
-      <entry key="W1" value="513.9096334364862" />
+      <entry key="MS100" value="7.154849555669453E-15" />
+      <entry key="MS500" value="0.0015157797338784937" />
+      <entry key="S2" value="0.27399784290264745" />
+      <entry key="S5" value="1.17398411553291" />
+      <entry key="S10" value="3.3809407487817356" />
+      <entry key="S30" value="11.811356015847798" />
+      <entry key="S60" value="18.332653518634267" />
+      <entry key="M2" value="23.74493484219145" />
+      <entry key="M5" value="31.55488779806736" />
+      <entry key="M10" value="51.05808076577162" />
+      <entry key="M15" value="77.32145379270014" />
+      <entry key="M30" value="159.3855972884331" />
+      <entry key="H1" value="275.13470835220767" />
+      <entry key="H2" value="401.82940637459757" />
+      <entry key="H4" value="560.6836960577069" />
+      <entry key="D1" value="1006.0007970369052" />
+      <entry key="W1" value="1169.2935633691695" />
     </decayedShown>
   </component>
   <component name="ProjectColorInfo">{
@@ -117,30 +127,32 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent">{
-  &quot;keyToString&quot;: {
-    &quot;C/C++ Project.Surfels.executor&quot;: &quot;Run&quot;,
-    &quot;ModuleVcsDetector.initialDetectionPerformed&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.MCP Project settings loaded&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.cidr.known.project.marker&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.git.unshallow&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.readMode.enableVisualFormatting&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.typescript.service.memoryLimit.init&quot;: &quot;true&quot;,
-    &quot;cidr.known.project.marker&quot;: &quot;true&quot;,
-    &quot;codeWithMe.voiceChat.enabledByDefault&quot;: &quot;false&quot;,
-    &quot;com.intellij.ml.llm.matterhorn.ej.ui.settings.DefaultModelSelectionForGA.v1&quot;: &quot;true&quot;,
-    &quot;com.jetbrains.opentelemetry.toolwindow.stripe.promo&quot;: &quot;true&quot;,
-    &quot;ignore.virus.scanning.warn.message&quot;: &quot;true&quot;,
-    &quot;junie.onboarding.icon.badge.shown&quot;: &quot;true&quot;,
-    &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
-    &quot;node.js.detected.package.tslint&quot;: &quot;true&quot;,
-    &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
-    &quot;node.js.selected.package.tslint&quot;: &quot;(autodetect)&quot;,
-    &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;,
-    &quot;to.speed.mode.migration.done&quot;: &quot;true&quot;
+  <component name="PropertiesComponent"><![CDATA[{
+  "keyToString": {
+    "C/C++ Project.Surfels Headless Game.executor": "Run",
+    "C/C++ Project.Surfels.executor": "Run",
+    "ModuleVcsDetector.initialDetectionPerformed": "true",
+    "RunOnceActivity.MCP Project settings loaded": "true",
+    "RunOnceActivity.ShowReadmeOnStart": "true",
+    "RunOnceActivity.cidr.known.project.marker": "true",
+    "RunOnceActivity.git.unshallow": "true",
+    "RunOnceActivity.readMode.enableVisualFormatting": "true",
+    "RunOnceActivity.typescript.service.memoryLimit.init": "true",
+    "cidr.known.project.marker": "true",
+    "codeWithMe.voiceChat.enabledByDefault": "false",
+    "com.intellij.ml.llm.matterhorn.ej.ui.settings.DefaultModelSelectionForGA.v1": "true",
+    "com.jetbrains.opentelemetry.toolwindow.stripe.promo": "true",
+    "git-widget-placeholder": "main",
+    "ignore.virus.scanning.warn.message": "true",
+    "junie.onboarding.icon.badge.shown": "true",
+    "node.js.detected.package.eslint": "true",
+    "node.js.detected.package.tslint": "true",
+    "node.js.selected.package.eslint": "(autodetect)",
+    "node.js.selected.package.tslint": "(autodetect)",
+    "nodejs_package_manager_path": "npm",
+    "to.speed.mode.migration.done": "true"
   }
-}</component>
+}]]></component>
   <component name="RunManager" selected="C/C++ Project.Surfels Headless Game">
     <configuration name="Surfels Editor" type="CppProject" factoryName="C++ Project">
       <configuration_1 setup="1">

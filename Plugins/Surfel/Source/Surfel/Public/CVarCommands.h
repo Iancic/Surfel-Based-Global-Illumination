@@ -1,9 +1,9 @@
-﻿#pragma once
+#pragma once
 #include "CVarCommands.h"
 
 static TAutoConsoleVariable<int32> CVarSurfelMode(
 	TEXT("r.Surfel.Mode"),
-	0,
+	1,
 	TEXT("Surfel compute pass mode.\n")
 	TEXT(" 0: off\n")
 	TEXT(" 1: fullscreen procedural example\n")
@@ -12,7 +12,7 @@ static TAutoConsoleVariable<int32> CVarSurfelMode(
 
 static TAutoConsoleVariable<float> CVarSurfelIntensity(
 	TEXT("r.Surfel.Intensity"),
-	1.0f,
+	0.25f,
 	TEXT("Blend strength of the fullscreen example effect (0-1)."),
 	ECVF_RenderThreadSafe);
 
@@ -24,30 +24,22 @@ static TAutoConsoleVariable<float> CVarSurfelDepthScale(
 
 static TAutoConsoleVariable<int> CVarSurfelEnable(
 	TEXT("r.Surfel.Enable"),
-	0,
+	1,
 	TEXT("Is surfel system enabled or not."),
 	ECVF_RenderThreadSafe
 	);
 
 static TAutoConsoleVariable<int> CVarSurfelBudget(
 	TEXT("r.Surfel.Budget"),
-	50000,
+	500,
 	TEXT("Surfel Budget."),
 	ECVF_RenderThreadSafe
 	);
 
 static TAutoConsoleVariable<int> CVarSurfelRadius(
 	TEXT("r.Surfel.Radius"),
-	15,
+	10, // THESE VALUES AND THE GRIDS SHOLD BE CONNECTED
 	TEXT("Surfel Radius, in world units (cm)."),
-	ECVF_RenderThreadSafe
-	);
-
-static TAutoConsoleVariable<float> CVarSurfelDebugRadiusScale(
-	TEXT("r.Surfel.DebugRadiusScale"),
-	0.25f,
-	TEXT("Fraction of the true surfel radius drawn by the fullscreen debug visualization (Mode 1).\n")
-	TEXT("Keeps r.Surfel.Radius meaningful for spawning/coverage while keeping individual surfels visually distinguishable."),
 	ECVF_RenderThreadSafe
 	);
 
@@ -59,8 +51,6 @@ static TAutoConsoleVariable<int> CVarSurfelGridSize(
 	ECVF_RenderThreadSafe
 	);
 
-// TEMP (this session): stand-in for Scatter's coverage texture. See CoverageRadius
-// comment in Gather.usf for why this exists and when to remove it.
 static TAutoConsoleVariable<float> CVarSurfelCoverageRadius(
 	TEXT("r.Surfel.CoverageRadius"),
 	40.0f,

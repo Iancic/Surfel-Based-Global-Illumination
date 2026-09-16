@@ -10,11 +10,12 @@ public:
 	TRefCountPtr<FRDGPooledBuffer> GridCellEntries;
 	TRefCountPtr<FRDGPooledBuffer> GridCounter;
 		
-	FVector3f GridPosition;
+	// Should be exposed to editor
 	inline static uint32 CellResolution = 32;
 	inline static uint32 GridCellCount = CellResolution * CellResolution * CellResolution;
-	inline static uint32 CellCapacity = 32; 
-	inline static uint32 CellSize = 32; // Measured in World Units per cell
+	// Surfels are now inserted into every cell they overlap, so cells fill up faster
+	inline static uint32 CellCapacity = 128; // Cells near the camera hold many small surfels; overflow gets dropped
+	inline static uint32 CellSize = 64; // Measured in World Units per cell
 };
 class FGridAllocationPass : public FGlobalShader
 {
@@ -23,7 +24,7 @@ public:
 	SHADER_USE_PARAMETER_STRUCT(FGridAllocationPass, FGlobalShader);
 
 	BEGIN_SHADER_PARAMETER_STRUCT(FParameters, )
-		
+
 		// For surfels
 		SHADER_PARAMETER_RDG_BUFFER_UAV(RWStructuredBuffer<uint>, SurfelCount)
 		SHADER_PARAMETER_RDG_BUFFER_UAV(RWStructuredBuffer<float4>, SurfelPositionAndRadius)
@@ -39,7 +40,7 @@ public:
 		SHADER_PARAMETER(uint32, CellResolution)
 		SHADER_PARAMETER(uint32, CellCapacity)
 		SHADER_PARAMETER(uint32, CellSize)
-	
+
 	END_SHADER_PARAMETER_STRUCT()
 
 	static bool ShouldCompilePermutation(const FGlobalShaderPermutationParameters& Parameters)

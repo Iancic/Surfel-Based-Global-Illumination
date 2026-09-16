@@ -31,6 +31,9 @@ public:
 		 * Read and write surfel buffers
 		 * Read structure with surfels
 		 */
+	
+		
+			
 	END_SHADER_PARAMETER_STRUCT()
 
 	static bool ShouldCompilePermutation(const FGlobalShaderPermutationParameters& Parameters)
