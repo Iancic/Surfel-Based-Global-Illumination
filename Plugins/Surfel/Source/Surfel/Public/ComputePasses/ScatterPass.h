@@ -3,7 +3,7 @@
 #include "ShaderParameterStruct.h"
 
 /**
- * note: explaining nomenclature
+ * NOTE: explaining nomenclature
  * called scatter because one surfel writes to many pixels
  * gather because one pixel from many in a tile finds the worst value
  *
@@ -27,32 +27,31 @@ public:
 	SHADER_USE_PARAMETER_STRUCT(FScatterSurfelPass, FGlobalShader);
 
 	BEGIN_SHADER_PARAMETER_STRUCT(FParameters, )
-	
-		// To know the dispatch size
+		// View
 		SHADER_PARAMETER_STRUCT_REF(FViewUniformShaderParameters, View)
 		SHADER_PARAMETER(FUintVector2, ViewRectMin)
 		SHADER_PARAMETER(FUintVector2, ViewRectMax)
 	
-		// The important output of this shader
-		SHADER_PARAMETER_RDG_TEXTURE(Texture2D, CoverageTexture)
-	
+		// Coverage Texture
+		SHADER_PARAMETER_RDG_TEXTURE_UAV(RWTexture2D<float>, CoverageTexture)
+		
 		// Surfels buffers
+		SHADER_PARAMETER(uint32, SurfelBudget)
+		SHADER_PARAMETER(float, SurfelRadius) // Temporarily from the CVar
 		SHADER_PARAMETER_RDG_BUFFER_UAV(RWStructuredBuffer<uint>, SurfelCount)
 		SHADER_PARAMETER_RDG_BUFFER_UAV(RWStructuredBuffer<float4>, SurfelPositionAndRadius)
 		SHADER_PARAMETER_RDG_BUFFER_UAV(RWStructuredBuffer<float4>, SurfelNormalAndFlags)
 	
-		// Normal for coverage
+		// GBuffers
 		SHADER_PARAMETER_RDG_TEXTURE(Texture2D, GBufferATexture)
 		SHADER_PARAMETER_RDG_TEXTURE(Texture2D, GBufferBTexture)
 		SHADER_PARAMETER_RDG_TEXTURE(Texture2D, GBufferCTexture)
 		SHADER_PARAMETER_RDG_TEXTURE(Texture2D, GBufferDTexture)
 		SHADER_PARAMETER_RDG_TEXTURE(Texture2D, GBufferETexture)
 		SHADER_PARAMETER_RDG_TEXTURE(Texture2D, GBufferFTexture)
-		
-		// Depth Buffer for position reconstruction
 		SHADER_PARAMETER_RDG_TEXTURE(Texture2D, SceneDepthTexture)
 	
-		// For grid
+		// Uniform Grid
 		SHADER_PARAMETER_RDG_BUFFER_UAV(RWStructuredBuffer<uint32>, GridCellEntries)
 		SHADER_PARAMETER_RDG_BUFFER_UAV(RWStructuredBuffer<uint32>, GridCounter)
 		SHADER_PARAMETER(FVector3f, GridPosition)

@@ -4,16 +4,16 @@
 
 RWTexture2D<float> CoverageTexture;
 
-// Surfel Parameters
-uint SurfelBudget;
-float SurfelRadius;
 RWStructuredBuffer<uint> SurfelCount;
 RWStructuredBuffer<float4> SurfelPositionAndRadius;
 RWStructuredBuffer<float4> SurfelNormalAndFlags;
 
-// Todo: not sure if i need all these
+uint SurfelBudget;
+float SurfelRadius;
+
 RWStructuredBuffer<uint> GridCellEntries;
 RWStructuredBuffer<uint> GridCounter;
+
 float3 GridPosition;
 uint GridCellCount;
 uint CellResolution;
@@ -23,27 +23,17 @@ uint CellSize;
 uint2 ViewRectMin;
 uint2 ViewRectMax;
 
-// 2D coverage Texture
 [numthreads(THREADS_X, THREADS_Y, THREADS_Z)]
 void MainCS(uint3 DispatchThreadId : SV_DispatchThreadID)
 {
-	// Get thread ID. I know where to look in the texture
+	// TODO: can be dispatched per tile and use intrinsics
 	uint2 PixelPos = min(ViewRectMin + DispatchThreadId.xy, ViewRectMax - 1);
 	int3 LoadPos = int3(PixelPos, 0);
 	
-	// TODO:
-	// Could be dispatched per tile and then use nice intrinsics to compute faster
-	// Loop through the tile
-	// for each pixel in tile
-	
-	// TODO: make sure i read gbuffer from the thing jack showed me
-	// Get GBuffer Normal
+	// Get world surface normal and distance
 	float4 GBufferA = GBufferATexture.Load(LoadPos);
 	float3 WorldNormalAtPixel = normalize(GBufferA.xyz * 2.0f - 1.0f);
-
-	// Surfels persist across frames, but PrimaryView.PreViewTranslation shifts every
-	// frame with the camera. Store world position
-	// Todo: make this global shader function so I can re-use it
+	
 	float DeviceZ = SceneDepthTexture.Load(LoadPos).r;
 	float4 SvPosition = float4(PixelPos + 0.5f, DeviceZ, 1.0f);
 	float3 TranslatedWorldPosition = SvPositionToTranslatedWorld(SvPosition);
@@ -54,12 +44,12 @@ void MainCS(uint3 DispatchThreadId : SV_DispatchThreadID)
 
 	if (bInsideGrid)
 	{
-		// Retrieve grid cell id at this extracted world position 
+		// Retrieve grid cell at this extracted world position 
 		uint CellIdx = (uint)PixelCell.x
 				+ (uint)PixelCell.y * CellResolution
 				+ (uint)PixelCell.z * CellResolution * CellResolution;
 		
-		// Go through all entries 
+		// Go through all surfels in grid cell
 		uint EntryCount = min(GridCounter[CellIdx], CellCapacity);
 		
 		float CoverageWeight = 0.f;		
@@ -72,17 +62,15 @@ void MainCS(uint3 DispatchThreadId : SV_DispatchThreadID)
 			float Radius = SurfelPositionAndRadius[SurfelIdx].w;
 			float3 Normal = normalize(SurfelNormalAndFlags[SurfelIdx].xyz);
 			
-			// Check how close the surfel's center is to this world position
+			// Check how close the surfel center is to this world position
 			// Farther surfels add more coverage than closer ones
-			
 			float Distance =  length(WorldPositionAtPixel - Position);
+			
 			// Discard ones outside the radius or farther
-			/*smoothstep(min, max, x) returns 0 if x is less than min, 1 if x is greater than max, and a value between 0 and 1 in between, so one minus it gives 1 at the center and 0 at the radius. 
-			 *Both weights are then 0 to 1, and the sum over surfels is a coverage value you can compare against a threshold.
-			 */
 			float DistanceWeight = 1.0f - smoothstep(0.0f, Radius, Distance);
 			
-			// Dot product normals to see if they are aligned
+			// Dot product normals to see if the surfel is aligned with the surface
+			// It may be that the surface is sharp so the surfel belongs to another surface
 			float NormalsFacingFactor = saturate(dot(Normal, WorldNormalAtPixel));
 			
 			// Final Surfel Weight
@@ -92,7 +80,7 @@ void MainCS(uint3 DispatchThreadId : SV_DispatchThreadID)
 			CoverageWeight += FinalSurfelWeight;
 		}         
 		
-		// store coverage into the texture
-		CoverageTexture[PixelPos].x = CoverageWeight;
+		// Store coverage into the texture
+		CoverageTexture[PixelPos] = CoverageWeight;
 	}
 }

@@ -23,31 +23,32 @@ public:
 	SHADER_USE_PARAMETER_STRUCT(FGatherSurfelPass, FGlobalShader);
 
 	BEGIN_SHADER_PARAMETER_STRUCT(FParameters, )
-		/**
-		 * Read depth GBuffer
-		 * Read normal GBuffer
-		 * Read and write surfel buffers
-		 * Write surfel structure
-		 */
+		
+		// Surfel related parameters
+		SHADER_PARAMETER(uint32, SurfelBudget)
+		SHADER_PARAMETER(float, SurfelRadius)
 		SHADER_PARAMETER_RDG_BUFFER_UAV(RWStructuredBuffer<uint>, SurfelCount)
 		SHADER_PARAMETER_RDG_BUFFER_UAV(RWStructuredBuffer<float4>, SurfelPositionAndRadius)
 		SHADER_PARAMETER_RDG_BUFFER_UAV(RWStructuredBuffer<float4>, SurfelNormalAndFlags)
-	
+		
+		// GBuffers
 		SHADER_PARAMETER_RDG_TEXTURE(Texture2D, GBufferATexture)
 		SHADER_PARAMETER_RDG_TEXTURE(Texture2D, GBufferBTexture)
 		SHADER_PARAMETER_RDG_TEXTURE(Texture2D, GBufferCTexture)
 		SHADER_PARAMETER_RDG_TEXTURE(Texture2D, GBufferDTexture)
 		SHADER_PARAMETER_RDG_TEXTURE(Texture2D, GBufferETexture)
 		SHADER_PARAMETER_RDG_TEXTURE(Texture2D, GBufferFTexture)
-	
 		SHADER_PARAMETER_RDG_TEXTURE(Texture2D, SceneDepthTexture)
 	
+		// Coverage
+		SHADER_PARAMETER_RDG_TEXTURE(Texture2D<float>, CoverageTexture)
+		SHADER_PARAMETER(float, SpawnChance)
+		SHADER_PARAMETER(float, SpawnCoverageThreshold)
+		
+		// View
 		SHADER_PARAMETER_STRUCT_REF(FViewUniformShaderParameters, View)
 		SHADER_PARAMETER(FUintVector2, ViewRectMin)
 		SHADER_PARAMETER(FUintVector2, ViewRectMax)
-
-		SHADER_PARAMETER(uint32, SurfelBudget)
-		SHADER_PARAMETER(float, SurfelRadius) // Temporarily from the CVar
 
 	END_SHADER_PARAMETER_STRUCT()
 

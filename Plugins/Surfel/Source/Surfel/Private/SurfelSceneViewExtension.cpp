@@ -9,6 +9,7 @@
 #include "CVarCommands.h"
 #include "ComputePasses/GatherPass.h"
 #include "ComputePasses/GridAllocationPass.h"
+#include "ComputePasses/ScatterPass.h"
 #include "ComputePasses/VisualizePass.h"
 
 FSurfelSceneViewExtension::FSurfelSceneViewExtension(const FAutoRegister& AutoRegister)
@@ -40,23 +41,18 @@ void FSurfelSceneViewExtension::SubscribeToPostProcessingPass(
 void FSurfelSceneViewExtension::PostRenderBasePassDeferred_RenderThread(FRDGBuilder& GraphBuilder, FSceneView& InView,
 	const FRenderTargetBindingSlots& RenderTargets, TRDGUniformBufferRef<FSceneTextureUniformParameters> SceneTextures)
 {
+	// TODO:
+	// 1. Get gbuffers as jack said
+	// 2. Separate passes into functions that can be defined inside their own headers/cpp not everything in sceneview just the dispatchng and parameters
 	
-	// FVIewInfo
-	// For RenderDoc
-	RDG_EVENT_SCOPE(GraphBuilder, "Surfel Gather Pass");
-
 	// Are surfel enabled? Is view valid? Are the GBuffers?
 	if (!CVarSurfelEnable.GetValueOnRenderThread() || !InView.State || !SceneTextures)
 	{
 		return;
 	}
-
+	
 	// Get GBuffers
 	FSceneTextureUniformParameters GBufferTextures = *SceneTextures->GetContents();
-
-	// This callback runs inside the base pass, before the engine adds the GBuffers to SceneTextures,
-	// so GBufferATexture in there is still a black placeholder (never null). Every surfel would get
-	// the normal normalize(-1,-1,-1). The real GBufferA is one of the base pass render targets.
 	const int32 GBufferAIndex = FSceneTexturesConfig::Get().GBufferBindings[GBL_Default].GBufferA.Index;
 	FRDGTextureRef GBufferA = GBufferAIndex >= 0 ? RenderTargets.Output[GBufferAIndex].GetTexture() : nullptr;
 
@@ -67,9 +63,8 @@ void FSurfelSceneViewExtension::PostRenderBasePassDeferred_RenderThread(FRDGBuil
 	}
 	GBufferTextures.GBufferATexture = GBufferA;
 
+	// Get all the data for the surfels from this map	
 	uint32 ViewKey = InView.State->GetViewKey();
-
-	// Get all the data for the surfels from omap
 	FSurfelViewState& SurfelState = ViewStates.FindOrAdd(ViewKey);
 
 	uint32 CVarBudget = FMath::Max(1024, CVarSurfelBudget.GetValueOnRenderThread());
@@ -112,44 +107,6 @@ void FSurfelSceneViewExtension::PostRenderBasePassDeferred_RenderThread(FRDGBuil
 
 		AddClearUAVPass(GraphBuilder, GraphBuilder.CreateUAV(SurfelCounterBuffer), 0u);
 	}
-
-	// Allocate memory for GatherPass parameters
-	FGatherSurfelPass::FParameters* PassParameters =
-		GraphBuilder.AllocParameters<FGatherSurfelPass::FParameters>();
-	
-	FRDGTextureRef BlackDummy = GSystemTextures.GetBlackDummy(GraphBuilder);
-	PassParameters->GBufferATexture   = GBufferTextures.GBufferATexture;
-	PassParameters->GBufferBTexture   = GBufferTextures.GBufferBTexture ? GBufferTextures.GBufferBTexture : BlackDummy;
-	PassParameters->GBufferCTexture   = GBufferTextures.GBufferCTexture ? GBufferTextures.GBufferCTexture : BlackDummy;
-	PassParameters->GBufferDTexture   = GBufferTextures.GBufferDTexture ? GBufferTextures.GBufferDTexture : BlackDummy;
-	PassParameters->GBufferETexture   = GBufferTextures.GBufferETexture ? GBufferTextures.GBufferETexture : BlackDummy;
-	PassParameters->GBufferFTexture   = GBufferTextures.GBufferFTexture ? GBufferTextures.GBufferFTexture : BlackDummy;
-	PassParameters->SceneDepthTexture = GBufferTextures.SceneDepthTexture;
-
-	PassParameters->View = InView.ViewUniformBuffer;
-	// InView.UnscaledViewRect is important otherwise the imagine will be smaller because Unreal has upscaling somewhere
-	PassParameters->ViewRectMin = FUintVector2(InView.UnscaledViewRect.Min.X, InView.UnscaledViewRect.Min.Y);
-	PassParameters->ViewRectMax = FUintVector2(InView.UnscaledViewRect.Max.X, InView.UnscaledViewRect.Max.Y);
-
-	PassParameters->SurfelBudget =  CVarBudget;
-	PassParameters->SurfelRadius = CVarSurfelRadius.GetValueOnRenderThread();
-
-	PassParameters->SurfelCount              = GraphBuilder.CreateUAV(SurfelCounterBuffer);
-	PassParameters->SurfelPositionAndRadius  = GraphBuilder.CreateUAV(SurfelPositionAndRadiusBuffer);
-	PassParameters->SurfelNormalAndFlags     = GraphBuilder.CreateUAV(SurfelNormalAndFlagsBuffer);
-
-	// Add compute shader pass
-	TShaderMapRef<FGatherSurfelPass> ComputeShader(GetGlobalShaderMap(InView.GetFeatureLevel()));
-	
-	const FIntPoint ViewSize = InView.UnscaledViewRect.Size();
-	const FIntPoint GridDispatchSize(ViewSize.X, ViewSize.Y);
-	FComputeShaderUtils::AddPass(GraphBuilder, RDG_EVENT_NAME("Surfel Gather"), ComputeShader, PassParameters, FComputeShaderUtils::GetGroupCount(GridDispatchSize, FIntPoint(16, 16)));
-
-	UE_LOG(LogTemp, Log, TEXT("Surfel: gather ran, budget %u"), CVarBudget);
-	
-	// Grid allocation after gather pass
-	// For RenderDoc
-	RDG_EVENT_SCOPE(GraphBuilder, "Grid Allocation Pass");
 	
 	// Create RDG Buffers for the grid
 	FRDGBufferRef GridCellEntriesBuffer = GraphBuilder.CreateBuffer(
@@ -162,6 +119,126 @@ void FSurfelSceneViewExtension::PostRenderBasePassDeferred_RenderThread(FRDGBuil
 	
 	AddClearUAVPass(GraphBuilder, GraphBuilder.CreateUAV(GridCounterBuffer), 0u);
 	
+	
+	// Scatter pass
+	// For RenderDoc
+	RDG_EVENT_SCOPE(GraphBuilder, "Surfel Scatter Pass");
+	
+	FScatterSurfelPass::FParameters* ScatterPassParameters =
+		GraphBuilder.AllocParameters<FScatterSurfelPass::FParameters>();
+	
+	// size should be big enough for the shader to read
+	const FIntPoint CoverageExtent(InView.UnscaledViewRect.Max.X, InView.UnscaledViewRect.Max.Y);
+	
+	FRDGTextureDesc CoverageDesc = FRDGTextureDesc::Create2D(
+		CoverageExtent, PF_R32_FLOAT, FClearValueBinding::Black, TexCreate_ShaderResource | TexCreate_UAV);
+	
+	FRDGTextureRef CoverageTexture = GraphBuilder.CreateTexture(CoverageDesc, TEXT("CoverageTexture"));
+	
+	AddClearUAVPass(GraphBuilder, GraphBuilder.CreateUAV(CoverageTexture), FLinearColor::Black);
+
+	ScatterPassParameters->CoverageTexture = GraphBuilder.CreateUAV(CoverageTexture);
+	
+	// set parameters for scatter
+	ScatterPassParameters->GridCellEntries = GraphBuilder.CreateUAV(GridCellEntriesBuffer);
+	ScatterPassParameters->GridCounter = GraphBuilder.CreateUAV(GridCounterBuffer);
+	
+	// Position of the grid is always where the camera is
+	FVector CameraPosition = InView.ViewLocation;
+	const float GridExtent = static_cast<float>(FUniformGridViewState::CellResolution * FUniformGridViewState::CellSize);
+	FVector GridPosition = CameraPosition - FVector(GridExtent * 0.5f);
+
+	
+	ScatterPassParameters->GridPosition = FVector3f(GridPosition);
+	ScatterPassParameters->GridCellCount = FUniformGridViewState::GridCellCount;
+	ScatterPassParameters->CellResolution = FUniformGridViewState::CellResolution;
+	ScatterPassParameters->CellCapacity = FUniformGridViewState::CellCapacity;
+	ScatterPassParameters->CellSize = FUniformGridViewState::CellSize;
+	
+	
+	FRDGTextureRef BlackDummy = GSystemTextures.GetBlackDummy(GraphBuilder);
+	ScatterPassParameters->GBufferATexture   = GBufferTextures.GBufferATexture;
+	ScatterPassParameters->GBufferBTexture   = GBufferTextures.GBufferBTexture ? GBufferTextures.GBufferBTexture : BlackDummy;
+	ScatterPassParameters->GBufferCTexture   = GBufferTextures.GBufferCTexture ? GBufferTextures.GBufferCTexture : BlackDummy;
+	ScatterPassParameters->GBufferDTexture   = GBufferTextures.GBufferDTexture ? GBufferTextures.GBufferDTexture : BlackDummy;
+	ScatterPassParameters->GBufferETexture   = GBufferTextures.GBufferETexture ? GBufferTextures.GBufferETexture : BlackDummy;
+	ScatterPassParameters->GBufferFTexture   = GBufferTextures.GBufferFTexture ? GBufferTextures.GBufferFTexture : BlackDummy;
+	ScatterPassParameters->SceneDepthTexture = GBufferTextures.SceneDepthTexture;
+	
+	ScatterPassParameters->View = InView.ViewUniformBuffer;
+	// InView.UnscaledViewRect is important otherwise the imagine will be smaller because Unreal has upscaling somewhere
+	ScatterPassParameters->ViewRectMin = FUintVector2(InView.UnscaledViewRect.Min.X, InView.UnscaledViewRect.Min.Y);
+	ScatterPassParameters->ViewRectMax = FUintVector2(InView.UnscaledViewRect.Max.X, InView.UnscaledViewRect.Max.Y);
+
+	ScatterPassParameters->SurfelBudget = CVarBudget;
+	ScatterPassParameters->SurfelRadius = CVarSurfelRadius.GetValueOnRenderThread();
+
+	ScatterPassParameters->SurfelCount              = GraphBuilder.CreateUAV(SurfelCounterBuffer);
+	ScatterPassParameters->SurfelPositionAndRadius  = GraphBuilder.CreateUAV(SurfelPositionAndRadiusBuffer);
+	ScatterPassParameters->SurfelNormalAndFlags     = GraphBuilder.CreateUAV(SurfelNormalAndFlagsBuffer);
+	
+	// Add compute shader pass
+	TShaderMapRef<FScatterSurfelPass> ComputeShaderScatter(GetGlobalShaderMap(InView.GetFeatureLevel()));
+	
+	const FIntPoint ViewSizeScatter = InView.UnscaledViewRect.Size();
+	const FIntPoint GridDispatchSizeScatter(ViewSizeScatter.X, ViewSizeScatter.Y);
+	FComputeShaderUtils::AddPass(GraphBuilder, RDG_EVENT_NAME("Surfel Gather"), ComputeShaderScatter, ScatterPassParameters, FComputeShaderUtils::GetGroupCount(GridDispatchSizeScatter, FIntPoint(16, 16)));
+
+	UE_LOG(LogTemp, Log, TEXT("Surfel: scatter pass ran, budget %u"), CVarBudget);
+	
+	// TODO: get this for the gbuffers as Jack said in Teams using FVIewInfo
+	
+	// For RenderDoc
+	RDG_EVENT_SCOPE(GraphBuilder, "Surfel Gather Pass");
+
+	// Allocate memory for GatherPass parameters
+	FGatherSurfelPass::FParameters* GatherPassParameters =
+		GraphBuilder.AllocParameters<FGatherSurfelPass::FParameters>();
+	
+	// TODO: 256 is hardcoded should be exposed to ImGui
+	float SpawnChance = 256.f / float(CoverageExtent.X * CoverageExtent.Y) ; // Dividing by the pixel count makes SpawnChance the probability per uncovered pixel. Across the whole screen, that gives about TargetSpawnsPerFrame new surfels per frame at most, regardless of resolution.
+	GatherPassParameters->SpawnChance = SpawnChance;
+	
+	// TODO: to make global for ImGui
+	static float SpawnCoverageThreshold = 0.1f;
+	GatherPassParameters->SpawnCoverageThreshold = SpawnCoverageThreshold;
+	
+	GatherPassParameters->CoverageTexture = CoverageTexture;
+	
+	GatherPassParameters->GBufferATexture   = GBufferTextures.GBufferATexture;
+	GatherPassParameters->GBufferBTexture   = GBufferTextures.GBufferBTexture ? GBufferTextures.GBufferBTexture : BlackDummy;
+	GatherPassParameters->GBufferCTexture   = GBufferTextures.GBufferCTexture ? GBufferTextures.GBufferCTexture : BlackDummy;
+	GatherPassParameters->GBufferDTexture   = GBufferTextures.GBufferDTexture ? GBufferTextures.GBufferDTexture : BlackDummy;
+	GatherPassParameters->GBufferETexture   = GBufferTextures.GBufferETexture ? GBufferTextures.GBufferETexture : BlackDummy;
+	GatherPassParameters->GBufferFTexture   = GBufferTextures.GBufferFTexture ? GBufferTextures.GBufferFTexture : BlackDummy;
+	GatherPassParameters->SceneDepthTexture = GBufferTextures.SceneDepthTexture;
+
+	GatherPassParameters->View = InView.ViewUniformBuffer;
+	// InView.UnscaledViewRect is important otherwise the imagine will be smaller because Unreal has upscaling somewhere
+	GatherPassParameters->ViewRectMin = FUintVector2(InView.UnscaledViewRect.Min.X, InView.UnscaledViewRect.Min.Y);
+	GatherPassParameters->ViewRectMax = FUintVector2(InView.UnscaledViewRect.Max.X, InView.UnscaledViewRect.Max.Y);
+
+	GatherPassParameters->SurfelBudget =  CVarBudget;
+	GatherPassParameters->SurfelRadius = CVarSurfelRadius.GetValueOnRenderThread();
+
+	GatherPassParameters->SurfelCount              = GraphBuilder.CreateUAV(SurfelCounterBuffer);
+	GatherPassParameters->SurfelPositionAndRadius  = GraphBuilder.CreateUAV(SurfelPositionAndRadiusBuffer);
+	GatherPassParameters->SurfelNormalAndFlags     = GraphBuilder.CreateUAV(SurfelNormalAndFlagsBuffer);
+
+	// Add compute shader pass
+	TShaderMapRef<FGatherSurfelPass> ComputeShader(GetGlobalShaderMap(InView.GetFeatureLevel()));
+	
+	const FIntPoint ViewSize = InView.UnscaledViewRect.Size();
+	const FIntPoint GridDispatchSize(ViewSize.X, ViewSize.Y);
+	FComputeShaderUtils::AddPass(GraphBuilder, RDG_EVENT_NAME("Surfel Gather"), ComputeShader, GatherPassParameters, FComputeShaderUtils::GetGroupCount(GridDispatchSize, FIntPoint(16, 16)));
+
+	UE_LOG(LogTemp, Log, TEXT("Surfel: gather ran, budget %u"), CVarBudget);
+	
+	// Grid allocation after gather pass
+	// For RenderDoc
+	RDG_EVENT_SCOPE(GraphBuilder, "Grid Allocation Pass");
+	
+	
 	// Allocate memory for GridPass parameters
 	FGridAllocationPass::FParameters* GridPassParameters =
 		GraphBuilder.AllocParameters<FGridAllocationPass::FParameters>();
@@ -169,12 +246,6 @@ void FSurfelSceneViewExtension::PostRenderBasePassDeferred_RenderThread(FRDGBuil
 	// Set Parameters For Grid
 	GridPassParameters->GridCellEntries = GraphBuilder.CreateUAV(GridCellEntriesBuffer);
 	GridPassParameters->GridCounter = GraphBuilder.CreateUAV(GridCounterBuffer);
-	
-	// Position of the grid is always where the camera is
-	FVector CameraPosition = InView.ViewLocation;
-	const float GridExtent = static_cast<float>(FUniformGridViewState::CellResolution * FUniformGridViewState::CellSize);
-	FVector GridPosition = CameraPosition - FVector(GridExtent * 0.5f);
-	
 	GridPassParameters->GridPosition = FVector3f(GridPosition);
 	GridPassParameters->GridCellCount = FUniformGridViewState::GridCellCount;
 	GridPassParameters->CellResolution = FUniformGridViewState::CellResolution;

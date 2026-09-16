@@ -15,19 +15,15 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="33aded25-df80-4819-a209-c77824e12478" name="Changes" comment="">
-      <change afterPath="$PROJECT_DIR$/Plugins/Surfel/Shaders/Private/Surfels/Visualize.usf" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/.idea.Surfels/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/.idea.Surfels/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Plugins/Surfel/Shaders/Private/Surfels/FullscreenCS.usf" beforeDir="false" />
       <change beforePath="$PROJECT_DIR$/Plugins/Surfel/Shaders/Private/Surfels/Gather.usf" beforeDir="false" afterPath="$PROJECT_DIR$/Plugins/Surfel/Shaders/Private/Surfels/Gather.usf" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Plugins/Surfel/Shaders/Private/Surfels/GridAllocation.usf" beforeDir="false" afterPath="$PROJECT_DIR$/Plugins/Surfel/Shaders/Private/Surfels/GridAllocation.usf" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Plugins/Surfel/Shaders/Private/Surfels/Scatter.usf" beforeDir="false" afterPath="$PROJECT_DIR$/Plugins/Surfel/Shaders/Private/Surfels/Scatter.usf" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Plugins/Surfel/Shaders/Private/Surfels/Visualize.usf" beforeDir="false" afterPath="$PROJECT_DIR$/Plugins/Surfel/Shaders/Private/Surfels/Visualize.usf" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Plugins/Surfel/Source/Surfel/Private/ComputePasses/VisualizePass.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Plugins/Surfel/Source/Surfel/Private/ComputePasses/VisualizePass.cpp" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Plugins/Surfel/Source/Surfel/Private/SurfelSceneViewExtension.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Plugins/Surfel/Source/Surfel/Private/SurfelSceneViewExtension.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Plugins/Surfel/Source/Surfel/Public/CVarCommands.h" beforeDir="false" afterPath="$PROJECT_DIR$/Plugins/Surfel/Source/Surfel/Public/CVarCommands.h" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Plugins/Surfel/Source/Surfel/Public/ComputePasses/GatherPass.h" beforeDir="false" afterPath="$PROJECT_DIR$/Plugins/Surfel/Source/Surfel/Public/ComputePasses/GatherPass.h" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Plugins/Surfel/Source/Surfel/Public/ComputePasses/GridAllocationPass.h" beforeDir="false" afterPath="$PROJECT_DIR$/Plugins/Surfel/Source/Surfel/Public/ComputePasses/GridAllocationPass.h" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Plugins/Surfel/Source/Surfel/Public/ComputePasses/ScatterPass.h" beforeDir="false" afterPath="$PROJECT_DIR$/Plugins/Surfel/Source/Surfel/Public/ComputePasses/ScatterPass.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Plugins/Surfel/Source/Surfel/Public/ComputePasses/SurfelIrradiancePass.h" beforeDir="false" afterPath="$PROJECT_DIR$/Plugins/Surfel/Source/Surfel/Public/ComputePasses/SurfelIrradiancePass.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Plugins/Surfel/Source/Surfel/Public/ComputePasses/VisualizePass.h" beforeDir="false" afterPath="$PROJECT_DIR$/Plugins/Surfel/Source/Surfel/Public/ComputePasses/VisualizePass.h" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -41,6 +37,7 @@
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
   </component>
   <component name="HighlightingSettingsPerFile">
+    <setting file="file://$PROJECT_DIR$/../../../../../Program Files/Epic Games/UE_5.8/Engine/Source/Runtime/ApplicationCore/Public/IOS/IOSAppDelegate.h" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/../../../../../Program Files/Epic Games/UE_5.8/Engine/Source/Runtime/RenderCore/Private/RenderGraphBuilder.cpp" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/../../../../../Program Files/Epic Games/UE_5.8/Engine/Source/Runtime/RenderCore/Public/GlobalShader.h" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/Plugins/Surfel/Source/Surfel/Private/CVarCommands.cpp" root0="FORCE_HIGHLIGHTING" />
@@ -58,61 +55,61 @@
   </component>
   <component name="NextEditCompletionFeaturesState">
     <decayedCancelled>
-      <entry key="MS100" value="1.0000000000000004" />
-      <entry key="MS500" value="1.0008442746458197" />
-      <entry key="S2" value="1.1732732260567358" />
-      <entry key="S5" value="1.8340799826618095" />
-      <entry key="S10" value="3.90894754843233" />
-      <entry key="S30" value="12.18743823740471" />
-      <entry key="S60" value="18.603435345563767" />
-      <entry key="M2" value="23.919713463727646" />
-      <entry key="M5" value="31.369392521129434" />
-      <entry key="M10" value="49.408082945064535" />
-      <entry key="M15" value="73.93750967920356" />
-      <entry key="M30" value="152.070914086652" />
-      <entry key="H1" value="264.02083879048786" />
-      <entry key="H2" value="387.12162934039674" />
-      <entry key="H4" value="539.534898921017" />
-      <entry key="D1" value="958.8712034468784" />
-      <entry key="W1" value="1111.4226516669721" />
+      <entry key="MS100" value="1.0000010739628802" />
+      <entry key="MS500" value="1.1007466112268023" />
+      <entry key="S2" value="2.270316468826207" />
+      <entry key="S5" value="4.6886184981242955" />
+      <entry key="S10" value="7.534491768202475" />
+      <entry key="S30" value="11.60032903474453" />
+      <entry key="S60" value="13.143797002499586" />
+      <entry key="M2" value="14.03092002983412" />
+      <entry key="M5" value="15.499048106756259" />
+      <entry key="M10" value="22.3414439875693" />
+      <entry key="M15" value="32.919062380989" />
+      <entry key="M30" value="76.23869799617685" />
+      <entry key="H1" value="172.84601869400788" />
+      <entry key="H2" value="346.4577885246746" />
+      <entry key="H4" value="604.1642776136018" />
+      <entry key="D1" value="1333.475194520784" />
+      <entry key="W1" value="1621.4915169396681" />
     </decayedCancelled>
     <decayedSelected>
       <entry key="MS100" value="0.0" />
       <entry key="MS500" value="0.0" />
-      <entry key="S2" value="1.2042549292596722E-176" />
-      <entry key="S5" value="5.572888267861948E-71" />
-      <entry key="S10" value="1.0195244907381359E-35" />
-      <entry key="S30" value="3.4648853776990196E-12" />
-      <entry key="S60" value="2.9121427342314812E-6" />
-      <entry key="M2" value="0.0031616622612735813" />
-      <entry key="M5" value="0.2857759094499006" />
-      <entry key="M10" value="1.7391549224820069" />
-      <entry key="M15" value="3.4778806794395147" />
-      <entry key="M30" value="7.41360881349034" />
-      <entry key="H1" value="11.198610039510886" />
-      <entry key="H2" value="14.768035736922469" />
-      <entry key="H4" value="21.188565823560708" />
-      <entry key="D1" value="47.140119282330176" />
-      <entry key="W1" value="57.8726097880373" />
+      <entry key="S2" value="0.0" />
+      <entry key="S5" value="1.348837065539741E-296" />
+      <entry key="S10" value="1.1613944487295187E-148" />
+      <entry key="S30" value="4.878954181435693E-50" />
+      <entry key="S60" value="2.2101660885350513E-25" />
+      <entry key="M2" value="4.815209306409763E-13" />
+      <entry key="M5" value="1.447391922625881E-5" />
+      <entry key="M10" value="0.005776340204850674" />
+      <entry key="M15" value="0.05514374160770874" />
+      <entry key="M30" value="0.8803691366021968" />
+      <entry key="H1" value="4.883322485822325" />
+      <entry key="H2" value="13.586781292889604" />
+      <entry key="H4" value="26.234218458707904" />
+      <entry key="D1" value="66.50230373134514" />
+      <entry key="W1" value="84.34105002432653" />
     </decayedSelected>
     <decayedShown>
-      <entry key="MS100" value="7.154849555669453E-15" />
-      <entry key="MS500" value="0.0015157797338784937" />
-      <entry key="S2" value="0.27399784290264745" />
-      <entry key="S5" value="1.17398411553291" />
-      <entry key="S10" value="3.3809407487817356" />
-      <entry key="S30" value="11.811356015847798" />
-      <entry key="S60" value="18.332653518634267" />
-      <entry key="M2" value="23.74493484219145" />
-      <entry key="M5" value="31.55488779806736" />
-      <entry key="M10" value="51.05808076577162" />
-      <entry key="M15" value="77.32145379270014" />
-      <entry key="M30" value="159.3855972884331" />
-      <entry key="H1" value="275.13470835220767" />
-      <entry key="H2" value="401.82940637459757" />
-      <entry key="H4" value="560.6836960577069" />
-      <entry key="D1" value="1006.0007970369052" />
-      <entry key="W1" value="1169.2935633691695" />
+      <entry key="MS100" value="3.9953642024735535E-6" />
+      <entry key="MS500" value="0.13914313649977528" />
+      <entry key="S2" value="1.4737634317051471" />
+      <entry key="S5" value="4.110488713314205" />
+      <entry key="S10" value="7.1231748448532795" />
+      <entry key="S30" value="11.405325169540909" />
+      <entry key="S60" value="13.035051897728978" />
+      <entry key="M2" value="13.973278250371319" />
+      <entry key="M5" value="15.473601374831821" />
+      <entry key="M10" value="22.32873848139689" />
+      <entry key="M15" value="32.95566818137393" />
+      <entry key="M30" value="77.0960825223659" />
+      <entry key="H1" value="177.70013830189598" />
+      <entry key="H2" value="360.0103728747502" />
+      <entry key="H4" value="630.3653080317019" />
+      <entry key="D1" value="1399.964599013751" />
+      <entry key="W1" value="1705.8303265770755" />
     </decayedShown>
   </component>
   <component name="ProjectColorInfo">{
@@ -129,6 +126,7 @@
   </component>
   <component name="PropertiesComponent"><![CDATA[{
   "keyToString": {
+    "C/C++ Project.Surfels Editor.executor": "Run",
     "C/C++ Project.Surfels Headless Game.executor": "Run",
     "C/C++ Project.Surfels.executor": "Run",
     "ModuleVcsDetector.initialDetectionPerformed": "true",
@@ -153,7 +151,7 @@
     "to.speed.mode.migration.done": "true"
   }
 }]]></component>
-  <component name="RunManager" selected="C/C++ Project.Surfels Headless Game">
+  <component name="RunManager" selected="C/C++ Project.Surfels Editor">
     <configuration name="Surfels Editor" type="CppProject" factoryName="C++ Project">
       <configuration_1 setup="1">
         <option name="CONFIGURATION" value="Development_Editor" />
@@ -219,6 +217,18 @@
       </method>
     </configuration>
     <configuration name="UE5" type="CppProject" factoryName="C++ Project">
+      <configuration_1 setup="1">
+        <option name="CONFIGURATION" value="BuiltWithUnrealBuildTool" />
+        <option name="PLATFORM" value="Win64" />
+        <option name="CURRENT_LAUNCH_PROFILE" value="Local" />
+        <option name="EXE_PATH" value="$(LocalDebuggerCommand)" />
+        <option name="PROGRAM_PARAMETERS" value="$(LocalDebuggerCommandArguments)" />
+        <option name="WORKING_DIRECTORY" value="$(LocalDebuggerWorkingDirectory)" />
+        <option name="PASS_PARENT_ENVS" value="1" />
+        <option name="USE_EXTERNAL_CONSOLE" value="0" />
+        <option name="TERMINAL_INTERACTION_BEHAVIOR" value="AUTO_DETECT" />
+        <option name="PROJECT_FILE_PATH" value="$PROJECT_DIR$/Intermediate/ProjectFiles/UE5.vcxproj" />
+      </configuration_1>
       <option name="DEFAULT_PROJECT_PATH" value="$PROJECT_DIR$/Intermediate/ProjectFiles/UE5.vcxproj" />
       <option name="PROJECT_FILE_PATH" value="$PROJECT_DIR$/Intermediate/ProjectFiles/UE5.vcxproj" />
       <option name="AUTO_SELECT_PRIORITY" value="10000" />

@@ -60,8 +60,7 @@ void TestSurfel(uint SurfelIndex, float3 PixelWorldPosition, float3 PixelNormal,
     float3 SurfelNormal = SurfelNormalAndFlags[SurfelIndex].xyz;
     float3 ToPixel = PixelWorldPosition - PositionAndRadius.xyz;
 
-    // Inside the surfel's sphere. Same shape GridAllocation uses to pick cells,
-    // so a pixel that passes here is always in a cell that holds this surfel
+    // Is the tested point inside the surfel radius? 
     float DistanceRatio = length(ToPixel) / Radius;
     if (DistanceRatio > 1.0f)
     {
@@ -80,8 +79,6 @@ void TestSurfel(uint SurfelIndex, float3 PixelWorldPosition, float3 PixelNormal,
     }
 
     // Keep the surfel whose center is closest, so overlapping discs split the surface cleanly.
-    // On an exact tie pick the lower index: grid entries are inserted in a different order
-    // every frame, so "first one wins" would swap between tied surfels frame to frame.
     bool bCloser = DistanceRatio < Hit.DistanceRatio;
     bool bTieWon = DistanceRatio == Hit.DistanceRatio && SurfelIndex < Hit.Index;
     if (bCloser || bTieWon)
@@ -116,7 +113,7 @@ void MainCS(uint3 DispatchThreadId : SV_DispatchThreadID)
     int3 LoadPos = int3(RenderPixelPos, 0);
     float DeviceZ = SceneDepthTexture.Load(LoadPos).r;
 
-    // Sky: no surface for a disc to lie on
+    // Sky
     if (DeviceZ <= 0.0f)
     {
         OutRenderTarget[PixelPos] = SceneColor;
@@ -152,7 +149,7 @@ void MainCS(uint3 DispatchThreadId : SV_DispatchThreadID)
             TestSurfel(GridCellEntries[CellIdx * CellCapacity + i], PixelWorldPosition, PixelNormal, Hit);
         }
     }
-    else // Brute test
+    else // Brute test no grid
     {
         uint NumSurfels = SurfelCount[0];
         for (uint SurfelIndex = 0; SurfelIndex < NumSurfels; SurfelIndex++)

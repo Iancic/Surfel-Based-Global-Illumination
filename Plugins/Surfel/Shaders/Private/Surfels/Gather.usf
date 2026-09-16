@@ -2,25 +2,27 @@
 #include "/Engine/Private/Common.ush"
 #include "/Engine/Private/DeferredShadingCommon.ush"
 
+// Coverage texture and parameters
+Texture2D CoverageTexture;
+float SpawnChance;
+float SpawnCoverageThreshold;
+
+// View
 uint2 ViewRectMin;
 uint2 ViewRectMax;
 
-uint SurfelBudget;
-float SurfelRadius;
-
+// Surfel Budget and Pools
 RWStructuredBuffer<uint> SurfelCount;
 RWStructuredBuffer<float4> SurfelPositionAndRadius;
 RWStructuredBuffer<float4> SurfelNormalAndFlags;
 
+uint SurfelBudget;
+float SurfelRadius;
+
 [numthreads(THREADS_X, THREADS_Y, THREADS_Z)]
 void MainCS(uint3 DispatchThreadId : SV_DispatchThreadID)
 {
-    uint2 PixelPos = min(ViewRectMin + DispatchThreadId.xy, ViewRectMax - 1);
-
-    // READ COVERAGE TEXTURE
-    // Decide wheter TO continue or not based on Pos based on coverage texture
-    // threshold of coverage
-        // doesn't meet it return
+    uint2 PixelPos = ViewRectMin + DispatchThreadId.xy;
     
     if (any(PixelPos >= ViewRectMax))
     {
@@ -28,6 +30,29 @@ void MainCS(uint3 DispatchThreadId : SV_DispatchThreadID)
     }
     
     int3 LoadPos = int3(PixelPos, 0);
+    
+    // READ COVERAGE TEXTURE
+    // Decide whether TO continue or not based on Pos based on coverage texture
+    // threshold of coverage
+    // doesn't meet it return
+    
+    float Coverage = CoverageTexture.Load(LoadPos);
+    if (Coverage >= SpawnCoverageThreshold)
+    {
+        return; // Covered enough don't spawn
+    }
+    
+    // spawn only with a small probability
+    float seed = 5.f;
+    
+    // weird hash i don't like the conversion to 0 to 1 
+    uint3 Hash = Rand3DPCG16(int3(PixelPos, View.StateFrameIndex));
+    float Random01 = Hash.x / 65535.0f;
+    if (Random01 >= SpawnChance)
+    {
+        return;
+    }
+    
     float DeviceZ = SceneDepthTexture.Load(LoadPos).r;
 
     // Skip the sky
@@ -55,7 +80,15 @@ void MainCS(uint3 DispatchThreadId : SV_DispatchThreadID)
         return;
     }
     
-    // Scale surfel radius based on distance
-    SurfelPositionAndRadius[SurfelIndex] = float4(WorldPosition, SurfelRadius);
+    float LinearDepth = ConvertFromDeviceZ(DeviceZ);
+
+    // World-space width of one pixel at this depth (cm per pixel)
+    float PixelWorldSize = 2.0f * LinearDepth / (View.ViewToClip[0][0] * View.ViewSizeAndInvSize.x);
+
+    // SurfelRadius is now in pixels, e.g. 8 to 32
+    float Radius = SurfelRadius * PixelWorldSize;
+    Radius = clamp(Radius, SurfelRadius, 100.f); // 100.f is the max surfel radius arbitrary for now
+
+    SurfelPositionAndRadius[SurfelIndex] = float4(WorldPosition, Radius);
     SurfelNormalAndFlags[SurfelIndex] = float4(WorldNormal, 0.0f);
 }
