@@ -1,79 +1,65 @@
 #pragma once
-#include "CVarCommands.h"
+#include "CoreMinimal.h"
+#include "HAL/IConsoleManager.h"
 
-static TAutoConsoleVariable<int32> CVarSurfelMode(
-	TEXT("r.Surfel.Mode"),
-	1,
-	TEXT("Surfel compute pass mode.\n")
-	TEXT(" 0: off\n")
-	TEXT(" 1: fullscreen procedural example\n")
-	TEXT(" 2: G-Buffer visualization"),
-	ECVF_RenderThreadSafe);
+// Declared here, defined once in CVarCommands.cpp. Defining them `static` in the header
+// gave every including .cpp its own copy (own CVar registration, own refresh counter).
+extern TAutoConsoleVariable<int> CVarSurfelEnable;
+extern TAutoConsoleVariable<int32> CVarSurfelMode;
+extern TAutoConsoleVariable<float> CVarSurfelIntensity;
+extern TAutoConsoleVariable<float> CVarSurfelDepthScale;
+extern TAutoConsoleVariable<int> CVarSurfelBudget;
+extern TAutoConsoleVariable<float> CVarSurfelRadius;
+extern TAutoConsoleVariable<int32> CVarSurfelUseGrid;
+extern TAutoConsoleVariable<int32> CVarSurfelVisualizeMode;
+extern TAutoConsoleVariable<float> CVarSurfelCoverageScale;
+extern TAutoConsoleVariable<int32> CVarSurfelSpawnsPerFrame;
+extern TAutoConsoleVariable<float> CVarSurfelSpawnCoverageThreshold;
 
-static TAutoConsoleVariable<float> CVarSurfelIntensity(
-	TEXT("r.Surfel.Intensity"),
-	0.25f,
-	TEXT("Blend strength of the fullscreen example effect (0-1)."),
-	ECVF_RenderThreadSafe);
+// Grid layout. Read once per frame on the render thread (FUniformGridViewState::UpdateFromCVars)
+// so every pass in a frame agrees on the same layout.
+extern TAutoConsoleVariable<int32> CVarSurfelGridCellResolution;
+extern TAutoConsoleVariable<int32> CVarSurfelGridCellSize;
+extern TAutoConsoleVariable<int32> CVarSurfelGridCellCapacity;
 
-static TAutoConsoleVariable<float> CVarSurfelDepthScale(
-	TEXT("r.Surfel.DepthScale"),
-	10000.0f,
-	TEXT("Far distance in world units mapped to white in depth visualization."),
-	ECVF_RenderThreadSafe);
+// Grid visualization options
+extern TAutoConsoleVariable<int32> CVarSurfelGridVisFlags;
+extern TAutoConsoleVariable<float> CVarSurfelGridVisEdgeThickness;
 
-static TAutoConsoleVariable<int> CVarSurfelEnable(
-	TEXT("r.Surfel.Enable"),
-	1,
-	TEXT("Is surfel system enabled or not."),
-	ECVF_RenderThreadSafe
-	);
+// Bits of r.Surfel.Grid.VisFlags. Baked into Visualize.usf as GRID_VIS_* defines.
+enum class ESurfelGridVisFlags : uint32
+{
+	None      = 0,
+	Wireframe = 1 << 0, // White lines on cell boundaries
+	Overflow  = 1 << 1, // Cells past CellCapacity drawn solid red
+	HideEmpty = 1 << 2, // Cells with no surfels left as scene color
+	Heatmap   = 1 << 3, // Color by occupancy instead of a hashed color per cell
+};
+ENUM_CLASS_FLAGS(ESurfelGridVisFlags);
 
-static TAutoConsoleVariable<int> CVarSurfelBudget(
-	TEXT("r.Surfel.Budget"),
-	500,
-	TEXT("Surfel Budget."),
-	ECVF_RenderThreadSafe
-	);
+// What the visualize pass draws on top of scene color.
+// The first four are debug overlays the shader handles; the last three are lighting
+// references that only reconfigure the renderer, so the shader treats them as None.
+// The numbers are baked into Visualize.usf as VISUALIZE_MODE_* defines by
+// FSurfelFullscreenCS::ModifyCompilationEnvironment, so keep the two in sync.
+enum class ESurfelVisualizeMode : int32
+{
+	None            = 0, // Scene color, untouched
+	Surfels         = 1, // Every surfel disc in its own hashed color
+	Grid            = 2, // Uniform grid cells, tinted by how full each cell is
+	Coverage        = 3, // The coverage texture Scatter writes, as a heat map
+	LumenGI         = 4, // No overlay, engine Lumen GI left on (reference image)
+	SurfelGI        = 5, // No overlay, Lumen off so only our own GI contributes
+	DirectLightOnly = 6, // No overlay, no indirect lighting at all
+	MAX
+};
 
-static TAutoConsoleVariable<int> CVarSurfelRadius(
-	TEXT("r.Surfel.Radius"),
-	10, // THESE VALUES AND THE GRIDS SHOLD BE CONNECTED
-	TEXT("Surfel Radius, in world units (cm)."),
-	ECVF_RenderThreadSafe
-	);
-
-static TAutoConsoleVariable<int> CVarSurfelGridSize(
-	TEXT("r.Surfel.GridSize"),
-	32,
-	TEXT("Gather dispatches one thread per NxN pixel block instead of per pixel, spacing spawned surfels out on a coarse screen-space grid.\n")
-	TEXT("Stopgap until the Scatter coverage pass is implemented."),
-	ECVF_RenderThreadSafe
-	);
-
-static TAutoConsoleVariable<float> CVarSurfelCoverageRadius(
-	TEXT("r.Surfel.CoverageRadius"),
-	40.0f,
-	TEXT("TEMP stand-in for Scatter coverage: world-space distance (cm) under which Gather considers a spot already covered by an existing surfel and skips spawning.\n")
-	TEXT("Lets old surfels persist and budget only get spent on newly-revealed geometry (e.g. after moving the camera). Remove once Scatter provides real coverage."),
-	ECVF_RenderThreadSafe
-	);
-
-static TAutoConsoleVariable<int32> CVarSurfelUseGrid(
-	TEXT("r.Surfel.UseGrid"),
-	1,
-	TEXT("1: fullscreen visualize queries the uniform grid instead of brute-force looping every surfel.\n")
-	TEXT("0: brute-force fallback (loop every surfel per pixel) - useful for A/B verifying the grid query is correct."),
-	ECVF_RenderThreadSafe
-	);
+// True for the modes the visualize compute shader actually draws something for.
+// The rest need no fullscreen dispatch at all.
+inline bool IsSurfelOverlayMode(int32 Mode)
+{
+	return Mode >= (int32)ESurfelVisualizeMode::Surfels && Mode <= (int32)ESurfelVisualizeMode::Coverage;
+}
 
 // Bumped by r.Surfel.Refresh; Gather clears and respawns from scratch when this changes.
-static int32 GSurfelRefreshRequestId = 0;
-
-static FAutoConsoleCommand CVarSurfelRefreshCmd(
-	TEXT("r.Surfel.Refresh"),
-	TEXT("Clears all spawned surfels so they respawn from scratch on the current grid."),
-	FConsoleCommandDelegate::CreateLambda([]()
-	{
-		++GSurfelRefreshRequestId;
-	}));
+extern int32 GSurfelRefreshRequestId;

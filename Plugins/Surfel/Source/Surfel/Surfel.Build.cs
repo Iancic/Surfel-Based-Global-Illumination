@@ -29,5 +29,8 @@ public class Surfel : ModuleRules
                 "SlateCore",
             }
             );
+
+        // ImGui    	
+        PrivateDependencyModuleNames.Add("ImGui");
     }
 }

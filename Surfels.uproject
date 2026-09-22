@@ -22,6 +22,10 @@
 		{
 			"Name": "SceneViewExtensionTemplate",
 			"Enabled": false
+		},
+		{
+			"Name": "ImGui",
+			"Enabled": true
 		}
 	]
 }

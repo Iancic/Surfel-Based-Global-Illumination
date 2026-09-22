@@ -14,16 +14,371 @@
     <configurations />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="33aded25-df80-4819-a209-c77824e12478" name="Changes" comment="">
+    <list default="true" id="20fab832-f3ef-4372-8e5d-692461982054" name="Changes" comment="">
+      <change afterPath="$PROJECT_DIR$/Content/Box/Green.uasset" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Content/Box/Red.uasset" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Content/Box/White.uasset" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Content/Dragon/DragonAttenuation/Materials/Cloth_Backdrop.uasset" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Content/Dragon/DragonAttenuation/Materials/Dragon_with_Attenuation.uasset" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Content/Dragon/DragonAttenuation/Materials/Dragon_with_Surface_Coloring_Only.uasset" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Content/Dragon/DragonAttenuation/SceneImport_DragonAttenuation.uasset" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Content/Dragon/DragonAttenuation/StaticMeshes/Cloth_Backdrop.uasset" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Content/Dragon/DragonAttenuation/StaticMeshes/Dragon.uasset" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Content/Dragon/DragonAttenuation/Textures/DragonAttenuation_texture_0.uasset" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Content/Dragon/DragonAttenuation/Textures/DragonAttenuation_texture_1.uasset" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Content/Dragon/DragonAttenuation/Variants/DragonAttenuation.uasset" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Content/Dragon/RedMaterial.uasset" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Content/Sponza/Sponza/SceneImport_Sponza.uasset" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Plugins/Surfel/Config/DefaultSurfel.ini" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Plugins/Surfel/Source/Surfel/Private/DevGuiSubsystem.cpp" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Plugins/Surfel/Source/Surfel/Public/DevGuiSubsystem.h" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Plugins/UnrealImGui/.editorconfig" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Plugins/UnrealImGui/ImGui.uplugin" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Plugins/UnrealImGui/Resources/Icon128.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Plugins/UnrealImGui/Source/ImGui/ImGui.Build.cs" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Plugins/UnrealImGui/Source/ImGui/Private/Editor/ImGuiCanvasSizeInfoCustomization.cpp" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Plugins/UnrealImGui/Source/ImGui/Private/Editor/ImGuiCanvasSizeInfoCustomization.h" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Plugins/UnrealImGui/Source/ImGui/Private/Editor/ImGuiEditor.cpp" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Plugins/UnrealImGui/Source/ImGui/Private/Editor/ImGuiEditor.h" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Plugins/UnrealImGui/Source/ImGui/Private/Editor/ImGuiKeyInfoCustomization.cpp" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Plugins/UnrealImGui/Source/ImGui/Private/Editor/ImGuiKeyInfoCustomization.h" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Plugins/UnrealImGui/Source/ImGui/Private/ImGuiContextManager.cpp" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Plugins/UnrealImGui/Source/ImGui/Private/ImGuiContextManager.h" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Plugins/UnrealImGui/Source/ImGui/Private/ImGuiContextProxy.cpp" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Plugins/UnrealImGui/Source/ImGui/Private/ImGuiContextProxy.h" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Plugins/UnrealImGui/Source/ImGui/Private/ImGuiDelegates.cpp" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Plugins/UnrealImGui/Source/ImGui/Private/ImGuiDelegatesContainer.cpp" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Plugins/UnrealImGui/Source/ImGui/Private/ImGuiDelegatesContainer.h" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Plugins/UnrealImGui/Source/ImGui/Private/ImGuiDemo.cpp" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Plugins/UnrealImGui/Source/ImGui/Private/ImGuiDemo.h" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Plugins/UnrealImGui/Source/ImGui/Private/ImGuiDrawData.cpp" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Plugins/UnrealImGui/Source/ImGui/Private/ImGuiDrawData.h" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Plugins/UnrealImGui/Source/ImGui/Private/ImGuiImplementation.cpp" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Plugins/UnrealImGui/Source/ImGui/Private/ImGuiImplementation.h" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Plugins/UnrealImGui/Source/ImGui/Private/ImGuiInputHandler.cpp" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Plugins/UnrealImGui/Source/ImGui/Private/ImGuiInputHandlerFactory.cpp" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Plugins/UnrealImGui/Source/ImGui/Private/ImGuiInputHandlerFactory.h" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Plugins/UnrealImGui/Source/ImGui/Private/ImGuiInputState.cpp" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Plugins/UnrealImGui/Source/ImGui/Private/ImGuiInputState.h" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Plugins/UnrealImGui/Source/ImGui/Private/ImGuiInteroperability.cpp" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Plugins/UnrealImGui/Source/ImGui/Private/ImGuiInteroperability.h" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Plugins/UnrealImGui/Source/ImGui/Private/ImGuiModule.cpp" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Plugins/UnrealImGui/Source/ImGui/Private/ImGuiModuleCommands.cpp" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Plugins/UnrealImGui/Source/ImGui/Private/ImGuiModuleCommands.h" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Plugins/UnrealImGui/Source/ImGui/Private/ImGuiModuleDebug.h" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Plugins/UnrealImGui/Source/ImGui/Private/ImGuiModuleManager.cpp" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Plugins/UnrealImGui/Source/ImGui/Private/ImGuiModuleManager.h" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Plugins/UnrealImGui/Source/ImGui/Private/ImGuiModuleSettings.cpp" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Plugins/UnrealImGui/Source/ImGui/Private/ImGuiModuleSettings.h" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Plugins/UnrealImGui/Source/ImGui/Private/ImGuiTextureHandle.cpp" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Plugins/UnrealImGui/Source/ImGui/Private/TextureManager.cpp" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Plugins/UnrealImGui/Source/ImGui/Private/TextureManager.h" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Plugins/UnrealImGui/Source/ImGui/Private/Utilities/Arrays.h" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Plugins/UnrealImGui/Source/ImGui/Private/Utilities/DebugExecBindings.cpp" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Plugins/UnrealImGui/Source/ImGui/Private/Utilities/DebugExecBindings.h" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Plugins/UnrealImGui/Source/ImGui/Private/Utilities/Range.h" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Plugins/UnrealImGui/Source/ImGui/Private/Utilities/RedirectingHandle.h" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Plugins/UnrealImGui/Source/ImGui/Private/Utilities/WorldContext.cpp" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Plugins/UnrealImGui/Source/ImGui/Private/Utilities/WorldContext.h" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Plugins/UnrealImGui/Source/ImGui/Private/Utilities/WorldContextIndex.h" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Plugins/UnrealImGui/Source/ImGui/Private/VersionCompatibility.h" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Plugins/UnrealImGui/Source/ImGui/Private/Widgets/SImGuiCanvasControl.cpp" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Plugins/UnrealImGui/Source/ImGui/Private/Widgets/SImGuiCanvasControl.h" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Plugins/UnrealImGui/Source/ImGui/Private/Widgets/SImGuiLayout.cpp" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Plugins/UnrealImGui/Source/ImGui/Private/Widgets/SImGuiLayout.h" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Plugins/UnrealImGui/Source/ImGui/Private/Widgets/SImGuiWidget.cpp" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Plugins/UnrealImGui/Source/ImGui/Private/Widgets/SImGuiWidget.h" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Plugins/UnrealImGui/Source/ImGui/Public/ImGuiDelegates.h" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Plugins/UnrealImGui/Source/ImGui/Public/ImGuiInputHandler.h" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Plugins/UnrealImGui/Source/ImGui/Public/ImGuiModule.h" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Plugins/UnrealImGui/Source/ImGui/Public/ImGuiModuleProperties.h" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Plugins/UnrealImGui/Source/ImGui/Public/ImGuiTextureHandle.h" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Plugins/UnrealImGui/Source/ThirdParty/ImGuiLibrary/Docs/BACKENDS.md" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Plugins/UnrealImGui/Source/ThirdParty/ImGuiLibrary/Docs/CHANGELOG.txt" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Plugins/UnrealImGui/Source/ThirdParty/ImGuiLibrary/Docs/CONTRIBUTING.md" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Plugins/UnrealImGui/Source/ThirdParty/ImGuiLibrary/Docs/EXAMPLES.md" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Plugins/UnrealImGui/Source/ThirdParty/ImGuiLibrary/Docs/FAQ.md" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Plugins/UnrealImGui/Source/ThirdParty/ImGuiLibrary/Docs/FONTS.md" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Plugins/UnrealImGui/Source/ThirdParty/ImGuiLibrary/Docs/README.md" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Plugins/UnrealImGui/Source/ThirdParty/ImGuiLibrary/Docs/TODO.txt" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Plugins/UnrealImGui/Source/ThirdParty/ImGuiLibrary/ImGuiLibrary.Build.cs" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Plugins/UnrealImGui/Source/ThirdParty/ImGuiLibrary/ImGuiLibrary.tps" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Plugins/UnrealImGui/Source/ThirdParty/ImGuiLibrary/Include/imconfig.h" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Plugins/UnrealImGui/Source/ThirdParty/ImGuiLibrary/Include/imgui.h" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Plugins/UnrealImGui/Source/ThirdParty/ImGuiLibrary/Include/imgui_internal.h" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Plugins/UnrealImGui/Source/ThirdParty/ImGuiLibrary/Include/imstb_textedit.h" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Plugins/UnrealImGui/Source/ThirdParty/ImGuiLibrary/LICENSE.txt" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Plugins/UnrealImGui/Source/ThirdParty/ImGuiLibrary/Private/imgui.cpp" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Plugins/UnrealImGui/Source/ThirdParty/ImGuiLibrary/Private/imgui_demo.cpp" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Plugins/UnrealImGui/Source/ThirdParty/ImGuiLibrary/Private/imgui_draw.cpp" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Plugins/UnrealImGui/Source/ThirdParty/ImGuiLibrary/Private/imgui_tables.cpp" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Plugins/UnrealImGui/Source/ThirdParty/ImGuiLibrary/Private/imgui_widgets.cpp" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Plugins/UnrealImGui/Source/ThirdParty/ImGuiLibrary/Private/imstb_rectpack.h" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Plugins/UnrealImGui/Source/ThirdParty/ImGuiLibrary/Private/imstb_truetype.h" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Plugins/UnrealImGui/Source/ThirdParty/ImPlotLibrary/ImPlotLibrary.Build.cs" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Plugins/UnrealImGui/Source/ThirdParty/ImPlotLibrary/LICENSE" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Plugins/UnrealImGui/Source/ThirdParty/ImPlotLibrary/Private/implot.cpp" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Plugins/UnrealImGui/Source/ThirdParty/ImPlotLibrary/Private/implot_demo.cpp" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Plugins/UnrealImGui/Source/ThirdParty/ImPlotLibrary/Private/implot_internal.h" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Plugins/UnrealImGui/Source/ThirdParty/ImPlotLibrary/Private/implot_items.cpp" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Plugins/UnrealImGui/Source/ThirdParty/ImPlotLibrary/Public/implot.h" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Plugins/UnrealImGui/Source/ThirdParty/ImPlotLibrary/README.md" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Plugins/UnrealImGui/Source/ThirdParty/ImPlotLibrary/TODO.md" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/Surfels.sln.DotSettings.user" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/.idea.Surfels/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/.idea.Surfels/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Plugins/Surfel/Shaders/Private/Surfels/Gather.usf" beforeDir="false" afterPath="$PROJECT_DIR$/Plugins/Surfel/Shaders/Private/Surfels/Gather.usf" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Plugins/Surfel/Shaders/Private/Surfels/Scatter.usf" beforeDir="false" afterPath="$PROJECT_DIR$/Plugins/Surfel/Shaders/Private/Surfels/Scatter.usf" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Config/DefaultEngine.ini" beforeDir="false" afterPath="$PROJECT_DIR$/Config/DefaultEngine.ini" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/Sponza/Materials/Sponza_material_0.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Sponza/Sponza/Materials/Sponza_material_0.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/Sponza/Materials/Sponza_material_1.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Sponza/Sponza/Materials/Sponza_material_1.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/Sponza/Materials/Sponza_material_10.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Sponza/Sponza/Materials/Sponza_material_10.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/Sponza/Materials/Sponza_material_11.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Sponza/Sponza/Materials/Sponza_material_11.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/Sponza/Materials/Sponza_material_12.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Sponza/Sponza/Materials/Sponza_material_12.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/Sponza/Materials/Sponza_material_13.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Sponza/Sponza/Materials/Sponza_material_13.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/Sponza/Materials/Sponza_material_14.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Sponza/Sponza/Materials/Sponza_material_14.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/Sponza/Materials/Sponza_material_15.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Sponza/Sponza/Materials/Sponza_material_15.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/Sponza/Materials/Sponza_material_16.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Sponza/Sponza/Materials/Sponza_material_16.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/Sponza/Materials/Sponza_material_17.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Sponza/Sponza/Materials/Sponza_material_17.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/Sponza/Materials/Sponza_material_18.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Sponza/Sponza/Materials/Sponza_material_18.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/Sponza/Materials/Sponza_material_19.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Sponza/Sponza/Materials/Sponza_material_19.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/Sponza/Materials/Sponza_material_2.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Sponza/Sponza/Materials/Sponza_material_2.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/Sponza/Materials/Sponza_material_20.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Sponza/Sponza/Materials/Sponza_material_20.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/Sponza/Materials/Sponza_material_21.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Sponza/Sponza/Materials/Sponza_material_21.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/Sponza/Materials/Sponza_material_22.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Sponza/Sponza/Materials/Sponza_material_22.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/Sponza/Materials/Sponza_material_23.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Sponza/Sponza/Materials/Sponza_material_23.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/Sponza/Materials/Sponza_material_24.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Sponza/Sponza/Materials/Sponza_material_24.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/Sponza/Materials/Sponza_material_3.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Sponza/Sponza/Materials/Sponza_material_3.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/Sponza/Materials/Sponza_material_4.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Sponza/Sponza/Materials/Sponza_material_4.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/Sponza/Materials/Sponza_material_5.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Sponza/Sponza/Materials/Sponza_material_5.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/Sponza/Materials/Sponza_material_6.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Sponza/Sponza/Materials/Sponza_material_6.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/Sponza/Materials/Sponza_material_7.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Sponza/Sponza/Materials/Sponza_material_7.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/Sponza/Materials/Sponza_material_8.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Sponza/Sponza/Materials/Sponza_material_8.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/Sponza/Materials/Sponza_material_9.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Sponza/Sponza/Materials/Sponza_material_9.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/Sponza/StaticMeshes/Sponza.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Sponza/Sponza/StaticMeshes/Sponza_mesh_0.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/Sponza/Textures/10381718147657362067.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Sponza/Sponza/Textures/10381718147657362067.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/Sponza/Textures/10388182081421875623.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Sponza/Sponza/Textures/10388182081421875623.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/Sponza/Textures/11474523244911310074.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Sponza/Sponza/Textures/11474523244911310074.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/Sponza/Textures/11490520546946913238.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Sponza/Sponza/Textures/11490520546946913238.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/Sponza/Textures/11872827283454512094.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Sponza/Sponza/Textures/11872827283454512094.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/Sponza/Textures/11968150294050148237.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Sponza/Sponza/Textures/11968150294050148237.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/Sponza/Textures/1219024358953944284.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Sponza/Sponza/Textures/1219024358953944284.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/Sponza/Textures/12501374198249454378.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Sponza/Sponza/Textures/12501374198249454378.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/Sponza/Textures/13196865903111448057.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Sponza/Sponza/Textures/13196865903111448057.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/Sponza/Textures/13824894030729245199.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Sponza/Sponza/Textures/13824894030729245199.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/Sponza/Textures/13982482287905699490.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Sponza/Sponza/Textures/13982482287905699490.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/Sponza/Textures/14118779221266351425.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Sponza/Sponza/Textures/14118779221266351425.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/Sponza/Textures/14170708867020035030.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Sponza/Sponza/Textures/14170708867020035030.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/Sponza/Textures/14267839433702832875.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Sponza/Sponza/Textures/14267839433702832875.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/Sponza/Textures/14650633544276105767.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Sponza/Sponza/Textures/14650633544276105767.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/Sponza/Textures/15295713303328085182.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Sponza/Sponza/Textures/15295713303328085182.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/Sponza/Textures/15722799267630235092.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Sponza/Sponza/Textures/15722799267630235092.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/Sponza/Textures/16275776544635328252.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Sponza/Sponza/Textures/16275776544635328252.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/Sponza/Textures/16299174074766089871.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Sponza/Sponza/Textures/16299174074766089871.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/Sponza/Textures/16885566240357350108.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Sponza/Sponza/Textures/16885566240357350108.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/Sponza/Textures/17556969131407844942.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Sponza/Sponza/Textures/17556969131407844942.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/Sponza/Textures/17876391417123941155.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Sponza/Sponza/Textures/17876391417123941155.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/Sponza/Textures/2051777328469649772.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Sponza/Sponza/Textures/2051777328469649772.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/Sponza/Textures/2185409758123873465.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Sponza/Sponza/Textures/2185409758123873465.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/Sponza/Textures/2299742237651021498.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Sponza/Sponza/Textures/2299742237651021498.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/Sponza/Textures/2374361008830720677.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Sponza/Sponza/Textures/2374361008830720677.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/Sponza/Textures/2411100444841994089.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Sponza/Sponza/Textures/2411100444841994089.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/Sponza/Textures/2775690330959970771.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Sponza/Sponza/Textures/2775690330959970771.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/Sponza/Textures/2969916736137545357.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Sponza/Sponza/Textures/2969916736137545357.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/Sponza/Textures/332936164838540657.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Sponza/Sponza/Textures/332936164838540657.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/Sponza/Textures/3371964815757888145.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Sponza/Sponza/Textures/3371964815757888145.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/Sponza/Textures/3455394979645218238.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Sponza/Sponza/Textures/3455394979645218238.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/Sponza/Textures/3628158980083700836.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Sponza/Sponza/Textures/3628158980083700836.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/Sponza/Textures/3827035219084910048.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Sponza/Sponza/Textures/3827035219084910048.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/Sponza/Textures/4477655471536070370.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Sponza/Sponza/Textures/4477655471536070370.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/Sponza/Textures/4601176305987539675.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Sponza/Sponza/Textures/4601176305987539675.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/Sponza/Textures/466164707995436622.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Sponza/Sponza/Textures/466164707995436622.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/Sponza/Textures/4675343432951571524.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Sponza/Sponza/Textures/4675343432951571524.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/Sponza/Textures/4871783166746854860.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Sponza/Sponza/Textures/4871783166746854860.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/Sponza/Textures/4910669866631290573.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Sponza/Sponza/Textures/4910669866631290573.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/Sponza/Textures/4975155472559461469.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Sponza/Sponza/Textures/4975155472559461469.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/Sponza/Textures/5061699253647017043.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Sponza/Sponza/Textures/5061699253647017043.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/Sponza/Textures/5792855332885324923.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Sponza/Sponza/Textures/5792855332885324923.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/Sponza/Textures/5823059166183034438.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Sponza/Sponza/Textures/5823059166183034438.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/Sponza/Textures/6047387724914829168.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Sponza/Sponza/Textures/6047387724914829168.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/Sponza/Textures/6151467286084645207.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Sponza/Sponza/Textures/6151467286084645207.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/Sponza/Textures/6593109234861095314.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Sponza/Sponza/Textures/6593109234861095314.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/Sponza/Textures/6667038893015345571.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Sponza/Sponza/Textures/6667038893015345571.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/Sponza/Textures/6772804448157695701.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Sponza/Sponza/Textures/6772804448157695701.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/Sponza/Textures/7056944414013900257.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Sponza/Sponza/Textures/7056944414013900257.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/Sponza/Textures/715093869573992647.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Sponza/Sponza/Textures/715093869573992647.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/Sponza/Textures/7268504077753552595.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Sponza/Sponza/Textures/7268504077753552595.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/Sponza/Textures/7441062115984513793.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Sponza/Sponza/Textures/7441062115984513793.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/Sponza/Textures/755318871556304029.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Sponza/Sponza/Textures/755318871556304029.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/Sponza/Textures/759203620573749278.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Sponza/Sponza/Textures/759203620573749278.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/Sponza/Textures/7645212358685992005.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Sponza/Sponza/Textures/7645212358685992005.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/Sponza/Textures/7815564343179553343.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Sponza/Sponza/Textures/7815564343179553343.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/Sponza/Textures/8006627369776289000.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Sponza/Sponza/Textures/8006627369776289000.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/Sponza/Textures/8051790464816141987.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Sponza/Sponza/Textures/8051790464816141987.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/Sponza/Textures/8114461559286000061.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Sponza/Sponza/Textures/8114461559286000061.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/Sponza/Textures/8481240838833932244.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Sponza/Sponza/Textures/8481240838833932244.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/Sponza/Textures/8503262930880235456.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Sponza/Sponza/Textures/8503262930880235456.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/Sponza/Textures/8747919177698443163.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Sponza/Sponza/Textures/8747919177698443163.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/Sponza/Textures/8750083169368950601.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Sponza/Sponza/Textures/8750083169368950601.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/Sponza/Textures/8773302468495022225.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Sponza/Sponza/Textures/8773302468495022225.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/Sponza/Textures/8783994986360286082.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Sponza/Sponza/Textures/8783994986360286082.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/Sponza/Textures/9288698199695299068.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Sponza/Sponza/Textures/9288698199695299068.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/Sponza/Textures/9916269861720640319.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Sponza/Sponza/Textures/9916269861720640319.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/Sponza/Textures/white.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Sponza/Sponza/Textures/white.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/TestMap.umap" beforeDir="false" afterPath="$PROJECT_DIR$/Content/TestMap.umap" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/TestMap_HLOD0_Instancing.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/TextureRenderTargetTest.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/TextureTest.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/TestMap/0/3H/PWESVHZ16RANY1LDHHNLBJ.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/TestMap/0/4X/NGJXNZDX453Y7PASKTC7FZ.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/TestMap/0/B6/WOK65NS72Z28U9NXLG7RTV.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/TestMap/0/CU/BNB4M1BJWOO9XVBLB2I0W7.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/TestMap/0/DO/C13W3UJPSQVYIXSXJVODA0.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/TestMap/0/I1/DYD2AHICYKS5X8G5XT31BR.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/TestMap/0/JV/RC6VS28M1URXCPGFZLVRS9.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/TestMap/0/M9/AWRWQ05BDSSPT9IV24KZPV.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/TestMap/0/VW/21RMYLNIQC5ZI4ZM2WZHPL.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/TestMap/0/XR/4E4VY8XMTNBPQQLNO4R5NL.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/TestMap/1/F8/R9X89LK7H23F5CQ2V9CK0U.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/TestMap/1/S0/NOGITDZ0QZLV0GBPITCWF7.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/TestMap/1/T9/61QTJXYO8LX28EHHV6LNBM.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/TestMap/2/13/8VKHN7Y4KW399WEYMH9ELL.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/TestMap/2/5E/V67UO4AX08VJ36M4F6L4WS.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/TestMap/2/66/W7YXPFRY87KJXGSRCLHGJU.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/TestMap/2/SC/WT11T0T8J0AH2JU87ELFY8.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/TestMap/2/YV/P4BSJS5QL6ZGGAIU3U67BF.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/TestMap/3/2K/OKHGSRR3A4RT616IYVAV8U.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/TestMap/3/3K/G94A477DI1CJXOTTTK7UET.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/TestMap/3/9G/S0AO65IDSDKOJF03IEXTMR.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/TestMap/3/FY/5SNQGVRWZEASYTB1PHZ7DM.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/TestMap/3/IA/ZUTQICF21RHOJX7ARHVDOG.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/TestMap/3/L9/JQHB95I96P8ZTVPLSKJHWM.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/TestMap/3/OF/RXYOUFGGPEHA68CJMB75LC.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/TestMap/3/P5/BIW9QU1ZVR4VR29OU6A9G8.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/TestMap/3/PD/ELV8H15V1OJL3S0N9QM4TB.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/TestMap/3/QV/GM8E9TO21SNPOQODDKXG1O.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/TestMap/3/SA/1L3QSZYLOM7A3F6PCJ3WV1.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/TestMap/4/1P/5QYDRV7I3CACQ6GP2MI5SM.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/TestMap/4/3Y/4R4HYT87W4Z2WGUOKWNPAK.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/TestMap/4/5G/DX53DP5Q3AHL3D8WF3DCSB.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/TestMap/4/7U/4RZTZQ7EI0RPNGSRE90QNV.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/TestMap/4/9C/ME06HP8BCKXTG21MMPZ1XC.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/TestMap/4/IA/0LF36Q7F81LY1V9FV8NK5F.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/TestMap/4/MG/Y0HOJW0SIGXSWRIJXW46W4.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/TestMap/4/NJ/LFU0912BZ2II6UMPIZMLQH.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/TestMap/4/ON/PN95M866WL72Z9TU06XAQ4.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/TestMap/5/53/Z2JBBHMTBHL9ZV6HGU5N1Z.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/TestMap/5/57/YPISX1UTJUCHGZFQS9Y0BX.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/TestMap/5/5X/K4OED3N6M5RYC6296RSAD5.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/TestMap/5/82/MFHFWFZBT18C946BSQWLV3.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/TestMap/5/DK/0ATY8SFLTP4NSVLC8F73VQ.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/TestMap/5/FZ/RQJGMM5P3EUGZFJ5J2YWOE.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/TestMap/5/GO/OJSL08Q0P5EIYBNXBRP4JQ.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/TestMap/5/IO/WF9EBYIO6GK9IEM1Y2DQDA.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/TestMap/5/IZ/HOP8O2N90IJ3CMNE9KVKXA.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/TestMap/5/L2/991MBPSGE7DVB8DZ8GZJO2.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/TestMap/5/MS/46ZK1USSB7927Y6GF4O6O8.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/TestMap/5/S3/VLVD9W68YYLXBMYEMJEL6G.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/TestMap/5/V6/I0EXH2X82E1SBV8YGC0TAO.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/TestMap/6/04/6AX77NU7M9KDO15TWH5FUZ.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/TestMap/6/57/8LMM2X2C9FNL6VOS3HN67P.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/TestMap/6/58/ODG72S0OW5KSZYRQXLHNRO.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/TestMap/6/63/AH558BXTTV2VIUY6RGR5TM.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/TestMap/6/B1/JZKBX2S9LJZ5PX4QH7HMOM.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/TestMap/6/EY/6FLDSM6IKA69EMYNI8XATH.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/TestMap/6/NY/Z85FEN9J08FHTB0M9TG2MC.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/TestMap/6/QE/UDW9HOTQT0BR6SQ0FNYF99.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/TestMap/6/VM/DRVNNXJUIGT4XOQ3KYYXDU.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/TestMap/7/1R/WAJOCPVQFH5OFF0U409259.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/TestMap/7/D4/02JWZCFIJ5VV5A1VJJJRV6.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/TestMap/7/FN/5U8DOKPISP61M923NDB5TN.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/TestMap/7/HS/1CJS80H0EIQPUR147JXALH.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/TestMap/7/OW/VY6VU6MUSV5Y3L9F1FEKUH.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/TestMap/7/QC/NBMP63A9YE16HBHU82V0V9.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/TestMap/7/XI/LN80UVICDXQ5JNKV5PDPZW.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/TestMap/7/YX/HHN3UFCUSHYPOWJW5TPJF5.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/TestMap/8/02/2SZVGEJFBTXIVU5URWGXOU.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/TestMap/8/13/OTWYKS990FXK3QEJQQ4A7G.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/TestMap/8/4Q/OPOQQ2PQM3V4N38NBI0LGG.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/TestMap/8/G1/30INCQJQZWJ1VYIX3J69QP.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/TestMap/8/IT/YXO9U31SDII0P68NJL7FVV.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/TestMap/8/J7/ZGMNHDRASE4IRO4967LVD4.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/TestMap/8/JC/DHPZAO5V7GQIVBDCS1R88H.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/TestMap/8/SE/0ZNCQD7DPJ2RPXQ23TCL8H.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/TestMap/8/TN/74NMMHYOTAFOOPDMGXJU08.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/TestMap/9/0K/28H9943VSQFFHQWAWT64V3.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/TestMap/9/11/FID29GUR2590R4RJD40SSB.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/TestMap/9/65/D9GFCEQKU5UPSPXVGYWL7C.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/TestMap/9/6K/LB6TVR6HKUSPRI4ANXC7XW.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/TestMap/9/D6/C45QOV5L8YU9VGS8O7YYXJ.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/TestMap/9/F4/25EK9786CKSWPXAM52X1HP.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/TestMap/9/G1/4HM9THAD5GJA56VSOTZS98.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/TestMap/9/GZ/3USTVKK8KQG9PDTRXJ8P12.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/TestMap/9/HK/31IZ5PTW0Z1V0C4Q8RJCNS.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/TestMap/9/QR/VXQZ7TV50OTNNE6YKBD9P1.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/TestMap/A/5L/D6HVYMUV53VV3KMD6T2VQJ.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/TestMap/A/5R/3QIRO2OB7X66O5D3PYDJPN.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/TestMap/A/6N/GCENKS2HS38ZU5JWS7MK80.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/TestMap/A/A9/YTI5ON01YKRXPEDDT1AXGD.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/TestMap/A/AK/YV7OKGN2QG5Z4RYCQL4C7R.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/TestMap/A/I0/KUH0R73WFC15HS2I3C1BFE.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/TestMap/A/MG/Y8RYD7CLX99582X2G5R8V9.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/TestMap/A/RW/P1TSTA6CIX6FIFIMT2BRGX.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/TestMap/A/UV/GCMGUT5YEQU92V74S2VDUH.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/TestMap/A/VJ/JGT6NGN2ARZPC7PBW618LO.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/TestMap/A/VK/GZXKBL7W43RF1OPEC10JD3.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/TestMap/B/72/JWZYU8SGH21OXCQONHOROY.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/TestMap/B/CC/DX62XW9SLMKSCTT93L3S18.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/TestMap/B/DO/A960YANZ2F2UZPKIA1GSUE.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/TestMap/B/K8/L2V9HXPFDI9067ZY9IQZIP.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/TestMap/B/RG/4J7876EUG60PFLC1W3ZX90.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/TestMap/B/SM/Y5UL6Z8PEX3ZBX4BZ32ASR.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/TestMap/B/V5/3HT96KWTXQ71KSPJWBDCJE.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/TestMap/B/YZ/VWU87IMRW4RT8E8TN6OK23.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/TestMap/C/0V/PUY6M36XATW5RWTKW4HQ2N.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/TestMap/C/1B/DXLT009861ICCV1W66R08S.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/TestMap/C/1U/FFCW3TWAFH58E3OU7ZFG8V.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/TestMap/C/5N/WU253BMWFN3Q8VPVSTLSRP.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/TestMap/C/7I/E1VCEGQ95JE4D70A742SUS.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/TestMap/C/DK/6N33ENCP6LWVOB72FOTX98.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/TestMap/C/SW/Y416TQVYXQFY4WSVISPKUK.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/TestMap/C/TC/QI2SMJ4I15FQ9TA9QAIWMS.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/TestMap/C/YN/AOZANPAL9CM9HIYRUXZBED.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/TestMap/D/05/TY9B7QREU4LL6ZZT6AI1B5.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/TestMap/D/19/VM6SLSQU7E59TCES109XFT.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/TestMap/D/6A/B0PCEEP095FK64C5AY0RKR.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/TestMap/D/BN/4IXI3ESOO6SECMNTDI4H3M.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/TestMap/D/DQ/XA90VC957WKNPQXV1MS2C7.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/TestMap/D/EJ/8ME18KPEM041YX6FYTB71O.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/TestMap/D/FH/C27LN3F2K8Q95K0VULPWNU.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/TestMap/D/JD/8GIUZAYMAQ9RBBDGJRED6F.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/TestMap/D/SN/7VTM61HKZUP3PGYG1MN9YT.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/TestMap/D/WP/RT8FJGI8CCT3JZ6IK8EL78.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/TestMap/E/6U/W92JI46FRBHFMJVLD7AUQ5.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/TestMap/E/A5/486LH779PJR1B7HGBUFPUY.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/TestMap/E/AB/PC1EPPEIZ9EO9SXXDN90ZB.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/TestMap/E/CN/YYQ0TH4D48LP3LOR7IOTPN.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/TestMap/E/DM/U297NMZOCLGQQI1G1SG9OF.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/TestMap/E/DV/W647OMWU5YJGBF47CS3ZRA.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/TestMap/E/IY/QVBV6OZ8FK5GSF8SCC34RE.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/TestMap/E/KQ/4ST9DY3C9ZRF1W7VMKN2KX.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/TestMap/E/M4/JFHOJYBBLXHRY2CK4NQ1KZ.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/TestMap/E/TW/7ZXSPLVEY4VUDZVF8ISN4D.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/TestMap/E/UW/U0JNYI7HMJ4JTZGDV7KH7M.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/TestMap/E/V2/EBH7OJBCOCQEU4YGLUQTSM.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/TestMap/E/W4/RTXZT7T7RONKDTYKZHXJL8.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/TestMap/F/0U/D3IKU9DDSGZWU7E9QCGC32.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalObjects__/TestMap/4/8F/RYJ8IL7VEEZ0Z8N2L2LLY5.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalObjects__/TestMap/4/JZ/GVAWCKA0T5BPA8X4YGWSKR.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalObjects__/TestMap/5/5L/C3I1G93P8CAVWJMYPBEYEW.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalObjects__/TestMap/9/DO/8KXT3PRML2K0OPIIQCH1I7.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalObjects__/TestMap/A/7C/M1KS2O5LCVRHAP4QNJHN6S.uasset" beforeDir="false" />
       <change beforePath="$PROJECT_DIR$/Plugins/Surfel/Shaders/Private/Surfels/Visualize.usf" beforeDir="false" afterPath="$PROJECT_DIR$/Plugins/Surfel/Shaders/Private/Surfels/Visualize.usf" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Plugins/Surfel/Source/Surfel/Private/ComputePasses/VisualizePass.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Plugins/Surfel/Source/Surfel/Private/ComputePasses/VisualizePass.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Plugins/Surfel/Source/Surfel/Private/CVarCommands.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Plugins/Surfel/Source/Surfel/Private/CVarCommands.cpp" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Plugins/Surfel/Source/Surfel/Private/SurfelSceneViewExtension.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Plugins/Surfel/Source/Surfel/Private/SurfelSceneViewExtension.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Plugins/Surfel/Source/Surfel/Public/ComputePasses/GatherPass.h" beforeDir="false" afterPath="$PROJECT_DIR$/Plugins/Surfel/Source/Surfel/Public/ComputePasses/GatherPass.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Plugins/Surfel/Source/Surfel/Public/CVarCommands.h" beforeDir="false" afterPath="$PROJECT_DIR$/Plugins/Surfel/Source/Surfel/Public/CVarCommands.h" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Plugins/Surfel/Source/Surfel/Public/ComputePasses/GridAllocationPass.h" beforeDir="false" afterPath="$PROJECT_DIR$/Plugins/Surfel/Source/Surfel/Public/ComputePasses/GridAllocationPass.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Plugins/Surfel/Source/Surfel/Public/ComputePasses/ScatterPass.h" beforeDir="false" afterPath="$PROJECT_DIR$/Plugins/Surfel/Source/Surfel/Public/ComputePasses/ScatterPass.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Plugins/Surfel/Source/Surfel/Public/ComputePasses/VisualizePass.h" beforeDir="false" afterPath="$PROJECT_DIR$/Plugins/Surfel/Source/Surfel/Public/ComputePasses/VisualizePass.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Plugins/Surfel/Source/Surfel/Public/SurfelSceneViewExtension.h" beforeDir="false" afterPath="$PROJECT_DIR$/Plugins/Surfel/Source/Surfel/Public/SurfelSceneViewExtension.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Plugins/Surfel/Source/Surfel/Surfel.Build.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Plugins/Surfel/Source/Surfel/Surfel.Build.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Surfels.uproject" beforeDir="false" afterPath="$PROJECT_DIR$/Surfels.uproject" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -36,100 +391,22 @@
   <component name="Git.Settings">
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
   </component>
-  <component name="HighlightingSettingsPerFile">
-    <setting file="file://$PROJECT_DIR$/../../../../../Program Files/Epic Games/UE_5.8/Engine/Source/Runtime/ApplicationCore/Public/IOS/IOSAppDelegate.h" root0="FORCE_HIGHLIGHTING" />
-    <setting file="file://$PROJECT_DIR$/../../../../../Program Files/Epic Games/UE_5.8/Engine/Source/Runtime/RenderCore/Private/RenderGraphBuilder.cpp" root0="FORCE_HIGHLIGHTING" />
-    <setting file="file://$PROJECT_DIR$/../../../../../Program Files/Epic Games/UE_5.8/Engine/Source/Runtime/RenderCore/Public/GlobalShader.h" root0="FORCE_HIGHLIGHTING" />
-    <setting file="file://$PROJECT_DIR$/Plugins/Surfel/Source/Surfel/Private/CVarCommands.cpp" root0="FORCE_HIGHLIGHTING" />
-    <setting file="file://$PROJECT_DIR$/Plugins/Surfel/Source/Surfel/Private/ComputePasses/CompositePass.cpp" root0="FORCE_HIGHLIGHTING" />
-    <setting file="file://$PROJECT_DIR$/Plugins/Surfel/Source/Surfel/Private/ComputePasses/GatherPass.cpp" root0="FORCE_HIGHLIGHTING" />
-    <setting file="file://$PROJECT_DIR$/Plugins/Surfel/Source/Surfel/Private/ComputePasses/GridAllocationPass.cpp" root0="FORCE_HIGHLIGHTING" />
-    <setting file="file://$PROJECT_DIR$/Plugins/Surfel/Source/Surfel/Private/ComputePasses/ScatterPass.cpp" root0="FORCE_HIGHLIGHTING" />
-    <setting file="file://$PROJECT_DIR$/Plugins/Surfel/Source/Surfel/Private/ComputePasses/SurfelIrradiance.cpp" root0="FORCE_HIGHLIGHTING" />
-    <setting file="file://$PROJECT_DIR$/Plugins/Surfel/Source/Surfel/Private/ComputePasses/SurfelIrradiancePass.cpp" root0="FORCE_HIGHLIGHTING" />
-    <setting file="file://$PROJECT_DIR$/Plugins/Surfel/Source/Surfel/Private/ComputePasses/VisualizePass.cpp" root0="FORCE_HIGHLIGHTING" />
-  </component>
   <component name="McpProjectServerCommands">
     <commands />
     <urls />
   </component>
-  <component name="NextEditCompletionFeaturesState">
-    <decayedCancelled>
-      <entry key="MS100" value="1.0000010739628802" />
-      <entry key="MS500" value="1.1007466112268023" />
-      <entry key="S2" value="2.270316468826207" />
-      <entry key="S5" value="4.6886184981242955" />
-      <entry key="S10" value="7.534491768202475" />
-      <entry key="S30" value="11.60032903474453" />
-      <entry key="S60" value="13.143797002499586" />
-      <entry key="M2" value="14.03092002983412" />
-      <entry key="M5" value="15.499048106756259" />
-      <entry key="M10" value="22.3414439875693" />
-      <entry key="M15" value="32.919062380989" />
-      <entry key="M30" value="76.23869799617685" />
-      <entry key="H1" value="172.84601869400788" />
-      <entry key="H2" value="346.4577885246746" />
-      <entry key="H4" value="604.1642776136018" />
-      <entry key="D1" value="1333.475194520784" />
-      <entry key="W1" value="1621.4915169396681" />
-    </decayedCancelled>
-    <decayedSelected>
-      <entry key="MS100" value="0.0" />
-      <entry key="MS500" value="0.0" />
-      <entry key="S2" value="0.0" />
-      <entry key="S5" value="1.348837065539741E-296" />
-      <entry key="S10" value="1.1613944487295187E-148" />
-      <entry key="S30" value="4.878954181435693E-50" />
-      <entry key="S60" value="2.2101660885350513E-25" />
-      <entry key="M2" value="4.815209306409763E-13" />
-      <entry key="M5" value="1.447391922625881E-5" />
-      <entry key="M10" value="0.005776340204850674" />
-      <entry key="M15" value="0.05514374160770874" />
-      <entry key="M30" value="0.8803691366021968" />
-      <entry key="H1" value="4.883322485822325" />
-      <entry key="H2" value="13.586781292889604" />
-      <entry key="H4" value="26.234218458707904" />
-      <entry key="D1" value="66.50230373134514" />
-      <entry key="W1" value="84.34105002432653" />
-    </decayedSelected>
-    <decayedShown>
-      <entry key="MS100" value="3.9953642024735535E-6" />
-      <entry key="MS500" value="0.13914313649977528" />
-      <entry key="S2" value="1.4737634317051471" />
-      <entry key="S5" value="4.110488713314205" />
-      <entry key="S10" value="7.1231748448532795" />
-      <entry key="S30" value="11.405325169540909" />
-      <entry key="S60" value="13.035051897728978" />
-      <entry key="M2" value="13.973278250371319" />
-      <entry key="M5" value="15.473601374831821" />
-      <entry key="M10" value="22.32873848139689" />
-      <entry key="M15" value="32.95566818137393" />
-      <entry key="M30" value="77.0960825223659" />
-      <entry key="H1" value="177.70013830189598" />
-      <entry key="H2" value="360.0103728747502" />
-      <entry key="H4" value="630.3653080317019" />
-      <entry key="D1" value="1399.964599013751" />
-      <entry key="W1" value="1705.8303265770755" />
-    </decayedShown>
-  </component>
-  <component name="ProjectColorInfo">{
-  &quot;customColor&quot;: &quot;000000ff&quot;,
-  &quot;associatedIndex&quot;: 3
-}</component>
-  <component name="ProjectId" id="3JJEKXQdgqTx8Eo0x7eVGL7roHH" />
-  <component name="ProjectLevelVcsManager">
-    <ConfirmationsSetting value="2" id="Add" />
-  </component>
+  <component name="ProjectColorInfo"><![CDATA[{
+  "customColor": "000000ff",
+  "associatedIndex": 3
+}]]></component>
+  <component name="ProjectId" id="3Jdz7uEn6jqVdMHIha9XHKQE5Zx" />
   <component name="ProjectViewState">
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
   <component name="PropertiesComponent"><![CDATA[{
   "keyToString": {
-    "C/C++ Project.Surfels Editor.executor": "Run",
-    "C/C++ Project.Surfels Headless Game.executor": "Run",
     "C/C++ Project.Surfels.executor": "Run",
-    "ModuleVcsDetector.initialDetectionPerformed": "true",
     "RunOnceActivity.MCP Project settings loaded": "true",
     "RunOnceActivity.ShowReadmeOnStart": "true",
     "RunOnceActivity.cidr.known.project.marker": "true",
@@ -140,8 +417,6 @@
     "codeWithMe.voiceChat.enabledByDefault": "false",
     "com.intellij.ml.llm.matterhorn.ej.ui.settings.DefaultModelSelectionForGA.v1": "true",
     "com.jetbrains.opentelemetry.toolwindow.stripe.promo": "true",
-    "git-widget-placeholder": "main",
-    "ignore.virus.scanning.warn.message": "true",
     "junie.onboarding.icon.badge.shown": "true",
     "node.js.detected.package.eslint": "true",
     "node.js.detected.package.tslint": "true",
@@ -151,8 +426,8 @@
     "to.speed.mode.migration.done": "true"
   }
 }]]></component>
-  <component name="RunManager" selected="C/C++ Project.Surfels Editor">
-    <configuration name="Surfels Editor" type="CppProject" factoryName="C++ Project">
+  <component name="RunManager" selected="C/C++ Project.Surfels">
+    <configuration name="Surfels" type="CppProject" factoryName="C++ Project">
       <configuration_1 setup="1">
         <option name="CONFIGURATION" value="Development_Editor" />
         <option name="PLATFORM" value="x64" />
@@ -165,50 +440,6 @@
         <option name="TERMINAL_INTERACTION_BEHAVIOR" value="AUTO_DETECT" />
         <option name="PROJECT_FILE_PATH" value="$PROJECT_DIR$/Intermediate/ProjectFiles/Surfels.vcxproj" />
       </configuration_1>
-      <configuration_2 setup="1">
-        <option name="CONFIGURATION" value="Development" />
-        <option name="PLATFORM" value="x64" />
-        <option name="CURRENT_LAUNCH_PROFILE" value="Local" />
-        <option name="EXE_PATH" value="$(LocalDebuggerCommand)" />
-        <option name="PROGRAM_PARAMETERS" value="$(LocalDebuggerCommandArguments)" />
-        <option name="WORKING_DIRECTORY" value="$(LocalDebuggerWorkingDirectory)" />
-        <option name="PASS_PARENT_ENVS" value="1" />
-        <option name="USE_EXTERNAL_CONSOLE" value="0" />
-        <option name="TERMINAL_INTERACTION_BEHAVIOR" value="AUTO_DETECT" />
-        <option name="PROJECT_FILE_PATH" value="$PROJECT_DIR$/Intermediate/ProjectFiles/Surfels.vcxproj" />
-      </configuration_2>
-      <option name="DEFAULT_PROJECT_PATH" value="$PROJECT_DIR$/Intermediate/ProjectFiles/Surfels.vcxproj" />
-      <option name="PROJECT_FILE_PATH" value="$PROJECT_DIR$/Intermediate/ProjectFiles/Surfels.vcxproj" />
-      <option name="AUTO_SELECT_PRIORITY" value="10010" />
-      <method v="2">
-        <option name="Build" />
-      </method>
-    </configuration>
-    <configuration name="Surfels Headless Game" type="CppProject" factoryName="C++ Project">
-      <configuration_1 setup="1">
-        <option name="CONFIGURATION" value="Development_Editor" />
-        <option name="PLATFORM" value="x64" />
-        <option name="CURRENT_LAUNCH_PROFILE" value="Local" />
-        <option name="EXE_PATH" value="$(LocalDebuggerCommand)" />
-        <option name="PROGRAM_PARAMETERS" value="$(LocalDebuggerCommandArguments) -game -log -windowed -resx=1280 -resy=720" />
-        <option name="WORKING_DIRECTORY" value="$(LocalDebuggerWorkingDirectory)" />
-        <option name="PASS_PARENT_ENVS" value="1" />
-        <option name="USE_EXTERNAL_CONSOLE" value="0" />
-        <option name="TERMINAL_INTERACTION_BEHAVIOR" value="AUTO_DETECT" />
-        <option name="PROJECT_FILE_PATH" value="$PROJECT_DIR$/Intermediate/ProjectFiles/Surfels.vcxproj" />
-      </configuration_1>
-      <configuration_2 setup="1">
-        <option name="CONFIGURATION" value="Development" />
-        <option name="PLATFORM" value="x64" />
-        <option name="CURRENT_LAUNCH_PROFILE" value="Local" />
-        <option name="EXE_PATH" value="$(LocalDebuggerCommand)" />
-        <option name="PROGRAM_PARAMETERS" value="$(LocalDebuggerCommandArguments)" />
-        <option name="WORKING_DIRECTORY" value="$(LocalDebuggerWorkingDirectory)" />
-        <option name="PASS_PARENT_ENVS" value="1" />
-        <option name="USE_EXTERNAL_CONSOLE" value="0" />
-        <option name="TERMINAL_INTERACTION_BEHAVIOR" value="AUTO_DETECT" />
-        <option name="PROJECT_FILE_PATH" value="$PROJECT_DIR$/Intermediate/ProjectFiles/Surfels.vcxproj" />
-      </configuration_2>
       <option name="DEFAULT_PROJECT_PATH" value="$PROJECT_DIR$/Intermediate/ProjectFiles/Surfels.vcxproj" />
       <option name="PROJECT_FILE_PATH" value="$PROJECT_DIR$/Intermediate/ProjectFiles/Surfels.vcxproj" />
       <option name="AUTO_SELECT_PRIORITY" value="10010" />
@@ -217,18 +448,6 @@
       </method>
     </configuration>
     <configuration name="UE5" type="CppProject" factoryName="C++ Project">
-      <configuration_1 setup="1">
-        <option name="CONFIGURATION" value="BuiltWithUnrealBuildTool" />
-        <option name="PLATFORM" value="Win64" />
-        <option name="CURRENT_LAUNCH_PROFILE" value="Local" />
-        <option name="EXE_PATH" value="$(LocalDebuggerCommand)" />
-        <option name="PROGRAM_PARAMETERS" value="$(LocalDebuggerCommandArguments)" />
-        <option name="WORKING_DIRECTORY" value="$(LocalDebuggerWorkingDirectory)" />
-        <option name="PASS_PARENT_ENVS" value="1" />
-        <option name="USE_EXTERNAL_CONSOLE" value="0" />
-        <option name="TERMINAL_INTERACTION_BEHAVIOR" value="AUTO_DETECT" />
-        <option name="PROJECT_FILE_PATH" value="$PROJECT_DIR$/Intermediate/ProjectFiles/UE5.vcxproj" />
-      </configuration_1>
       <option name="DEFAULT_PROJECT_PATH" value="$PROJECT_DIR$/Intermediate/ProjectFiles/UE5.vcxproj" />
       <option name="PROJECT_FILE_PATH" value="$PROJECT_DIR$/Intermediate/ProjectFiles/UE5.vcxproj" />
       <option name="AUTO_SELECT_PRIORITY" value="10000" />
@@ -236,19 +455,14 @@
         <option name="Build" />
       </method>
     </configuration>
-    <list>
-      <item itemvalue="C/C++ Project.Surfels Editor" />
-      <item itemvalue="C/C++ Project.Surfels Headless Game" />
-      <item itemvalue="C/C++ Project.UE5" />
-    </list>
   </component>
   <component name="TaskManager">
     <task active="true" id="Default" summary="Default task">
-      <changelist id="33aded25-df80-4819-a209-c77824e12478" name="Changes" comment="" />
-      <created>1789370739243</created>
+      <changelist id="20fab832-f3ef-4372-8e5d-692461982054" name="Changes" comment="" />
+      <created>1790005589375</created>
       <option name="number" value="Default" />
       <option name="presentableId" value="Default" />
-      <updated>1789370739243</updated>
+      <updated>1790005589375</updated>
     </task>
     <servers />
   </component>

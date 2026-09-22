@@ -1,0 +1,24 @@
+{
+	"FileVersion": 3,
+	"Version": 1,
+	"VersionName": "0.1.0",
+	"FriendlyName": "ImGui",
+	"Description": "Dear ImGui is a bloat-free graphical user interface library for C++",
+	"Category": "Debug",
+	"CreatedBy": "Omar Cornut, segross, IDI-Systems, Other contributors",
+	"CreatedByURL": "https://github.com/IDI-Systems/UnrealImGui/graphs/contributors",
+	"DocsURL": "",
+	"MarketplaceURL": "",
+	"SupportURL": "",
+	"CanContainContent": false,
+	"IsBetaVersion": false,
+	"Installed": false,
+	"Modules": [
+		{
+			"Name": "ImGui",
+			"Type": "Runtime",
+			"LoadingPhase": "PreDefault"
+		}
+	],
+	"IsExperimentalVersion": false
+}

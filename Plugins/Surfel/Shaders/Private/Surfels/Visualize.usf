@@ -24,11 +24,17 @@ uint CellResolution;
 uint CellCapacity;
 uint CellSize;
 
-uint bUseGrid; // 1 = grid
+uint bUseGrid;
 uint bHasGBufferNormal;
 
-static const float DiscThickness = 0.25f; // How far a pixel can be off the surfel's plane and still count as on the disc, as a fraction of the radius
-static const float MinNormalAlignment = 0.5f; // Pixel and surfel normals must be within ~60 degrees, so a floor surfel doesn't bleed onto the wall next to it
+Texture2D CoverageTexture;
+uint bHasCoverageTexture;
+float CoverageScale;
+
+uint VisualizeMode; // One of the VISUALIZE_MODE_* defines
+uint GridVisFlags;          // GRID_VIS_* bits
+float GridVisEdgeThickness; // Width of the wireframe line drawn on a grid cell boundary, as a fraction of the cell
+
 
 // Generated with Claude
 float3 HashColor(uint Seed)
@@ -38,16 +44,40 @@ float3 HashColor(uint Seed)
     return saturate(Color * 0.7f + 0.3f);
 }
 
+// Black -> blue -> green -> red -> white, so both ends of the range stay readable.
+float3 HeatColor(float T)
+{
+    T = saturate(T);
+    float3 Color = lerp(float3(0.0f, 0.0f, 0.3f), float3(0.0f, 1.0f, 0.0f), saturate(T * 2.0f));
+    Color = lerp(Color, float3(1.0f, 0.0f, 0.0f), saturate(T * 2.0f - 1.0f));
+    return lerp(Color, float3(1.0f, 1.0f, 1.0f), saturate(T * 4.0f - 3.0f));
+}
+
+// Index of the grid cell a world position falls in, or false when it is outside the grid.
+bool GetGridCell(float3 WorldPosition, out int3 CellCoord, out uint CellIdx)
+{
+    CellCoord = int3(floor((WorldPosition - GridPosition) / (float)CellSize));
+    CellIdx = 0;
+
+    if (any(CellCoord < 0) || any(CellCoord >= (int)CellResolution))
+    {
+        return false;
+    }
+
+    CellIdx = (uint)CellCoord.x
+        + (uint)CellCoord.y * CellResolution
+        + (uint)CellCoord.z * CellResolution * CellResolution;
+    return true;
+}
+
 struct FSurfelHit
 {
     uint Index;
     float DistanceRatio; // Distance from the surfel center divided by its radius: 0 = center, 1 = rim
 };
 
-// Generated with Claude
-// Tests whether a pixel on a surface lies on one surfel's disc.
-// The disc lies on the surface, so seen at an angle it shows up as an ellipse on screen,
-// and geometry in front of it hides it because the pixel position comes from scene depth.
+static const float DiscThickness = 0.25f;
+static const float MinNormalAlignment = 0.5f;
 void TestSurfel(uint SurfelIndex, float3 PixelWorldPosition, float3 PixelNormal, inout FSurfelHit Hit)
 {
     float4 PositionAndRadius = SurfelPositionAndRadius[SurfelIndex];
@@ -88,6 +118,110 @@ void TestSurfel(uint SurfelIndex, float3 PixelWorldPosition, float3 PixelNormal,
     }
 }
 
+float3 VisualizeSurfels(float3 SceneColor, float3 PixelWorldPosition, float3 PixelNormal)
+{
+    FSurfelHit Hit;
+    Hit.Index = 0xFFFFFFFF;
+    Hit.DistanceRatio = 2.0f; // Above 1 = no surfel found yet
+
+    int3 PixelCell;
+    uint CellIdx;
+    bool bInsideGrid = bUseGrid != 0 && GetGridCell(PixelWorldPosition, PixelCell, CellIdx);
+
+    if (bInsideGrid)
+    {
+        // Only the pixel's own cell - GridAllocation inserts every surfel into
+        // all the cells it overlaps, so no neighbor check is needed.
+        // Insertion is fixed-capacity: a cell's counter can exceed
+        // CellCapacity if it overflowed, so clamp the read.
+        uint EntryCount = min(GridCounter[CellIdx], CellCapacity);
+        for (uint i = 0; i < EntryCount; i++)
+        {
+            TestSurfel(GridCellEntries[CellIdx * CellCapacity + i], PixelWorldPosition, PixelNormal, Hit);
+        }
+    }
+    else // Brute test no grid
+    {
+        uint NumSurfels = SurfelCount[0];
+        for (uint SurfelIndex = 0; SurfelIndex < NumSurfels; SurfelIndex++)
+        {
+            TestSurfel(SurfelIndex, PixelWorldPosition, PixelNormal, Hit);
+        }
+    }
+
+    // No surfel covers this pixel
+    if (Hit.DistanceRatio > 1.0f)
+    {
+        return SceneColor;
+    }
+
+    // Blend between random color, scene color and an intensity value
+    return lerp(SceneColor, HashColor(Hit.Index), saturate(Intensity));
+}
+
+// VISUALIZE_MODE_GRID: show the uniform grid the surfels are binned into.
+// What gets drawn is controlled by the GRID_VIS_* bits in GridVisFlags:
+//   default   - color hashed per cell so neighbours are easy to tell apart, brightness = fullness
+//   HEATMAP   - color by fullness instead, so dense areas read at a glance
+//   OVERFLOW  - cells that got more surfels than CellCapacity are solid red
+//   HIDE_EMPTY- cells with no surfels are left as scene color
+//   WIREFRAME - white lines on cell boundaries
+float3 VisualizeGrid(float3 SceneColor, float3 PixelWorldPosition)
+{
+    int3 PixelCell;
+    uint CellIdx;
+    if (!GetGridCell(PixelWorldPosition, PixelCell, CellIdx))
+    {
+        return SceneColor; // Outside the grid: nothing is binned here
+    }
+
+    uint EntryCount = GridCounter[CellIdx];
+    float Fullness = saturate((float)EntryCount / (float)CellCapacity);
+
+    // Wireframe: how far into the cell this pixel is, on each axis.
+    float3 CellLocal = frac((PixelWorldPosition - GridPosition) / (float)CellSize);
+    float3 EdgeDistance = min(CellLocal, 1.0f - CellLocal);
+    bool bOnEdge = (GridVisFlags & GRID_VIS_WIREFRAME) != 0
+        && min(EdgeDistance.x, min(EdgeDistance.y, EdgeDistance.z)) < GridVisEdgeThickness;
+
+    // Empty cells can be hidden, but keep their wireframe so the grid's extent stays visible.
+    if (EntryCount == 0 && (GridVisFlags & GRID_VIS_HIDE_EMPTY) != 0 && !bOnEdge)
+    {
+        return SceneColor;
+    }
+
+    float3 CellColor = (GridVisFlags & GRID_VIS_HEATMAP) != 0
+        ? HeatColor(Fullness)
+        // Empty cells stay dark so the populated part of the grid stands out.
+        : HashColor(CellIdx) * lerp(0.15f, 1.0f, Fullness);
+
+    // More surfels wanted in than the cell can hold, so the grid query is dropping some.
+    if (EntryCount > CellCapacity && (GridVisFlags & GRID_VIS_OVERFLOW) != 0)
+    {
+        CellColor = float3(1.0f, 0.0f, 0.0f);
+    }
+
+    if (bOnEdge)
+    {
+        CellColor = float3(1.0f, 1.0f, 1.0f);
+    }
+
+    return lerp(SceneColor, CellColor, saturate(Intensity));
+}
+
+// VISUALIZE_MODE_COVERAGE: the map Scatter writes and Gather reads to decide where to
+// spawn. Shown on its own rather than blended, since the point is to read the values.
+float3 VisualizeCoverage(float3 SceneColor, int3 LoadPos)
+{
+    if (bHasCoverageTexture == 0)
+    {
+        return SceneColor; // Nothing ran this frame, so there is no map to show
+    }
+
+    float Coverage = CoverageTexture.Load(LoadPos).r;
+    return HeatColor(Coverage / max(CoverageScale, 0.0001f));
+}
+
 [numthreads(THREADS_X, THREADS_Y, THREADS_Z)]
 void MainCS(uint3 DispatchThreadId : SV_DispatchThreadID)
 {
@@ -126,46 +260,22 @@ void MainCS(uint3 DispatchThreadId : SV_DispatchThreadID)
     float3 PixelWorldPosition = DFFastSubtractDemote(TranslatedWorldPosition, PrimaryView.PreViewTranslation);
     float3 PixelNormal = normalize(GBufferATexture.Load(LoadPos).xyz * 2.0f - 1.0f);
 
-    FSurfelHit Hit;
-    Hit.Index = 0xFFFFFFFF;
-    Hit.DistanceRatio = 2.0f; // Above 1 = no surfel found yet
-
-    int3 PixelCell = int3(floor((PixelWorldPosition - GridPosition) / CellSize));
-    bool bInsideGrid = bUseGrid != 0 && all(PixelCell >= 0) && all(PixelCell < (int)CellResolution);
-
-    if (bInsideGrid)
-    {
-        // Only the pixel's own cell - GridAllocation inserts every surfel into
-        // all the cells it overlaps, so no neighbor check is needed.
-        uint CellIdx = (uint)PixelCell.x
-            + (uint)PixelCell.y * CellResolution
-            + (uint)PixelCell.z * CellResolution * CellResolution;
-
-        // Insertion is fixed-capacity: a cell's counter can exceed
-        // CellCapacity if it overflowed, so clamp the read.
-        uint EntryCount = min(GridCounter[CellIdx], CellCapacity);
-        for (uint i = 0; i < EntryCount; i++)
-        {
-            TestSurfel(GridCellEntries[CellIdx * CellCapacity + i], PixelWorldPosition, PixelNormal, Hit);
-        }
-    }
-    else // Brute test no grid
-    {
-        uint NumSurfels = SurfelCount[0];
-        for (uint SurfelIndex = 0; SurfelIndex < NumSurfels; SurfelIndex++)
-        {
-            TestSurfel(SurfelIndex, PixelWorldPosition, PixelNormal, Hit);
-        }
-    }
-
     float3 Result = SceneColor.rgb;
-    
-    // If surfel was hit color it
-    if (Hit.DistanceRatio <= 1.0f)
+
+    if (VisualizeMode == VISUALIZE_MODE_SURFELS)
     {
-        // Blend between random color, scene color and an intensity value
-        Result = lerp(SceneColor.rgb, HashColor(Hit.Index), saturate(Intensity));
+        Result = VisualizeSurfels(SceneColor.rgb, PixelWorldPosition, PixelNormal);
     }
+    else if (VisualizeMode == VISUALIZE_MODE_GRID)
+    {
+        Result = VisualizeGrid(SceneColor.rgb, PixelWorldPosition);
+    }
+    else if (VisualizeMode == VISUALIZE_MODE_COVERAGE)
+    {
+        Result = VisualizeCoverage(SceneColor.rgb, LoadPos);
+    }
+    // Every other mode leaves scene color alone: the lighting-reference modes only
+    // reconfigure the renderer from the game thread, there is nothing to draw here.
 
     OutRenderTarget[PixelPos] = float4(Result, SceneColor.a);
 }

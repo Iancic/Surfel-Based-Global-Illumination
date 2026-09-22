@@ -3,6 +3,8 @@
 #include "RenderGraphResources.h"
 #include "RenderGraphUtils.h"
 #include "SceneViewExtension.h"
+#include "SceneInterface.h"
+#include "Engine/World.h"
 #include "ScreenPass.h"
 #include "SystemTextures.h"
 #include "PostProcess/PostProcessMaterialInputs.h"
@@ -18,6 +20,52 @@ FSurfelSceneViewExtension::FSurfelSceneViewExtension(const FAutoRegister& AutoRe
 	UE_LOG(LogTemp, Log, TEXT("Surfel: SceneViewExtension registered"));
 }
 
+void FSurfelSceneViewExtension::SetupView(FSceneViewFamily& InViewFamily, FSceneView& InView)
+{
+	// Game worlds only (PIE / standalone). The mode CVar is global and survives the end of
+	// PIE, so without this, stopping PIE in "Direct Light Only" leaves the editor viewport
+	// unlit as well.
+	const UWorld* World = InViewFamily.Scene ? InViewFamily.Scene->GetWorld() : nullptr;
+	if (!World || !World->IsGameWorld())
+	{
+		return;
+	}
+
+	// Lumen GI only runs when the view's resolved GI method is Lumen AND nothing vetoes it.
+	// The project ships with r.DynamicGlobalIlluminationMethod=0 (None), and
+	// r.Lumen.DiffuseIndirect.Allow can only veto, never enable. So the way to switch it
+	// both ways is the view's FinalPostProcessSettings: SetupView runs right after
+	// EndFinalPostprocessSettings, so what is set here beats the project default and any
+	// Post Process Volume.
+	FFinalPostProcessSettings& Settings = InView.FinalPostProcessSettings;
+
+	switch ((ESurfelVisualizeMode)CVarSurfelVisualizeMode.GetValueOnGameThread())
+	{
+	case ESurfelVisualizeMode::LumenGI:
+		Settings.DynamicGlobalIlluminationMethod = EDynamicGlobalIlluminationMethod::Lumen;
+		Settings.ReflectionMethod = EReflectionMethod::Lumen;
+		break;
+
+	case ESurfelVisualizeMode::SurfelGI:
+		// No Lumen anywhere, including its reflections, which would carry Lumen's bounce.
+		Settings.DynamicGlobalIlluminationMethod = EDynamicGlobalIlluminationMethod::None;
+		Settings.ReflectionMethod = EReflectionMethod::ScreenSpace;
+		break;
+
+	case ESurfelVisualizeMode::DirectLightOnly:
+		// Every indirect term off: GI, reflections, and the skylight's ambient.
+		Settings.DynamicGlobalIlluminationMethod = EDynamicGlobalIlluminationMethod::None;
+		Settings.ReflectionMethod = EReflectionMethod::None;
+		InViewFamily.EngineShowFlags.SetSkyLighting(false);
+		InViewFamily.EngineShowFlags.SetReflectionEnvironment(false);
+		break;
+
+	default:
+		// Debug overlays draw on top of whatever the project / level has configured.
+		break;
+	}
+}
+
 // Where should my defined passes hook into the pipeline
 void FSurfelSceneViewExtension::SubscribeToPostProcessingPass(
 	EPostProcessingPass PassId,
@@ -31,7 +79,11 @@ void FSurfelSceneViewExtension::SubscribeToPostProcessingPass(
 		return;
 	}
 
-	if (CVarSurfelMode.GetValueOnRenderThread() == 1)
+	// Nothing to draw unless the visualize pass is on AND the selected mode is one the
+	// shader actually renders. The lighting-reference modes only reconfigure the
+	// renderer, so skip the fullscreen dispatch for them entirely.
+	if (CVarSurfelMode.GetValueOnRenderThread() == 1
+		&& IsSurfelOverlayMode(CVarSurfelVisualizeMode.GetValueOnRenderThread()))
 	{
 		InOutPassCallbacks.Add(FAfterPassCallbackDelegate::CreateRaw(
 			this, &FSurfelSceneViewExtension::RunFullscreenPass));
@@ -45,6 +97,17 @@ void FSurfelSceneViewExtension::PostRenderBasePassDeferred_RenderThread(FRDGBuil
 	// 1. Get gbuffers as jack said
 	// 2. Separate passes into functions that can be defined inside their own headers/cpp not everything in sceneview just the dispatchng and parameters
 	
+	// Drop last frame's grid handle before any early return: those RDG buffers belong to a
+	// finished graph, and RunFullscreenPass must never pick them up if this frame skips the grid.
+	if (InView.State)
+	{
+		SurfelFrameDataByViewKey.Remove(InView.State->GetViewKey());
+	}
+
+	// Before any early return, so RunFullscreenPass later this frame sees the same
+	// grid layout whether or not the grid got built.
+	FUniformGridViewState::UpdateFromCVars();
+
 	// Are surfel enabled? Is view valid? Are the GBuffers?
 	if (!CVarSurfelEnable.GetValueOnRenderThread() || !InView.State || !SceneTextures)
 	{
@@ -195,13 +258,11 @@ void FSurfelSceneViewExtension::PostRenderBasePassDeferred_RenderThread(FRDGBuil
 	FGatherSurfelPass::FParameters* GatherPassParameters =
 		GraphBuilder.AllocParameters<FGatherSurfelPass::FParameters>();
 	
-	// TODO: 256 is hardcoded should be exposed to ImGui
-	float SpawnChance = 256.f / float(CoverageExtent.X * CoverageExtent.Y) ; // Dividing by the pixel count makes SpawnChance the probability per uncovered pixel. Across the whole screen, that gives about TargetSpawnsPerFrame new surfels per frame at most, regardless of resolution.
+	const float SpawnsPerFrame = (float)FMath::Max(CVarSurfelSpawnsPerFrame.GetValueOnRenderThread(), 0);
+	float SpawnChance = SpawnsPerFrame / float(CoverageExtent.X * CoverageExtent.Y) ; // Dividing by the pixel count makes SpawnChance the probability per uncovered pixel. Across the whole screen, that gives about SpawnsPerFrame new surfels per frame at most, regardless of resolution.
 	GatherPassParameters->SpawnChance = SpawnChance;
-	
-	// TODO: to make global for ImGui
-	static float SpawnCoverageThreshold = 0.1f;
-	GatherPassParameters->SpawnCoverageThreshold = SpawnCoverageThreshold;
+
+	GatherPassParameters->SpawnCoverageThreshold = CVarSurfelSpawnCoverageThreshold.GetValueOnRenderThread();
 	
 	GatherPassParameters->CoverageTexture = CoverageTexture;
 	
@@ -266,11 +327,11 @@ void FSurfelSceneViewExtension::PostRenderBasePassDeferred_RenderThread(FRDGBuil
 		
 	UE_LOG(LogTemp, Log, TEXT("Surfel: grid allocation ran, budget %u"), CVarBudget);
 
-	// Hand the grid this frame's buffers off to RunFullscreenPass, which runs later
-	// in the same frame's render graph (same GraphBuilder) but is a separate callback
+	// Hand this frame's grid buffers and coverage map off to RunFullscreenPass, which runs
+	// later in the same frame's render graph (same GraphBuilder) but is a separate callback
 	// with no access to these locals. Not persisted across frames - overwritten here
 	// every frame before it's read.
-	GridFrameDataByViewKey.Add(ViewKey, FGridFrameData{ GridCellEntriesBuffer, GridCounterBuffer, GridPassParameters->GridPosition });
+	SurfelFrameDataByViewKey.Add(ViewKey, FSurfelFrameData{ GridCellEntriesBuffer, GridCounterBuffer, GridPassParameters->GridPosition, CoverageTexture });
 
 	// Convert from RDG to the SurfelState struct from the map so surfels are persistent per frame
 	// Otherwise RDG resources get freed here
@@ -393,18 +454,24 @@ FScreenPassTexture FSurfelSceneViewExtension::RunFullscreenPass(
 		}
 	}
 
-	// Grid: pull in whatever GridAllocation built for this view earlier this same
-	// frame. If it's not there yet (first frame, or the grid feature is off), fall
+	// Grid and coverage: pull in whatever the passes built for this view earlier this same
+	// frame. If they're not there yet (first frame, or the grid feature is off), fall
 	// back to the brute-force loop with small dummy buffers just to keep the
 	// shader parameters valid.
-	const FGridFrameData* GridFrameData = GridFrameDataByViewKey.Find(ViewKey);
-	const bool bUseGrid = GridFrameData != nullptr && CVarSurfelUseGrid.GetValueOnRenderThread() != 0;
+	// Consume (copy + remove) so a handle can never outlive the graph it was created in.
+	FSurfelFrameData SurfelFrameData;
+	const bool bHasFrameData = SurfelFrameDataByViewKey.RemoveAndCopyValue(ViewKey, SurfelFrameData);
+
+	// The Grid visualization needs the grid itself, so read it there whatever r.Surfel.UseGrid says.
+	const int32 VisualizeMode = CVarSurfelVisualizeMode.GetValueOnRenderThread();
+	const bool bUseGrid = bHasFrameData
+		&& (CVarSurfelUseGrid.GetValueOnRenderThread() != 0 || VisualizeMode == (int32)ESurfelVisualizeMode::Grid);
 
 	if (bUseGrid)
 	{
-		PassParameters->GridCellEntries = GraphBuilder.CreateUAV(GridFrameData->GridCellEntries);
-		PassParameters->GridCounter     = GraphBuilder.CreateUAV(GridFrameData->GridCounter);
-		PassParameters->GridPosition    = GridFrameData->GridPosition;
+		PassParameters->GridCellEntries = GraphBuilder.CreateUAV(SurfelFrameData.GridCellEntries);
+		PassParameters->GridCounter     = GraphBuilder.CreateUAV(SurfelFrameData.GridCounter);
+		PassParameters->GridPosition    = SurfelFrameData.GridPosition;
 	}
 	else
 	{
@@ -423,6 +490,18 @@ FScreenPassTexture FSurfelSceneViewExtension::RunFullscreenPass(
 	PassParameters->CellCapacity   = FUniformGridViewState::CellCapacity;
 	PassParameters->CellSize       = FUniformGridViewState::CellSize;
 	PassParameters->bUseGrid       = bUseGrid ? 1u : 0u;
+
+	// Coverage map, for the Coverage visualization. Scatter writes it and Gather reads it,
+	// so by the time this pass runs it holds this frame's finished values.
+	const bool bHasCoverage = bHasFrameData && SurfelFrameData.CoverageTexture != nullptr;
+	PassParameters->CoverageTexture     = bHasCoverage ? SurfelFrameData.CoverageTexture : BlackDummy;
+	PassParameters->bHasCoverageTexture = bHasCoverage ? 1u : 0u;
+	PassParameters->CoverageScale       = CVarSurfelCoverageScale.GetValueOnRenderThread();
+
+	PassParameters->VisualizeMode = (uint32)VisualizeMode;
+
+	PassParameters->GridVisFlags         = (uint32)CVarSurfelGridVisFlags.GetValueOnRenderThread();
+	PassParameters->GridVisEdgeThickness = FMath::Clamp(CVarSurfelGridVisEdgeThickness.GetValueOnRenderThread(), 0.0f, 0.5f);
 	//---------------------------------------------------------------------------------------------------------------------------------------------
 
 	TShaderMapRef<FSurfelFullscreenCS> ComputeShader(GetGlobalShaderMap(View.GetFeatureLevel()));
