@@ -26,11 +26,14 @@ public class Surfel : ModuleRules
             new string[]
             {
                 "Slate",
-                "SlateCore",
+                "SlateCore"
             }
             );
 
         // ImGui    	
         PrivateDependencyModuleNames.Add("ImGui");
+        
+        // For the Translucent header error
+        PrivateIncludePaths.Add(Path.Combine(GetModuleDirectory("Renderer"), "Internal"));
     }
 }

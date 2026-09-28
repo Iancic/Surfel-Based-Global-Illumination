@@ -1,6 +1,7 @@
 #pragma once
 #include "CoreMinimal.h"
 #include "HAL/IConsoleManager.h"
+#include <atomic>
 
 // Declared here, defined once in CVarCommands.cpp. Defining them `static` in the header
 // gave every including .cpp its own copy (own CVar registration, own refresh counter).
@@ -63,3 +64,9 @@ inline bool IsSurfelOverlayMode(int32 Mode)
 
 // Bumped by r.Surfel.Refresh; Gather clears and respawns from scratch when this changes.
 extern int32 GSurfelRefreshRequestId;
+
+// How many surfels the GPU had allocated as of the last completed readback, for the ImGui
+// budget meter. Written on the render thread when a readback lands, read on the game thread,
+// hence the atomic. It lags the GPU by a frame or two - fine for a debug gauge, do not use it
+// to size anything.
+extern std::atomic<int32> GSurfelAllocatedCount;

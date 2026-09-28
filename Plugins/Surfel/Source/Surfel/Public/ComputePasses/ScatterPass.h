@@ -1,6 +1,7 @@
 ﻿#pragma once
 #include "GlobalShader.h"
 #include "ShaderParameterStruct.h"
+#include "SceneTexturesConfig.h"
 
 /**
  * NOTE: explaining nomenclature
@@ -43,13 +44,7 @@ public:
 		SHADER_PARAMETER_RDG_BUFFER_UAV(RWStructuredBuffer<float4>, SurfelNormalAndFlags)
 	
 		// GBuffers
-		SHADER_PARAMETER_RDG_TEXTURE(Texture2D, GBufferATexture)
-		SHADER_PARAMETER_RDG_TEXTURE(Texture2D, GBufferBTexture)
-		SHADER_PARAMETER_RDG_TEXTURE(Texture2D, GBufferCTexture)
-		SHADER_PARAMETER_RDG_TEXTURE(Texture2D, GBufferDTexture)
-		SHADER_PARAMETER_RDG_TEXTURE(Texture2D, GBufferETexture)
-		SHADER_PARAMETER_RDG_TEXTURE(Texture2D, GBufferFTexture)
-		SHADER_PARAMETER_RDG_TEXTURE(Texture2D, SceneDepthTexture)
+		SHADER_PARAMETER_STRUCT_INCLUDE(FSceneTextureShaderParameters, GBufferTextures)
 	
 		// Uniform Grid
 		SHADER_PARAMETER_RDG_BUFFER_UAV(RWStructuredBuffer<uint32>, GridCellEntries)

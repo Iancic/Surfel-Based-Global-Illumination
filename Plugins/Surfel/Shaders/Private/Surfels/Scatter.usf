@@ -26,22 +26,24 @@ uint2 ViewRectMax;
 [numthreads(THREADS_X, THREADS_Y, THREADS_Z)]
 void MainCS(uint3 DispatchThreadId : SV_DispatchThreadID)
 {
-	// TODO: can be dispatched per tile and use intrinsics
+	// Thread per pixel to find the coverage of this
 	uint2 PixelPos = min(ViewRectMin + DispatchThreadId.xy, ViewRectMax - 1);
 	int3 LoadPos = int3(PixelPos, 0);
 	
-	// Get world surface normal and distance
-	float4 GBufferA = GBufferATexture.Load(LoadPos);
+	// Get world surface normal at this pixel
+	float4 GBufferA = SceneTexturesStruct.GBufferATexture.Load(LoadPos);
 	float3 WorldNormalAtPixel = normalize(GBufferA.xyz * 2.0f - 1.0f);
 	
-	float DeviceZ = SceneDepthTexture.Load(LoadPos).r;
+	// Get world position at this pixel
+	float DeviceZ = SceneTexturesStruct.SceneDepthTexture.Load(LoadPos).r;
 	float4 SvPosition = float4(PixelPos + 0.5f, DeviceZ, 1.0f);
 	float3 TranslatedWorldPosition = SvPositionToTranslatedWorld(SvPosition);
 	float3 WorldPositionAtPixel = DFFastSubtractDemote(TranslatedWorldPosition, PrimaryView.PreViewTranslation);
 	
+	// Where in the grid is this pixel's position
 	int3 PixelCell = int3(floor((WorldPositionAtPixel - GridPosition) / CellSize));
+	
 	bool bInsideGrid = all(PixelCell >= 0) && all(PixelCell < (int)CellResolution);
-
 	if (bInsideGrid)
 	{
 		// Retrieve grid cell at this extracted world position 
@@ -52,35 +54,37 @@ void MainCS(uint3 DispatchThreadId : SV_DispatchThreadID)
 		// Go through all surfels in grid cell
 		uint EntryCount = min(GridCounter[CellIdx], CellCapacity);
 		
-		float CoverageWeight = 0.f;		
+		// Coverage weight is computed based on:
+		// 1. How close the surfel center is to this retrieved position
+		// 2. How aligned is the surfel to the surface normal
+		float CoverageWeight = 0.f;
 		for (uint i = 0; i < EntryCount; i++)            
-		{                         
+		{
 			int SurfelIdx = GridCellEntries[CellIdx * CellCapacity + i];
 			
-			// Retrieve Surfel
 			float3 Position = SurfelPositionAndRadius[SurfelIdx].xyz;
 			float Radius = SurfelPositionAndRadius[SurfelIdx].w;
 			float3 Normal = normalize(SurfelNormalAndFlags[SurfelIdx].xyz);
 			
 			// Check how close the surfel center is to this world position
-			// Farther surfels add more coverage than closer ones
+			// Further surfels add more coverage than closer ones
 			float Distance =  length(WorldPositionAtPixel - Position);
 			
-			// Discard ones outside the radius or farther
+			// Discard ones outside the radius or further
 			float DistanceWeight = 1.0f - smoothstep(0.0f, Radius, Distance);
 			
 			// Dot product normals to see if the surfel is aligned with the surface
 			// It may be that the surface is sharp so the surfel belongs to another surface
 			float NormalsFacingFactor = saturate(dot(Normal, WorldNormalAtPixel));
 			
-			// Final Surfel Weight
-			float FinalSurfelWeight = Distance * NormalsFacingFactor;
-			
-			// Add to final coverage weight
-			CoverageWeight += FinalSurfelWeight;
-		}         
+			CoverageWeight += DistanceWeight * NormalsFacingFactor;
+		}
 		
-		// Store coverage into the texture
 		CoverageTexture[PixelPos] = CoverageWeight;
+	}
+	else
+	{
+		// This pixel's surface is outside the grid.
+		// What should happen
 	}
 }

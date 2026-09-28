@@ -7,6 +7,10 @@
 #include "GameFramework/PlayerController.h"
 #include "Kismet/GameplayStatics.h"
 #include "Misc/PackageName.h"
+#include "Misc/FileHelper.h"
+#include "Misc/Paths.h"
+#include "Misc/ScopeExit.h"
+#include "Styling/StarshipCoreStyle.h"
 
 // Credit AI Usage: After I laid out some general scaffolding and to do ideas, I used Claude Code to generate most of the visualization code
 // Prompts used: 
@@ -120,6 +124,61 @@ namespace
 			ImGui::SetTooltip("Set by the quality preset. Choose \"Sliders\" to edit.");
 		}
 	}
+
+	// Key the font is registered under. The plugin also copies it into ImFontConfig::Name,
+	// which is how FindSlateFont picks it back out of the atlas.
+	const char* const GSlateFontName = "Roboto (Slate)";
+
+	// Give ImGui the same font the editor's Slate UI uses: Roboto Regular from the engine's
+	// Slate content, at Starship's regular text size.
+	void RegisterSlateFont()
+	{
+		FImGuiModuleProperties& Properties = FImGuiModule::Get().GetProperties();
+		const FName FontKey(GSlateFontName);
+
+		// Module properties outlive PIE sessions, so only the first session registers it.
+		if (Properties.GetCustomFonts().Contains(FontKey))
+		{
+			return;
+		}
+
+		// The plugin keeps this config and re-reads it every time it rebuilds the atlas (e.g. on
+		// a DPI change), so the TTF bytes have to live as long as the editor does.
+		static TArray<uint8> FontData;
+		const FString FontPath = FPaths::EngineContentDir() / TEXT("Slate/Fonts/Roboto-Regular.ttf");
+		if (!FFileHelper::LoadFileToArray(FontData, *FontPath))
+		{
+			UE_LOG(LogTemp, Warning, TEXT("DevGui: couldn't load %s, keeping ImGui's default font"), *FontPath);
+			return;
+		}
+
+		TSharedPtr<ImFontConfig> Config = MakeShared<ImFontConfig>();
+		Config->FontData = FontData.GetData();
+		Config->FontDataSize = FontData.Num();
+		// Not owned: the atlas copies the bytes on each build instead of freeing our buffer,
+		// which would leave the next rebuild reading freed memory.
+		Config->FontDataOwnedByAtlas = false;
+		// Slate sizes are points at 96 DPI, ImGui's are pixels.
+		Config->SizePixels = FMath::RoundToFloat(FStarshipCoreStyle::RegularTextSize * 96.0f / 72.0f);
+
+		Properties.AddCustomFont(FontKey, Config);
+
+		// The plugin built its atlas at startup, before this font existed.
+		FImGuiModule::Get().RebuildFontAtlas();
+	}
+
+	// Looked up by name each frame rather than cached: a rebuild replaces every ImFont.
+	ImFont* FindSlateFont()
+	{
+		for (ImFont* Font : ImGui::GetIO().Fonts->Fonts)
+		{
+			if (FCStringAnsi::Strcmp(Font->GetDebugName(), GSlateFontName) == 0)
+			{
+				return Font;
+			}
+		}
+		return nullptr;
+	}
 }
 
 void UDevGuiSubsystem::Initialize(FSubsystemCollectionBase& Collection)
@@ -128,10 +187,27 @@ void UDevGuiSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 
 	// So I don't type the CVar manually 
 	FImGuiModule::Get().GetProperties().SetInputEnabled(true);
+
+	RegisterSlateFont();
 }
 
 void UDevGuiSubsystem::Tick(float DeltaTime)
 {
+	// Pushed before Begin so the title bar uses it too. Falls back to ImGui's default
+	// font if the Slate one isn't in the atlas (failed to load, or rebuild still pending).
+	ImFont* SlateFont = FindSlateFont();
+	if (SlateFont)
+	{
+		ImGui::PushFont(SlateFont);
+	}
+	ON_SCOPE_EXIT
+	{
+		if (SlateFont)
+		{
+			ImGui::PopFont();
+		}
+	};
+
 	ImGui::SetNextWindowSize(ImVec2(1200.0f, 720.0f), ImGuiCond_FirstUseEver);
 	ImGui::SetNextWindowPos(ImVec2(10.0f, 10.0f), ImGuiCond_FirstUseEver);
 
@@ -307,6 +383,8 @@ void UDevGuiSubsystem::DrawSurfelSettings()
 	}
 	ImGui::EndDisabled();
 
+	DrawBudgetMeter();
+
 	// Not part of any preset: it's an algorithm threshold, not a quality level.
 	float SpawnCoverageThreshold = CVarSurfelSpawnCoverageThreshold.GetValueOnGameThread();
 	if (ImGui::SliderFloat("Spawn Coverage Threshold", &SpawnCoverageThreshold, 0.0f, 2.0f, "%.3f"))
@@ -319,6 +397,46 @@ void UDevGuiSubsystem::DrawSurfelSettings()
 	}
 
 	DrawVisualizationSettings();
+}
+
+void UDevGuiSubsystem::DrawBudgetMeter()
+{
+	// GSurfelAllocatedCount is filled in by a GPU readback on the render thread, so it trails
+	// the GPU by a frame or two and sits at 0 until the first copy lands. That is fine for a
+	// gauge, but it means a fresh PIE session shows 0/N for a moment rather than being broken.
+	const int32 Used = GSurfelAllocatedCount.load(std::memory_order_relaxed);
+	const int32 Budget = FMath::Max(CVarSurfelBudget.GetValueOnGameThread(), 1);
+	const float Fraction = FMath::Clamp((float)Used / (float)Budget, 0.0f, 1.0f);
+
+	// The meter earns its place at the top of the range: once the pool is full, Gather silently
+	// stops spawning and coverage gaps never fill, which looks like a spawning bug rather than
+	// an exhausted budget. Colour makes that state obvious before you go hunting.
+	ImVec4 BarColor(0.20f, 0.70f, 0.30f, 1.0f);            // healthy
+	if (Fraction >= 0.95f)      BarColor = ImVec4(0.85f, 0.20f, 0.20f, 1.0f);  // effectively full
+	else if (Fraction >= 0.75f) BarColor = ImVec4(0.85f, 0.65f, 0.15f, 1.0f);  // filling up
+
+	const FString Overlay = FString::Printf(TEXT("%d / %d  (%.1f%%)"), Used, Budget, Fraction * 100.0f);
+
+	ImGui::PushStyleColor(ImGuiCol_PlotHistogram, BarColor);
+	ImGui::ProgressBar(Fraction, ImVec2(-FLT_MIN, 0.0f), TCHAR_TO_UTF8(*Overlay));
+	ImGui::PopStyleColor();
+
+	ImGui::SameLine();
+	ImGui::Text("Budget Used");
+
+	if (ImGui::IsItemHovered())
+	{
+		ImGui::SetTooltip("Surfels currently allocated out of the budget.");
+	}
+
+	ImGui::BeginDisabled(Used == 0);
+	if (ImGui::Button("Clear Surfels"))
+	{
+		// Same path as r.Surfel.Refresh: the render thread notices the id changed and
+		// reallocates the pool from scratch.
+		++GSurfelRefreshRequestId;
+	}
+	ImGui::EndDisabled();
 }
 
 void UDevGuiSubsystem::DrawVisualizationSettings()

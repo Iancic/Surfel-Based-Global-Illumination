@@ -3,6 +3,7 @@
 #include "Runtime/Engine/Public/SceneViewExtension.h"
 #include "RenderGraphResources.h"
 #include "RenderGraphUtils.h"
+#include "RHIGPUReadback.h"
 #include "ComputePasses/GatherPass.h"
 #include "ComputePasses/VisualizePass.h"
 
@@ -28,7 +29,7 @@ public:
 	// Called once after the deferred pass has been completed so I can register a callback for a dispatch
 	virtual void PostRenderBasePassDeferred_RenderThread(
 		FRDGBuilder& GraphBuilder,
-		FSceneView& InView,
+		FSceneView& SceneView,
 		const FRenderTargetBindingSlots& RenderTargets,
 		TRDGUniformBufferRef<FSceneTextureUniformParameters> SceneTextures) override;
 	
@@ -43,6 +44,13 @@ public:
 		uint32 Budget = 0;
 		uint32 LastFrameSeen = 0;
 		int32 LastRefreshRequestId = 0;
+
+		// Pulls SurfelCounter back to the CPU so the ImGui budget meter has a number to show.
+		// A GPU->CPU copy takes a few frames to land, so only one can be in flight at a time:
+		// bCounterReadbackPending gates enqueuing the next one until this one has been read.
+		// Without that gate, EnqueueCopy would overwrite a copy still being waited on.
+		TUniquePtr<FRHIGPUBufferReadback> CounterReadback;
+		bool bCounterReadbackPending = false;
 	};
 
 	// Transient per-frame handles to what PostRenderBasePassDeferred_RenderThread built
@@ -80,8 +88,8 @@ public:
 	}
 
 private:
-	FScreenPassTexture RunFullscreenPass(
+	FScreenPassTexture RunVisualizePass(
 		FRDGBuilder& GraphBuilder,
-		const FSceneView& View,
+		const FSceneView& SceneView,
 		const FPostProcessMaterialInputs& Inputs);
 };

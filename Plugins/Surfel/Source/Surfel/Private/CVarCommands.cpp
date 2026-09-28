@@ -118,6 +118,8 @@ TAutoConsoleVariable<float> CVarSurfelCoverageScale(
 
 int32 GSurfelRefreshRequestId = 0;
 
+std::atomic<int32> GSurfelAllocatedCount{0};
+
 static FAutoConsoleCommand CVarSurfelRefreshCmd(
 	TEXT("r.Surfel.Refresh"),
 	TEXT("Clears all spawned surfels so they respawn from scratch on the current grid."),

@@ -2,7 +2,7 @@
 #include "GlobalShader.h"
 #include "ShaderParameterStruct.h"
 #include "Runtime/Engine/Public/SceneView.h"
-
+#include "SceneTexturesConfig.h"
 /**
  * 2D dispatch of 16x16
  * Gather Pass
@@ -30,15 +30,6 @@ public:
 		SHADER_PARAMETER_RDG_BUFFER_UAV(RWStructuredBuffer<uint>, SurfelCount)
 		SHADER_PARAMETER_RDG_BUFFER_UAV(RWStructuredBuffer<float4>, SurfelPositionAndRadius)
 		SHADER_PARAMETER_RDG_BUFFER_UAV(RWStructuredBuffer<float4>, SurfelNormalAndFlags)
-		
-		// GBuffers
-		SHADER_PARAMETER_RDG_TEXTURE(Texture2D, GBufferATexture)
-		SHADER_PARAMETER_RDG_TEXTURE(Texture2D, GBufferBTexture)
-		SHADER_PARAMETER_RDG_TEXTURE(Texture2D, GBufferCTexture)
-		SHADER_PARAMETER_RDG_TEXTURE(Texture2D, GBufferDTexture)
-		SHADER_PARAMETER_RDG_TEXTURE(Texture2D, GBufferETexture)
-		SHADER_PARAMETER_RDG_TEXTURE(Texture2D, GBufferFTexture)
-		SHADER_PARAMETER_RDG_TEXTURE(Texture2D, SceneDepthTexture)
 	
 		// Coverage
 		SHADER_PARAMETER_RDG_TEXTURE(Texture2D<float>, CoverageTexture)
@@ -49,6 +40,9 @@ public:
 		SHADER_PARAMETER_STRUCT_REF(FViewUniformShaderParameters, View)
 		SHADER_PARAMETER(FUintVector2, ViewRectMin)
 		SHADER_PARAMETER(FUintVector2, ViewRectMax)
+	
+		// GBuffers
+		SHADER_PARAMETER_STRUCT_INCLUDE(FSceneTextureShaderParameters, GBufferTextures)
 
 	END_SHADER_PARAMETER_STRUCT()
 

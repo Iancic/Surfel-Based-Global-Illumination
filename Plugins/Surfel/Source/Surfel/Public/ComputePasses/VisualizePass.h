@@ -5,13 +5,13 @@
 #include "ShaderParameterStruct.h"
 #include "Runtime/Renderer/Public/ScreenPass.h"
 #include "CVarCommands.h"
+#include "SceneTexturesConfig.h"
 
-/** Visualize surfels */
-class FSurfelFullscreenCS : public FGlobalShader
+class FVisualizePassCS : public FGlobalShader
 {
 public:
-	DECLARE_GLOBAL_SHADER(FSurfelFullscreenCS);
-	SHADER_USE_PARAMETER_STRUCT(FSurfelFullscreenCS, FGlobalShader);
+	DECLARE_GLOBAL_SHADER(FVisualizePassCS);
+	SHADER_USE_PARAMETER_STRUCT(FVisualizePassCS, FGlobalShader);
 
 	BEGIN_SHADER_PARAMETER_STRUCT(FParameters, )
 		
@@ -54,16 +54,9 @@ public:
 		// Grid visualization options: ESurfelGridVisFlags bits, and the wireframe width.
 		SHADER_PARAMETER(uint32, GridVisFlags)
 		SHADER_PARAMETER(float, GridVisEdgeThickness)
-
-		// For depth and normals
-		SHADER_PARAMETER_RDG_TEXTURE(Texture2D, GBufferATexture)
-		SHADER_PARAMETER(uint32, bHasGBufferNormal) // 0 = GBufferATexture is a dummy, skip the normal test
-		SHADER_PARAMETER_RDG_TEXTURE(Texture2D, GBufferBTexture)
-		SHADER_PARAMETER_RDG_TEXTURE(Texture2D, GBufferCTexture)
-		SHADER_PARAMETER_RDG_TEXTURE(Texture2D, GBufferDTexture)
-		SHADER_PARAMETER_RDG_TEXTURE(Texture2D, GBufferETexture)
-		SHADER_PARAMETER_RDG_TEXTURE(Texture2D, GBufferFTexture)
-		SHADER_PARAMETER_RDG_TEXTURE(Texture2D, SceneDepthTexture)
+	
+		// GBuffers
+		SHADER_PARAMETER_STRUCT_INCLUDE(FSceneTextureShaderParameters, GBufferTextures)
 
 	END_SHADER_PARAMETER_STRUCT()
 

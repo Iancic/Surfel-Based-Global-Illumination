@@ -3,4 +3,5 @@
 [numthreads(THREADS_X, THREADS_Y, THREADS_Z)]
 void MainCS(uint3 DispatchThreadId : SV_DispatchThreadID)
 {
+	// Scaffold this shader
 }

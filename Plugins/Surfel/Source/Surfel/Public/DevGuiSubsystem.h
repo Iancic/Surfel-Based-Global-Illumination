@@ -26,6 +26,7 @@ private:
 	void DrawScenesSection();
 	void DrawCamerasSection();
 	void DrawSurfelSettings();
+	void DrawBudgetMeter();
 	void DrawVisualizationSettings();
 	void DrawGridSettings();
 

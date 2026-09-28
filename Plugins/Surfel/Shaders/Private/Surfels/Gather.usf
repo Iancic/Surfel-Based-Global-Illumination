@@ -2,16 +2,10 @@
 #include "/Engine/Private/Common.ush"
 #include "/Engine/Private/DeferredShadingCommon.ush"
 
-// Coverage texture and parameters
 Texture2D CoverageTexture;
 float SpawnChance;
 float SpawnCoverageThreshold;
 
-// View
-uint2 ViewRectMin;
-uint2 ViewRectMax;
-
-// Surfel Budget and Pools
 RWStructuredBuffer<uint> SurfelCount;
 RWStructuredBuffer<float4> SurfelPositionAndRadius;
 RWStructuredBuffer<float4> SurfelNormalAndFlags;
@@ -19,33 +13,75 @@ RWStructuredBuffer<float4> SurfelNormalAndFlags;
 uint SurfelBudget;
 float SurfelRadius;
 
-[numthreads(THREADS_X, THREADS_Y, THREADS_Z)]
-void MainCS(uint3 DispatchThreadId : SV_DispatchThreadID)
+uint2 ViewRectMin;
+uint2 ViewRectMax;
+
+#define GROUP_SIZE (16 * 16 * 1) // in Gather.hpp
+
+groupshared float SharedCoverage[GROUP_SIZE];
+groupshared uint SharedWinnerIndex[GROUP_SIZE];
+
+float PixelNoise(float2 Pixel)
 {
+    return frac(52.9829189f * frac(dot(Pixel, float2(0.06711056f, 0.00583715f))));
+}
+
+[numthreads(THREADS_X, THREADS_Y, THREADS_Z)]
+void MainCS(uint3 DispatchThreadId : SV_DispatchThreadID, uint GroupIndex : SV_GroupIndex)
+{
+    float CoverageValue = 1e9f;
+    float DepthZ = 0.f;
+    int3 LoadPos = int3(0, 0, 0);
+    
+    // Dispatch shader per screen tiles
     uint2 PixelPos = ViewRectMin + DispatchThreadId.xy;
     
-    if (any(PixelPos >= ViewRectMax))
+    bool bInBounds = all(PixelPos < ViewRectMax);
+    if (bInBounds)
     {
-        return;
+        LoadPos = int3(PixelPos, 0);
+        float SampledCoverage = CoverageTexture.Load(LoadPos);
+        DepthZ = SceneTexturesStruct.SceneDepthTexture.Load(LoadPos).r;
+
+        // Only a spawn candidate if not covered and not sky
+        if (SampledCoverage < SpawnCoverageThreshold && DepthZ > 0.0f)
+        {
+            // Pixels with equal coverage are treated differently
+            // Breaks uniformity
+            uint3 Hash = Rand3DPCG16(int3(PixelPos, View.StateFrameIndex));
+            // 65535 max 16 bit value, jitter is gonna be float form 0 to 1
+            float Jitter = Hash.x / 65535.0f;
+
+            CoverageValue = SampledCoverage + Jitter * 0.001f;
+        }
     }
     
-    int3 LoadPos = int3(PixelPos, 0);
-    
-    // READ COVERAGE TEXTURE
-    // Decide whether TO continue or not based on Pos based on coverage texture
-    // threshold of coverage
-    // doesn't meet it return
-    
-    float Coverage = CoverageTexture.Load(LoadPos);
-    if (Coverage >= SpawnCoverageThreshold)
+    SharedCoverage[GroupIndex] = CoverageValue;
+    SharedWinnerIndex[GroupIndex] = GroupIndex;
+    GroupMemoryBarrierWithGroupSync();
+
+    // Parallel min-reduction across the tile: halve the active range each pass.
+    [unroll]
+    for (uint Stride = GROUP_SIZE / 2; Stride > 0; Stride >>= 1)
     {
-        return; // Covered enough don't spawn
+        if (GroupIndex < Stride)
+        {
+            uint OtherIndex = GroupIndex + Stride;
+            if (SharedCoverage[OtherIndex] < SharedCoverage[GroupIndex])
+            {
+                SharedCoverage[GroupIndex] = SharedCoverage[OtherIndex];
+                SharedWinnerIndex[GroupIndex] = SharedWinnerIndex[OtherIndex];
+            }
+        }
+        GroupMemoryBarrierWithGroupSync();
     }
-    
-    // spawn only with a small probability
-    float seed = 5.f;
-    
-    // weird hash i don't like the conversion to 0 to 1 
+
+    // Only the thread holding the tile's least-covered pixel may spawn.
+    bool bIsWinner = (GroupIndex == SharedWinnerIndex[0]) && (SharedCoverage[0] < 1e9f);
+    if (!bIsWinner) return;
+        
+    // Don't spawn suitable candidates for every empty cell
+    // I add a random factor so some cells get skipped for later iterations
     uint3 Hash = Rand3DPCG16(int3(PixelPos, View.StateFrameIndex));
     float Random01 = Hash.x / 65535.0f;
     if (Random01 >= SpawnChance)
@@ -53,42 +89,33 @@ void MainCS(uint3 DispatchThreadId : SV_DispatchThreadID)
         return;
     }
     
-    float DeviceZ = SceneDepthTexture.Load(LoadPos).r;
-
-    // Skip the sky
-    if (DeviceZ <= 0.0f)
-    {
-        return;
-    }
-
-    // Get Normal
-    float4 GBufferA = GBufferATexture.Load(LoadPos);
+    // Get normal at this pixel
+    float4 GBufferA = SceneTexturesStruct.GBufferATexture.Load(LoadPos);
     float3 WorldNormal = normalize(GBufferA.xyz * 2.0f - 1.0f);
-
-    // Surfels persist across frames, but PrimaryView.PreViewTranslation shifts every
-    // frame with the camera. Store world position
-    float4 SvPosition = float4(PixelPos + 0.5f, DeviceZ, 1.0f);
+    
+    // Surfels should keep their world position across frames
+    // PrimaryView.PreViewTranslation changes with camera
+    float4 SvPosition = float4(PixelPos + 0.5f, DepthZ, 1.0f);
     float3 TranslatedWorldPosition = SvPositionToTranslatedWorld(SvPosition);
-    float3 WorldPosition = DFFastSubtractDemote(TranslatedWorldPosition, PrimaryView.PreViewTranslation);
+    float3 WorldPosition = DFSubtractDemote(TranslatedWorldPosition, PrimaryView.PreViewTranslation);
 
+    // Surfel Index
     uint SurfelIndex;
     InterlockedAdd(SurfelCount[0], 1, SurfelIndex);
-
     if (SurfelIndex >= SurfelBudget)
     {
         InterlockedAdd(SurfelCount[0], -1);
         return;
     }
     
-    float LinearDepth = ConvertFromDeviceZ(DeviceZ);
-
-    // World-space width of one pixel at this depth (cm per pixel)
-    float PixelWorldSize = 2.0f * LinearDepth / (View.ViewToClip[0][0] * View.ViewSizeAndInvSize.x);
-
+    // World space width of one pixel at this depth (cm per pixel)
     // SurfelRadius is now in pixels, e.g. 8 to 32
+    float LinearDepth = ConvertFromDeviceZ(DepthZ);
+    float PixelWorldSize = 2.0f * LinearDepth / (View.ViewToClip[0][0] * View.ViewSizeAndInvSize.x);
+    
     float Radius = SurfelRadius * PixelWorldSize;
-    Radius = clamp(Radius, SurfelRadius, 100.f); // 100.f is the max surfel radius arbitrary for now
-
+    if (Radius < SurfelRadius) Radius = SurfelRadius;
+    
     SurfelPositionAndRadius[SurfelIndex] = float4(WorldPosition, Radius);
     SurfelNormalAndFlags[SurfelIndex] = float4(WorldNormal, 0.0f);
 }
