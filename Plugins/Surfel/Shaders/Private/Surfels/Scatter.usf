@@ -1,6 +1,7 @@
 #include "/Engine/Public/Platform.ush"
 #include "/Engine/Private/Common.ush"
 #include "/Engine/Private/DeferredShadingCommon.ush"
+#include "/Surfel/Surfels/SurfelCommon.ush"
 
 RWTexture2D<float> CoverageTexture;
 
@@ -61,23 +62,8 @@ void MainCS(uint3 DispatchThreadId : SV_DispatchThreadID)
 		for (uint i = 0; i < EntryCount; i++)            
 		{
 			int SurfelIdx = GridCellEntries[CellIdx * CellCapacity + i];
-			
-			float3 Position = SurfelPositionAndRadius[SurfelIdx].xyz;
-			float Radius = SurfelPositionAndRadius[SurfelIdx].w;
-			float3 Normal = normalize(SurfelNormalAndFlags[SurfelIdx].xyz);
-			
-			// Check how close the surfel center is to this world position
-			// Further surfels add more coverage than closer ones
-			float Distance =  length(WorldPositionAtPixel - Position);
-			
-			// Discard ones outside the radius or further
-			float DistanceWeight = 1.0f - smoothstep(0.0f, Radius, Distance);
-			
-			// Dot product normals to see if the surfel is aligned with the surface
-			// It may be that the surface is sharp so the surfel belongs to another surface
-			float NormalsFacingFactor = saturate(dot(Normal, WorldNormalAtPixel));
-			
-			CoverageWeight += DistanceWeight * NormalsFacingFactor;
+			CoverageWeight += SurfelCoverageWeight(WorldPositionAtPixel, WorldNormalAtPixel,
+				SurfelPositionAndRadius[SurfelIdx], SurfelNormalAndFlags[SurfelIdx].xyz);
 		}
 		
 		CoverageTexture[PixelPos] = CoverageWeight;

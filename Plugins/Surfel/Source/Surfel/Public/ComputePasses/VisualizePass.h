@@ -28,8 +28,7 @@ public:
 		// Needed to project each surfel's world position back to screen space.
 		SHADER_PARAMETER_STRUCT_REF(FViewUniformShaderParameters, View)
 
-		// Fraction of the true surfel radius drawn, so individual surfels stay distinguishable.
-		SHADER_PARAMETER(float, DebugRadiusScale)
+		SHADER_PARAMETER(float, SpawnCoverageThreshold)
 	
 		// For grid
 		SHADER_PARAMETER_RDG_BUFFER_UAV(RWStructuredBuffer<uint32>, GridCellEntries)

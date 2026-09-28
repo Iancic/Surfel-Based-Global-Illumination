@@ -1,6 +1,7 @@
 #include "/Engine/Public/Platform.ush"
 #include "/Engine/Private/Common.ush"
 #include "/Engine/Private/ScreenPass.ush"
+#include "/Surfel/Surfels/SurfelCommon.ush"
 
 Texture2D InputSceneColor;
 
@@ -23,6 +24,7 @@ uint CellCapacity;
 uint CellSize;
 
 uint bUseGrid;
+float SpawnCoverageThreshold;
 
 Texture2D CoverageTexture;
 uint bHasCoverageTexture;
@@ -70,48 +72,26 @@ bool GetGridCell(float3 WorldPosition, out int3 CellCoord, out uint CellIdx)
 struct FSurfelHit
 {
     uint Index;
-    float DistanceRatio; // Distance from the surfel center divided by its radius: 0 = center, 1 = rim
+    float Weight;
 };
 
-static const float DiscThickness = 0.25f;
-static const float MinNormalAlignment = 0.5f;
 void TestSurfel(uint SurfelIndex, float3 PixelWorldPosition, float3 PixelNormal, inout FSurfelHit Hit)
 {
-    float4 PositionAndRadius = SurfelPositionAndRadius[SurfelIndex];
-    float Radius = PositionAndRadius.w;
-    if (Radius <= 0.0f)
+    float Weight = SurfelCoverageWeight(PixelWorldPosition, PixelNormal,
+        SurfelPositionAndRadius[SurfelIndex], SurfelNormalAndFlags[SurfelIndex].xyz);
+
+    // Drawn only where this surfel alone stops Gather from spawning
+    if (Weight <= 0.0f || Weight < SpawnCoverageThreshold)
     {
         return;
     }
 
-    float3 SurfelNormal = SurfelNormalAndFlags[SurfelIndex].xyz;
-    float3 ToPixel = PixelWorldPosition - PositionAndRadius.xyz;
-
-    // Is the tested point inside the surfel radius? 
-    float DistanceRatio = length(ToPixel) / Radius;
-    if (DistanceRatio > 1.0f)
-    {
-        return;
-    }
-
-    // Close to the surfel's plane: flattens the sphere into a disc
-    if (abs(dot(ToPixel, SurfelNormal)) > Radius * DiscThickness)
-    {
-        return;
-    }
-
-    if (dot(PixelNormal, SurfelNormal) < MinNormalAlignment)
-    {
-        return;
-    }
-
-    // Keep the surfel whose center is closest, so overlapping discs split the surface cleanly.
-    bool bCloser = DistanceRatio < Hit.DistanceRatio;
-    bool bTieWon = DistanceRatio == Hit.DistanceRatio && SurfelIndex < Hit.Index;
-    if (bCloser || bTieWon)
+    bool bStronger = Weight > Hit.Weight;
+    bool bTieWon = Weight == Hit.Weight && SurfelIndex < Hit.Index;
+    if (bStronger || bTieWon)
     {
         Hit.Index = SurfelIndex;
-        Hit.DistanceRatio = DistanceRatio;
+        Hit.Weight = Weight;
     }
 }
 
@@ -119,25 +99,25 @@ float3 VisualizeSurfels(float3 SceneColor, float3 PixelWorldPosition, float3 Pix
 {
     FSurfelHit Hit;
     Hit.Index = 0xFFFFFFFF;
-    Hit.DistanceRatio = 2.0f; // Above 1 = no surfel found yet
+    Hit.Weight = 0.0f;
 
-    int3 PixelCell;
-    uint CellIdx;
-    bool bInsideGrid = bUseGrid != 0 && GetGridCell(PixelWorldPosition, PixelCell, CellIdx);
-
-    if (bInsideGrid)
+    if (bUseGrid != 0)
     {
-        // Only the pixel's own cell - GridAllocation inserts every surfel into
-        // all the cells it overlaps, so no neighbor check is needed.
-        // Insertion is fixed-capacity: a cell's counter can exceed
-        // CellCapacity if it overflowed, so clamp the read.
+        // Outside the grid Scatter sees no surfels either, so draw none
+        int3 PixelCell;
+        uint CellIdx;
+        if (!GetGridCell(PixelWorldPosition, PixelCell, CellIdx))
+        {
+            return SceneColor;
+        }
+
         uint EntryCount = min(GridCounter[CellIdx], CellCapacity);
         for (uint i = 0; i < EntryCount; i++)
         {
             TestSurfel(GridCellEntries[CellIdx * CellCapacity + i], PixelWorldPosition, PixelNormal, Hit);
         }
     }
-    else // Brute test no grid
+    else
     {
         uint NumSurfels = SurfelCount[0];
         for (uint SurfelIndex = 0; SurfelIndex < NumSurfels; SurfelIndex++)
@@ -146,8 +126,7 @@ float3 VisualizeSurfels(float3 SceneColor, float3 PixelWorldPosition, float3 Pix
         }
     }
 
-    // No surfel covers this pixel
-    if (Hit.DistanceRatio > 1.0f)
+    if (Hit.Index == 0xFFFFFFFF)
     {
         return SceneColor;
     }

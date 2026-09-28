@@ -154,10 +154,13 @@ void FSurfelSceneViewExtension::PostRenderBasePassDeferred_RenderThread(FRDGBuil
 	// Parameters for shaders related to the scene texture (the GBuffers)
 	auto SceneTextureShaderParameters = CreateSceneTextureShaderParameters(GraphBuilder, SceneView, ESceneTextureSetupMode::GBuffers | ESceneTextureSetupMode::SceneDepth);
 	
-	// Position of the grid is always where the camera is
-	FVector CameraPosition = SceneView.ViewLocation;
-	const float GridExtent = static_cast<float>(FUniformGridViewState::CellResolution * FUniformGridViewState::CellSize);
-	FVector GridPosition = CameraPosition - FVector(GridExtent * 0.5f);
+	// Snapped to whole cells so cell boundaries stay fixed in world space as the camera moves
+	const double CellSize = FUniformGridViewState::CellSize;
+	const FVector CameraCell(
+		FMath::FloorToDouble(SceneView.ViewLocation.X / CellSize),
+		FMath::FloorToDouble(SceneView.ViewLocation.Y / CellSize),
+		FMath::FloorToDouble(SceneView.ViewLocation.Z / CellSize));
+	FVector GridPosition = (CameraCell - FVector((double)(FUniformGridViewState::CellResolution / 2))) * CellSize;
 	
 	// Grid allocation MUST run before Scatter. Scatter reads the grid to work out how well
 	// covered each pixel already is, so if the grid were still empty (it is cleared just
@@ -441,6 +444,7 @@ FScreenPassTexture FSurfelSceneViewExtension::RunVisualizePass(
 	PassParameters->CellCapacity   = FUniformGridViewState::CellCapacity;
 	PassParameters->CellSize       = FUniformGridViewState::CellSize;
 	PassParameters->bUseGrid       = bUseGrid ? 1u : 0u;
+	PassParameters->SpawnCoverageThreshold = CVarSurfelSpawnCoverageThreshold.GetValueOnRenderThread();
 
 	// Coverage map, for the Coverage visualization. Scatter writes it and Gather reads it,
 	// so by the time this pass runs it holds this frame's finished values.
