@@ -12,6 +12,7 @@
 #include "Misc/ScopeExit.h"
 #include "Styling/StarshipCoreStyle.h"
 
+// - David
 // Credit AI Usage: After I laid out some general scaffolding and to do ideas, I used Claude Code to generate most of the visualization code
 // Prompts used: 
 	// @Plugins/Surfel/Source/Surfel/Private/DevGuiSubsystem.cpp Inside this can you change ImGui editor window size. 
@@ -48,14 +49,17 @@ namespace
 		float Radius;
 		int32 SpawnsPerFrame;
 	};
-
+	
+	// Smaller radius - high cost but sharper detail
+	// Larger radius - fewer surfel to cover but approximated detail
+	// Quality Settings Should also change grid settings
 	const FSurfelQualityPreset GSurfelQualityPresets[] =
 	{
 		{ "Low (8k)",       8 * 1024, 16.0f,  128 },
 		{ "Medium (32k)",  32 * 1024, 12.0f,  256 },
 		{ "High (128k)",  128 * 1024,  8.0f,  512 },
 		{ "Ultra (512k)", 512 * 1024,  6.0f, 1024 },
-		{ "Sliders",               0,  0.0f,    0 },
+		{ "Custom",               0,  0.0f,    0 },
 	};
 
 	const int32 GNumScenes = (int32)UE_ARRAY_COUNT(GDevScenes);
@@ -193,8 +197,6 @@ void UDevGuiSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 
 void UDevGuiSubsystem::Tick(float DeltaTime)
 {
-	// Pushed before Begin so the title bar uses it too. Falls back to ImGui's default
-	// font if the Slate one isn't in the atlas (failed to load, or rebuild still pending).
 	ImFont* SlateFont = FindSlateFont();
 	if (SlateFont)
 	{
@@ -305,31 +307,14 @@ void UDevGuiSubsystem::DrawCamerasSection()
 		return;
 	}
 
-	// Back to whatever the level would normally view from.
-	if (ImGui::Button("Reset To Pawn"))
+	if (ImGui::Button("Reset To Player Pawn"))
 	{
 		PlayerController->SetViewTargetWithBlend(PlayerController->GetPawn(), CameraBlendTime);
 	}
-
-	ImGui::SliderFloat("Blend Time", &CameraBlendTime, 0.0f, 3.0f);
 }
 
 void UDevGuiSubsystem::DrawSurfelSettings()
 {
-	/*
-	int EnableSurfels = CVarSurfelEnable.GetValueOnGameThread();
-	if (ImGui::SliderInt("Enable Surfels", &EnableSurfels, 0, 1))
-	{
-		// ECVF is set to the highest priority, like changing from CVar
-		CVarSurfelEnable->Set(EnableSurfels, ECVF_SetByConsole);
-	}
-
-	if (!EnableSurfels)
-	{
-		return;
-	}
-	*/
-	
 	ImGui::SeparatorText("Surfel Settings");
 
 	if (ImGui::BeginCombo("Quality Preset", GSurfelQualityPresets[QualityPresetIndex].Name))
@@ -375,7 +360,7 @@ void UDevGuiSubsystem::DrawSurfelSettings()
 		LockedByPresetTooltip();
 
 		int SpawnsPerFrame = CVarSurfelSpawnsPerFrame.GetValueOnGameThread();
-		if (ImGui::SliderInt("Spawns / Frame", &SpawnsPerFrame, 0, 4096))
+		if (ImGui::SliderInt("Spawn Rate", &SpawnsPerFrame, 0, 4096))
 		{
 			CVarSurfelSpawnsPerFrame->Set(SpawnsPerFrame, ECVF_SetByConsole);
 		}
@@ -384,18 +369,6 @@ void UDevGuiSubsystem::DrawSurfelSettings()
 	ImGui::EndDisabled();
 
 	DrawBudgetMeter();
-
-	/*
-	float SpawnCoverageThreshold = CVarSurfelSpawnCoverageThreshold.GetValueOnGameThread();
-	if (ImGui::SliderFloat("Spawn Coverage Threshold", &SpawnCoverageThreshold, 0.0f, 2.0f, "%.3f"))
-	{
-		CVarSurfelSpawnCoverageThreshold->Set(SpawnCoverageThreshold, ECVF_SetByConsole);
-	}
-	if (ImGui::IsItemHovered())
-	{
-		ImGui::SetTooltip("Pixels with at least this much coverage never spawn a surfel.");
-	}
-	*/
 	
 	DrawVisualizationSettings();
 }
@@ -532,24 +505,17 @@ void UDevGuiSubsystem::DrawGridSettings()
 	{
 		CVarSurfelGridCellSize->Set(CellSize, ECVF_SetByConsole);
 	}
-
+	
+	// TODO: Should scale with the quality levels
 	int CellCapacity = CVarSurfelGridCellCapacity.GetValueOnGameThread();
-	if (ImGui::SliderInt("Cell Capacity", &CellCapacity, 8, 512))
+	if (ImGui::SliderInt("Cell Capacity", &CellCapacity, 8, 2048))
 	{
 		CVarSurfelGridCellCapacity->Set(CellCapacity, ECVF_SetByConsole);
 	}
 
-	// Worth seeing next to the sliders: it's cubic in resolution, so it gets big fast.
-	const double ExtentMeters = (double)CellResolution * CellSize / 100.0;
-	const double EntriesMB = (double)CellResolution * CellResolution * CellResolution * CellCapacity * sizeof(uint32) / (1024.0 * 1024.0);
-	ImGui::TextDisabled("Covers %.1f m around the camera, entries buffer %.1f MB", ExtentMeters, EntriesMB);
-
-	// Only meaningful while the Grid visualization is showing, so keep it out of the way otherwise.
-	if (CVarSurfelVisualizeMode.GetValueOnGameThread() != (int32)ESurfelVisualizeMode::Grid)
-	{
-		ImGui::TextDisabled("Pick the \"Grid\" visualization mode for grid display options.");
-		return;
-	}
+	//const double ExtentMeters = (double)CellResolution * CellSize / 100.0;
+	//const double EntriesMB = (double)CellResolution * CellResolution * CellResolution * CellCapacity * sizeof(uint32) / (1024.0 * 1024.0);
+	//ImGui::TextDisabled("Covers %.1f m around the camera, entries buffer %.1f MB", ExtentMeters, EntriesMB);
 
 	ImGui::SeparatorText("Grid Visualization");
 

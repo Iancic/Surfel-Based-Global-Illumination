@@ -16,14 +16,10 @@
   <component name="ChangeListManager">
     <list default="true" id="20fab832-f3ef-4372-8e5d-692461982054" name="Changes" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/.idea.Surfels/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/.idea.Surfels/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Config/DefaultEngine.ini" beforeDir="false" afterPath="$PROJECT_DIR$/Config/DefaultEngine.ini" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Plugins/Surfel/Shaders/Private/Surfels/Gather.usf" beforeDir="false" afterPath="$PROJECT_DIR$/Plugins/Surfel/Shaders/Private/Surfels/Gather.usf" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Plugins/Surfel/Shaders/Private/Surfels/Scatter.usf" beforeDir="false" afterPath="$PROJECT_DIR$/Plugins/Surfel/Shaders/Private/Surfels/Scatter.usf" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Plugins/Surfel/Shaders/Private/Surfels/SurfelCommon.ush" beforeDir="false" afterPath="$PROJECT_DIR$/Plugins/Surfel/Shaders/Private/Surfels/SurfelCommon.ush" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Plugins/Surfel/Shaders/Private/Surfels/Visualize.usf" beforeDir="false" afterPath="$PROJECT_DIR$/Plugins/Surfel/Shaders/Private/Surfels/Visualize.usf" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Plugins/Surfel/Source/Surfel/Private/CVarCommands.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Plugins/Surfel/Source/Surfel/Private/CVarCommands.cpp" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Plugins/Surfel/Source/Surfel/Private/DevGuiSubsystem.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Plugins/Surfel/Source/Surfel/Private/DevGuiSubsystem.cpp" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Plugins/Surfel/Source/Surfel/Private/SurfelSceneViewExtension.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Plugins/Surfel/Source/Surfel/Private/SurfelSceneViewExtension.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Plugins/Surfel/Source/Surfel/Public/ComputePasses/GatherPass.h" beforeDir="false" afterPath="$PROJECT_DIR$/Plugins/Surfel/Source/Surfel/Public/ComputePasses/GatherPass.h" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -71,61 +67,61 @@
   <component name="MetaFilesCheckinStateConfiguration" checkMetaFiles="true" />
   <component name="NextEditCompletionFeaturesState">
     <decayedCancelled>
-      <entry key="MS100" value="1.0" />
-      <entry key="MS500" value="1.0000000406459042" />
-      <entry key="S2" value="1.0178098610213175" />
-      <entry key="S5" value="1.3479922524648429" />
-      <entry key="S10" value="2.36700974279783" />
-      <entry key="S30" value="9.361552665601511" />
-      <entry key="S60" value="18.879898698960762" />
-      <entry key="M2" value="30.379702893291928" />
-      <entry key="M5" value="44.173589005271175" />
-      <entry key="M10" value="52.373838970180195" />
-      <entry key="M15" value="57.72897462475827" />
-      <entry key="M30" value="77.62456737306857" />
-      <entry key="H1" value="132.17996527079174" />
-      <entry key="H2" value="235.44174402531752" />
-      <entry key="H4" value="360.7844951911311" />
-      <entry key="D1" value="561.8091437856745" />
-      <entry key="W1" value="611.2068617448832" />
+      <entry key="MS100" value="0.2708194451073009" />
+      <entry key="MS500" value="1.2740712176496465" />
+      <entry key="S2" value="2.715645459326138" />
+      <entry key="S5" value="3.3894605239197535" />
+      <entry key="S10" value="3.675213666891958" />
+      <entry key="S30" value="3.9016413497896867" />
+      <entry key="S60" value="4.23683312832525" />
+      <entry key="M2" value="6.031312015944974" />
+      <entry key="M5" value="18.63907883664913" />
+      <entry key="M10" value="41.63427489318385" />
+      <entry key="M15" value="58.33208061809066" />
+      <entry key="M30" value="90.75418337765329" />
+      <entry key="H1" value="142.8751529546719" />
+      <entry key="H2" value="244.4699472280682" />
+      <entry key="H4" value="388.31687331816073" />
+      <entry key="D1" value="657.0533928633427" />
+      <entry key="W1" value="728.980038683345" />
     </decayedCancelled>
     <decayedSelected>
       <entry key="MS100" value="0.0" />
       <entry key="MS500" value="0.0" />
       <entry key="S2" value="0.0" />
-      <entry key="S5" value="2.696370931793586E-200" />
-      <entry key="S10" value="1.642063010908407E-100" />
-      <entry key="S30" value="5.475997898116857E-34" />
-      <entry key="S60" value="2.3400879746648517E-17" />
-      <entry key="M2" value="4.845129523001831E-9" />
-      <entry key="M5" value="5.262095506272305E-4" />
-      <entry key="M10" value="0.03215776113024699" />
-      <entry key="M15" value="0.1387760061411381" />
-      <entry key="M30" value="0.6998526619100343" />
-      <entry key="H1" value="2.5455561760231937" />
-      <entry key="H2" value="7.960624948972625" />
-      <entry key="H4" value="16.47716183268954" />
-      <entry key="D1" value="32.184214418408615" />
-      <entry key="W1" value="36.2666210272599" />
+      <entry key="S5" value="0.0" />
+      <entry key="S10" value="2.112650602253689E-276" />
+      <entry key="S30" value="1.283145462732814E-92" />
+      <entry key="S60" value="1.1327615387405087E-46" />
+      <entry key="M2" value="1.0660032931355934E-23" />
+      <entry key="M5" value="7.213399546206537E-10" />
+      <entry key="M10" value="3.765099310626501E-5" />
+      <entry key="M15" value="0.0015416110171758317" />
+      <entry key="M30" value="0.0737627040644622" />
+      <entry key="H1" value="0.8264142377905426" />
+      <entry key="H2" value="4.535808556591115" />
+      <entry key="H4" value="12.437588485639203" />
+      <entry key="D1" value="30.71038132209925" />
+      <entry key="W1" value="36.024573735930396" />
     </decayedSelected>
     <decayedShown>
-      <entry key="MS100" value="0.4413514981453274" />
-      <entry key="MS500" value="0.8490962467740609" />
-      <entry key="S2" value="0.966659384993267" />
-      <entry key="S5" value="1.2306375436721635" />
-      <entry key="S10" value="2.1786779088747252" />
-      <entry key="S30" value="9.138351890507298" />
-      <entry key="S60" value="18.68665562099114" />
-      <entry key="M2" value="30.23440542384766" />
-      <entry key="M5" value="44.08879179071253" />
-      <entry key="M10" value="52.35343071122329" />
-      <entry key="M15" value="57.827739462606786" />
-      <entry key="M30" value="78.2950730882607" />
-      <entry key="H1" value="134.6984301864654" />
-      <entry key="H2" value="243.37649714193716" />
-      <entry key="H4" value="377.2408030509902" />
-      <entry key="D1" value="593.9876777830141" />
-      <entry key="W1" value="647.4725924231101" />
+      <entry key="MS100" value="1.016877719310847" />
+      <entry key="MS500" value="1.7582612878579686" />
+      <entry key="S2" value="3.372561802535041" />
+      <entry key="S5" value="4.2102044101322535" />
+      <entry key="S10" value="4.57661351507314" />
+      <entry key="S30" value="4.866411352956261" />
+      <entry key="S60" value="5.217525851204162" />
+      <entry key="M2" value="7.015777736728843" />
+      <entry key="M5" value="19.61090109497025" />
+      <entry key="M10" value="42.59969894716102" />
+      <entry key="M15" value="59.30078850737851" />
+      <entry key="M30" value="91.80159256773346" />
+      <entry key="H1" value="144.67871326714402" />
+      <entry key="H2" value="249.98326775301194" />
+      <entry key="H4" value="401.73465164863177" />
+      <entry key="D1" value="688.7576471363791" />
+      <entry key="W1" value="766.0036263261923" />
     </decayedShown>
   </component>
   <component name="ProblemsViewState">

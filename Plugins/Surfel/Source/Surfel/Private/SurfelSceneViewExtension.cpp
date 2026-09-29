@@ -249,16 +249,16 @@ void FSurfelSceneViewExtension::PostRenderBasePassDeferred_RenderThread(FRDGBuil
 		GraphBuilder.AllocParameters<FGatherSurfelPass::FParameters>();
 	
 	const float SpawnsPerFrame = (float)FMath::Max(CVarSurfelSpawnsPerFrame.GetValueOnRenderThread(), 0);
-
-	// Gather's tile reduction means only ONE thread per 16x16 group reaches the spawn test,
-	// so the probability has to be per tile, not per pixel. Dividing by the pixel count here
-	// (as this did before the reduction was added) made the real spawn rate 256x lower than
-	// the slider claimed.
-	const FIntPoint TileCount = FIntPoint::DivideAndRoundUp(CoverageExtent, 16);
-	float SpawnChance = SpawnsPerFrame; /// float(FMath::Max(TileCount.X * TileCount.Y, 1));
+	
+	float SpawnChance = SpawnsPerFrame;
 	GatherPassParameters->SpawnChance = SpawnChance;
 
-	GatherPassParameters->SpawnCoverageThreshold = CVarSurfelSpawnCoverageThreshold.GetValueOnRenderThread();
+	const float SpawnCoverageThreshold = CVarSurfelSpawnCoverageThreshold.GetValueOnRenderThread();
+	GatherPassParameters->SpawnCoverageThreshold = SpawnCoverageThreshold;
+
+	// Each group reduces a tile as wide as a new surfel's covered disc, not a fixed 16x16
+	const uint32 SpawnTileSize = FGatherSurfelPass::ComputeSpawnTileSize(CVarSurfelRadius.GetValueOnRenderThread(), SpawnCoverageThreshold);
+	GatherPassParameters->SpawnTileSize = SpawnTileSize;
 	
 	GatherPassParameters->CoverageTexture = CoverageTexture;
 
@@ -280,7 +280,7 @@ void FSurfelSceneViewExtension::PostRenderBasePassDeferred_RenderThread(FRDGBuil
 	
 	const FIntPoint ViewSize = SceneView.UnscaledViewRect.Size();
 	const FIntPoint GridDispatchSize(ViewSize.X, ViewSize.Y);
-	FComputeShaderUtils::AddPass(GraphBuilder, RDG_EVENT_NAME("Surfel Gather"), ComputeShader, GatherPassParameters, FComputeShaderUtils::GetGroupCount(GridDispatchSize, FIntPoint(16, 16)));
+	FComputeShaderUtils::AddPass(GraphBuilder, RDG_EVENT_NAME("Surfel Gather"), ComputeShader, GatherPassParameters, FComputeShaderUtils::GetGroupCount(GridDispatchSize, FIntPoint(SpawnTileSize, SpawnTileSize)));
 
 	UE_LOG(LogTemp, Log, TEXT("Surfel: gather ran, budget %u"), CVarBudget);
 	

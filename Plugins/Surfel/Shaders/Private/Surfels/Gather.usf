@@ -16,50 +16,53 @@ float SurfelRadius;
 uint2 ViewRectMin;
 uint2 ViewRectMax;
 
-#define GROUP_SIZE (16 * 16 * 1) // in Gather.hpp
+uint SpawnTileSize;
+
+// in GatherPass.h
+#define GROUP_SIZE (THREADS_X * THREADS_Y * THREADS_Z) 
 
 groupshared float SharedCoverage[GROUP_SIZE];
-groupshared uint SharedWinnerIndex[GROUP_SIZE];
-
-float PixelNoise(float2 Pixel)
-{
-    return frac(52.9829189f * frac(dot(Pixel, float2(0.06711056f, 0.00583715f))));
-}
+groupshared uint2 SharedWinnerPixel[GROUP_SIZE];
 
 [numthreads(THREADS_X, THREADS_Y, THREADS_Z)]
-void MainCS(uint3 DispatchThreadId : SV_DispatchThreadID, uint GroupIndex : SV_GroupIndex)
+void MainCS(uint3 GroupId : SV_GroupID, uint3 GroupThreadId : SV_GroupThreadID, uint GroupIndex : SV_GroupIndex)
 {
     // Step 1: Decide based on coverage whether to spawn
-    
     float CoverageValue = 1e9f;
-    float DepthZ = 0.f;
-    int3 LoadPos = int3(0, 0, 0);
-    
-    // Dispatch shader per screen tiles
-    uint2 PixelPos = ViewRectMin + DispatchThreadId.xy;
-    
-    bool bInBounds = all(PixelPos < ViewRectMax);
-    if (bInBounds)
+    uint2 CandidatePixel = uint2(0, 0);
+
+    // One group per SpawnTileSize square, on CPU based scales with surfel radius.
+    // Because if the radius is bigger tile reduction should also change.
+    uint2 TileOrigin = ViewRectMin + GroupId.xy * SpawnTileSize;
+    for (uint Y = GroupThreadId.y; Y < SpawnTileSize; Y += THREADS_Y)
+    for (uint X = GroupThreadId.x; X < SpawnTileSize; X += THREADS_X)
     {
-        LoadPos = int3(PixelPos, 0);
-        float SampledCoverage = CoverageTexture.Load(LoadPos);
-        DepthZ = SceneTexturesStruct.SceneDepthTexture.Load(LoadPos).r;
+        uint2 PixelPos = TileOrigin + uint2(X, Y);
+        if (any(PixelPos >= ViewRectMax)) continue;
+
+        int3 PixelLoadPos = int3(PixelPos, 0);
+        float SampledCoverage = CoverageTexture.Load(PixelLoadPos);
+        float PixelDepthZ = SceneTexturesStruct.SceneDepthTexture.Load(PixelLoadPos).r;
 
         // Only a spawn candidate if not covered and not sky
-        if (SampledCoverage < SpawnCoverageThreshold && DepthZ > 0.0f)
+        if (SampledCoverage < SpawnCoverageThreshold && PixelDepthZ > 0.0f)
         {
             // Pixels with equal coverage are treated differently
             // Breaks uniformity
             uint3 Hash = Rand3DPCG16(int3(PixelPos, View.StateFrameIndex));
-            // 65535 max 16 bit value, jitter is gonna be float form 0 to 1
-            float Jitter = Hash.x / 65535.0f;
+            float Jitter = Hash.x / 65535.0f; // 65535 max 16 bit value, jitter is gonna be float form 0 to 1
 
-            CoverageValue = SampledCoverage + Jitter * 0.001f;
+            float Candidate = SampledCoverage + Jitter * 0.001f;
+            if (Candidate < CoverageValue)
+            {
+                CoverageValue = Candidate;
+                CandidatePixel = PixelPos;
+            }
         }
     }
-    
+
     SharedCoverage[GroupIndex] = CoverageValue;
-    SharedWinnerIndex[GroupIndex] = GroupIndex;
+    SharedWinnerPixel[GroupIndex] = CandidatePixel;
     GroupMemoryBarrierWithGroupSync();
 
     // Parallel min-reduction across the tile: halve the active range each pass.
@@ -72,20 +75,22 @@ void MainCS(uint3 DispatchThreadId : SV_DispatchThreadID, uint GroupIndex : SV_G
             if (SharedCoverage[OtherIndex] < SharedCoverage[GroupIndex])
             {
                 SharedCoverage[GroupIndex] = SharedCoverage[OtherIndex];
-                SharedWinnerIndex[GroupIndex] = SharedWinnerIndex[OtherIndex];
+                SharedWinnerPixel[GroupIndex] = SharedWinnerPixel[OtherIndex];
             }
         }
         GroupMemoryBarrierWithGroupSync();
     }
 
-    // Only the thread holding the tile's least-covered pixel may spawn.
-    bool bIsWinner = (GroupIndex == SharedWinnerIndex[0]) && (SharedCoverage[0] < 1e9f);
-    if (!bIsWinner) return;
-        
+    // One thread spawns at the tile's least-covered pixel, if the tile had any candidate.
+    if (GroupIndex != 0 || SharedCoverage[0] >= 1e9f) return;
+
+    uint2 PixelPos = SharedWinnerPixel[0];
+    int3 LoadPos = int3(PixelPos, 0);
+    float DepthZ = SceneTexturesStruct.SceneDepthTexture.Load(LoadPos).r;
+
     // Don't spawn suitable candidates for every empty cell
     // I add a random factor so some cells get skipped for but get spawned later
-    // Best example is the first frame where I could spawn the whole budget on the top part of the screen 
-    // Without it reaching lower
+    // Best example is the first frame where there is 0 coverage
     uint3 Hash = Rand3DPCG16(int3(PixelPos, View.StateFrameIndex));
     float Random01 = Hash.x / 65535.0f;
     if (Random01 >= SpawnChance)
@@ -94,9 +99,10 @@ void MainCS(uint3 DispatchThreadId : SV_DispatchThreadID, uint GroupIndex : SV_G
     }
     
     // Step 2: Recycle
+    // Moving camera to a new space should recycle old surfels if it needs them
+    // Based on alive factor
     
-    // Step 3: Spawning Surfels Below
-    
+    // Step 3: Spawning the Surfel
     // Get normal at this pixel
     float4 GBufferA = SceneTexturesStruct.GBufferATexture.Load(LoadPos);
     float3 WorldNormal = normalize(GBufferA.xyz * 2.0f - 1.0f);
@@ -106,8 +112,7 @@ void MainCS(uint3 DispatchThreadId : SV_DispatchThreadID, uint GroupIndex : SV_G
     float4 SvPosition = float4(PixelPos + 0.5f, DepthZ, 1.0f);
     float3 TranslatedWorldPosition = SvPositionToTranslatedWorld(SvPosition);
     float3 WorldPosition = DFSubtractDemote(TranslatedWorldPosition, PrimaryView.PreViewTranslation);
-
-    // Surfel Index
+    
     uint SurfelIndex;
     InterlockedAdd(SurfelCount[0], 1, SurfelIndex);
     if (SurfelIndex >= SurfelBudget)
@@ -116,13 +121,15 @@ void MainCS(uint3 DispatchThreadId : SV_DispatchThreadID, uint GroupIndex : SV_G
         return;
     }
     
-    // World space width of one pixel at this depth (cm per pixel)
-    // SurfelRadius is now in pixels, e.g. 8 to 32
     float LinearDepth = ConvertFromDeviceZ(DepthZ);
+    
+    // SurfelRadius is now in pixels
     float PixelWorldSize = 2.0f * LinearDepth / (View.ViewToClip[0][0] * View.ViewSizeAndInvSize.x);
     
     float Radius = SurfelRadius * PixelWorldSize;
-    if (Radius < SurfelRadius) Radius = SurfelRadius;
+    
+    // Find a better way to clamp
+    //if (Radius < SurfelRadius) Radius = SurfelRadius;
     
     SurfelPositionAndRadius[SurfelIndex] = float4(WorldPosition, Radius);
     SurfelNormalAndFlags[SurfelIndex] = float4(WorldNormal, 0.0f);
