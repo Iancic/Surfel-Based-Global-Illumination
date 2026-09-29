@@ -195,6 +195,10 @@ float3 VisualizeCoverage(float3 SceneColor, int3 LoadPos)
     }
 
     float Coverage = CoverageTexture.Load(LoadPos).r;
+    if (Coverage >= SURFEL_COVERAGE_OUT_OF_GRID)
+    {
+        return SceneColor * 0.15f; // Outside the grid: no coverage was computed, spawning is blocked
+    }
     return HeatColor(Coverage / max(CoverageScale, 0.0001f));
 }
 

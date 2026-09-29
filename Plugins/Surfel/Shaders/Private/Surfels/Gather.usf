@@ -29,6 +29,8 @@ float PixelNoise(float2 Pixel)
 [numthreads(THREADS_X, THREADS_Y, THREADS_Z)]
 void MainCS(uint3 DispatchThreadId : SV_DispatchThreadID, uint GroupIndex : SV_GroupIndex)
 {
+    // Step 1: Decide based on coverage whether to spawn
+    
     float CoverageValue = 1e9f;
     float DepthZ = 0.f;
     int3 LoadPos = int3(0, 0, 0);
@@ -81,13 +83,19 @@ void MainCS(uint3 DispatchThreadId : SV_DispatchThreadID, uint GroupIndex : SV_G
     if (!bIsWinner) return;
         
     // Don't spawn suitable candidates for every empty cell
-    // I add a random factor so some cells get skipped for later iterations
+    // I add a random factor so some cells get skipped for but get spawned later
+    // Best example is the first frame where I could spawn the whole budget on the top part of the screen 
+    // Without it reaching lower
     uint3 Hash = Rand3DPCG16(int3(PixelPos, View.StateFrameIndex));
     float Random01 = Hash.x / 65535.0f;
     if (Random01 >= SpawnChance)
     {
         return;
     }
+    
+    // Step 2: Recycle
+    
+    // Step 3: Spawning Surfels Below
     
     // Get normal at this pixel
     float4 GBufferA = SceneTexturesStruct.GBufferATexture.Load(LoadPos);

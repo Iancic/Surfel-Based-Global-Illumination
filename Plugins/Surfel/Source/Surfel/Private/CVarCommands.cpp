@@ -17,7 +17,7 @@ TAutoConsoleVariable<int32> CVarSurfelMode(
 
 TAutoConsoleVariable<float> CVarSurfelIntensity(
 	TEXT("r.Surfel.Intensity"),
-	0.25f,
+	1.00f,
 	TEXT("Strength of the example effect (0-1)."),
 	ECVF_RenderThreadSafe);
 
@@ -27,37 +27,38 @@ TAutoConsoleVariable<float> CVarSurfelDepthScale(
 	TEXT("Far distance in world units mapped to white in depth visualization."),
 	ECVF_RenderThreadSafe);
 
+// 12k is a base default I found that works well enough with the rest of the settings
 TAutoConsoleVariable<int> CVarSurfelBudget(
 	TEXT("r.Surfel.Budget"),
-	500,
+	12000,
 	TEXT("Surfel Budget."),
 	ECVF_RenderThreadSafe
 	);
 
-// Float, not int: the ImGui slider and every shader that reads it treat it as a float,
-// and an int CVar silently truncated whatever the slider set.
 TAutoConsoleVariable<float> CVarSurfelRadius(
 	TEXT("r.Surfel.Radius"),
-	10.0f,
+	25.0f,
 	TEXT("Surfel radius in screen pixels at spawn time, also used as the minimum world radius (cm)."),
 	ECVF_RenderThreadSafe
 	);
 
 TAutoConsoleVariable<int32> CVarSurfelSpawnsPerFrame(
 	TEXT("r.Surfel.SpawnsPerFrame"),
-	256,
+	15,
 	TEXT("Roughly how many surfels Gather may spawn per frame across the whole screen, independent of resolution."),
 	ECVF_RenderThreadSafe);
 
+// Should not be played with too much
+// This avoid overcrowding
 TAutoConsoleVariable<float> CVarSurfelSpawnCoverageThreshold(
 	TEXT("r.Surfel.SpawnCoverageThreshold"),
-	0.1f,
+	0.25f,
 	TEXT("Pixels with coverage at or above this are considered covered and never spawn a surfel."),
 	ECVF_RenderThreadSafe);
 
 TAutoConsoleVariable<int32> CVarSurfelGridCellResolution(
 	TEXT("r.Surfel.Grid.CellResolution"),
-	32,
+	64,
 	TEXT("Cells along each axis of the camera-centred uniform grid (8-64). Memory grows with the cube of this."),
 	ECVF_RenderThreadSafe);
 
@@ -69,7 +70,7 @@ TAutoConsoleVariable<int32> CVarSurfelGridCellSize(
 
 TAutoConsoleVariable<int32> CVarSurfelGridCellCapacity(
 	TEXT("r.Surfel.Grid.CellCapacity"),
-	128,
+	256,
 	TEXT("Max surfels one cell can reference. Anything past this is dropped from the cell."),
 	ECVF_RenderThreadSafe);
 

@@ -185,7 +185,7 @@ void UDevGuiSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 {
 	Super::Initialize(Collection);
 
-	// So I don't type the CVar manually 
+	// So I don't type the CVar command of enabling input manually 
 	FImGuiModule::Get().GetProperties().SetInputEnabled(true);
 
 	RegisterSlateFont();
@@ -224,15 +224,15 @@ void UDevGuiSubsystem::Tick(float DeltaTime)
 		QualityPresetIndex = FindPresetForCurrentSettings();
 		bInitializedFromCVars = true;
 	}
-
-	DrawScenesSection();
-	DrawCamerasSection();
-	DrawSurfelSettings();
-
+	
 	if (CVarSurfelEnable.GetValueOnGameThread() != 0)
 	{
 		DrawGridSettings(); 
 	}
+	
+	DrawSurfelSettings();
+	DrawScenesSection();
+	DrawCamerasSection();
 
 	ImGui::End();
 }
@@ -316,6 +316,7 @@ void UDevGuiSubsystem::DrawCamerasSection()
 
 void UDevGuiSubsystem::DrawSurfelSettings()
 {
+	/*
 	int EnableSurfels = CVarSurfelEnable.GetValueOnGameThread();
 	if (ImGui::SliderInt("Enable Surfels", &EnableSurfels, 0, 1))
 	{
@@ -327,7 +328,8 @@ void UDevGuiSubsystem::DrawSurfelSettings()
 	{
 		return;
 	}
-
+	*/
+	
 	ImGui::SeparatorText("Surfel Settings");
 
 	if (ImGui::BeginCombo("Quality Preset", GSurfelQualityPresets[QualityPresetIndex].Name))
@@ -339,8 +341,6 @@ void UDevGuiSubsystem::DrawSurfelSettings()
 			{
 				QualityPresetIndex = Index;
 
-				// "Sliders" leaves the values where the last preset put them, so manual
-				// tuning starts from a known point instead of jumping somewhere.
 				if (Index != GCustomPresetIndex)
 				{
 					ApplyQualityPreset(GSurfelQualityPresets[Index]);
@@ -359,7 +359,7 @@ void UDevGuiSubsystem::DrawSurfelSettings()
 	ImGui::BeginDisabled(!bManualSettings);
 	{
 		int Budget = CVarSurfelBudget.GetValueOnGameThread();
-		if (ImGui::SliderInt("Budget", &Budget, 1024, 512 * 1024))
+		if (ImGui::InputInt("Budget", &Budget, 1024, 512 * 1024))
 		{
 			CVarSurfelBudget->Set(Budget, ECVF_SetByConsole);
 			++GSurfelRefreshRequestId;
@@ -367,7 +367,7 @@ void UDevGuiSubsystem::DrawSurfelSettings()
 		LockedByPresetTooltip();
 
 		float Radius = CVarSurfelRadius.GetValueOnGameThread();
-		if (ImGui::SliderFloat("Radius (px)", &Radius, 1.0f, 64.0f, "%.1f"))
+		if (ImGui::SliderFloat("Radius (px)", &Radius, 1.0f, 256.0f, "%.1f"))
 		{
 			CVarSurfelRadius->Set(Radius, ECVF_SetByConsole);
 			++GSurfelRefreshRequestId;
@@ -385,7 +385,7 @@ void UDevGuiSubsystem::DrawSurfelSettings()
 
 	DrawBudgetMeter();
 
-	// Not part of any preset: it's an algorithm threshold, not a quality level.
+	/*
 	float SpawnCoverageThreshold = CVarSurfelSpawnCoverageThreshold.GetValueOnGameThread();
 	if (ImGui::SliderFloat("Spawn Coverage Threshold", &SpawnCoverageThreshold, 0.0f, 2.0f, "%.3f"))
 	{
@@ -395,7 +395,8 @@ void UDevGuiSubsystem::DrawSurfelSettings()
 	{
 		ImGui::SetTooltip("Pixels with at least this much coverage never spawn a surfel.");
 	}
-
+	*/
+	
 	DrawVisualizationSettings();
 }
 
@@ -486,12 +487,14 @@ void UDevGuiSubsystem::DrawVisualizationSettings()
 		}
 	}
 
+	/*
 	int VisualizeSurfels = CVarSurfelMode.GetValueOnGameThread();
 	if (ImGui::SliderInt("Visualize Pass Enabled", &VisualizeSurfels, 0, 1))
 	{
 		CVarSurfelMode->Set(VisualizeSurfels, ECVF_SetByConsole);
 	}
-
+	*/
+	
 	if (VisualizeMode == (int32)ESurfelVisualizeMode::Surfels
 		|| VisualizeMode == (int32)ESurfelVisualizeMode::Grid)
 	{
@@ -499,17 +502,6 @@ void UDevGuiSubsystem::DrawVisualizationSettings()
 		if (ImGui::SliderFloat("Color Strenght", &SurfelIntensity, 0.0f, 1.0f))
 		{
 			CVarSurfelIntensity->Set(SurfelIntensity, ECVF_SetByConsole);
-		}
-	}
-
-	if (VisualizeMode == (int32)ESurfelVisualizeMode::Coverage)
-	{
-		// Coverage accumulates per overlapping surfel, so the useful range shifts a lot
-		// with radius and budget. This is what the top of the heat ramp maps to.
-		float CoverageScale = CVarSurfelCoverageScale.GetValueOnGameThread();
-		if (ImGui::SliderFloat("Coverage Scale", &CoverageScale, 0.01f, 50.0f, "%.2f", ImGuiSliderFlags_Logarithmic))
-		{
-			CVarSurfelCoverageScale->Set(CoverageScale, ECVF_SetByConsole);
 		}
 	}
 }
@@ -530,19 +522,19 @@ void UDevGuiSubsystem::DrawGridSettings()
 	}
 
 	int CellResolution = CVarSurfelGridCellResolution.GetValueOnGameThread();
-	if (ImGui::SliderInt("Cell Resolution", &CellResolution, 8, 64))
+	if (ImGui::SliderInt("Cell Resolution", &CellResolution, 8, 128))
 	{
 		CVarSurfelGridCellResolution->Set(CellResolution, ECVF_SetByConsole);
 	}
 
 	int CellSize = CVarSurfelGridCellSize.GetValueOnGameThread();
-	if (ImGui::SliderInt("Cell Size (cm)", &CellSize, 8, 512))
+	if (ImGui::SliderInt("Cell Size (cm)", &CellSize, 8, 1024))
 	{
 		CVarSurfelGridCellSize->Set(CellSize, ECVF_SetByConsole);
 	}
 
 	int CellCapacity = CVarSurfelGridCellCapacity.GetValueOnGameThread();
-	if (ImGui::SliderInt("Cell Capacity", &CellCapacity, 8, 256))
+	if (ImGui::SliderInt("Cell Capacity", &CellCapacity, 8, 512))
 	{
 		CVarSurfelGridCellCapacity->Set(CellCapacity, ECVF_SetByConsole);
 	}

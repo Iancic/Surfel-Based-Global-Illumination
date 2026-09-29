@@ -87,7 +87,7 @@ void FSurfelSceneViewExtension::PostRenderBasePassDeferred_RenderThread(FRDGBuil
 	}
 
 	// Before any early return, so RunFullscreenPass later this frame sees the same
-	// grid layout whether or not the grid got built.
+	// grid layout whether the grid got built.
 	FUniformGridViewState::UpdateFromCVars();
 
 	// Are surfel enabled? Is view valid? Are the GBuffers?
@@ -162,11 +162,6 @@ void FSurfelSceneViewExtension::PostRenderBasePassDeferred_RenderThread(FRDGBuil
 		FMath::FloorToDouble(SceneView.ViewLocation.Z / CellSize));
 	FVector GridPosition = (CameraCell - FVector((double)(FUniformGridViewState::CellResolution / 2))) * CellSize;
 	
-	// Grid allocation MUST run before Scatter. Scatter reads the grid to work out how well
-	// covered each pixel already is, so if the grid were still empty (it is cleared just
-	// above) every pixel would report zero coverage and Gather would spawn everywhere until
-	// the budget ran out. The grid holds the surfels that already existed at the start of
-	// this frame; ones Gather adds below are binned next frame, which is what we want.
 	// For RenderDoc
 	RDG_EVENT_SCOPE(GraphBuilder, "Grid Allocation Pass");
 	
@@ -260,7 +255,7 @@ void FSurfelSceneViewExtension::PostRenderBasePassDeferred_RenderThread(FRDGBuil
 	// (as this did before the reduction was added) made the real spawn rate 256x lower than
 	// the slider claimed.
 	const FIntPoint TileCount = FIntPoint::DivideAndRoundUp(CoverageExtent, 16);
-	float SpawnChance = SpawnsPerFrame / float(FMath::Max(TileCount.X * TileCount.Y, 1));
+	float SpawnChance = SpawnsPerFrame; /// float(FMath::Max(TileCount.X * TileCount.Y, 1));
 	GatherPassParameters->SpawnChance = SpawnChance;
 
 	GatherPassParameters->SpawnCoverageThreshold = CVarSurfelSpawnCoverageThreshold.GetValueOnRenderThread();

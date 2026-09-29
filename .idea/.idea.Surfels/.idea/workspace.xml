@@ -16,9 +16,14 @@
   <component name="ChangeListManager">
     <list default="true" id="20fab832-f3ef-4372-8e5d-692461982054" name="Changes" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/.idea.Surfels/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/.idea.Surfels/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Config/DefaultEngine.ini" beforeDir="false" afterPath="$PROJECT_DIR$/Config/DefaultEngine.ini" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Plugins/Surfel/Shaders/Private/Surfels/Gather.usf" beforeDir="false" afterPath="$PROJECT_DIR$/Plugins/Surfel/Shaders/Private/Surfels/Gather.usf" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Plugins/Surfel/Shaders/Private/Surfels/Scatter.usf" beforeDir="false" afterPath="$PROJECT_DIR$/Plugins/Surfel/Shaders/Private/Surfels/Scatter.usf" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Plugins/Surfel/Shaders/Private/Surfels/SurfelCommon.ush" beforeDir="false" afterPath="$PROJECT_DIR$/Plugins/Surfel/Shaders/Private/Surfels/SurfelCommon.ush" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Plugins/Surfel/Shaders/Private/Surfels/Visualize.usf" beforeDir="false" afterPath="$PROJECT_DIR$/Plugins/Surfel/Shaders/Private/Surfels/Visualize.usf" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Plugins/Surfel/Source/Surfel/Private/CVarCommands.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Plugins/Surfel/Source/Surfel/Private/CVarCommands.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Plugins/Surfel/Source/Surfel/Private/DevGuiSubsystem.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Plugins/Surfel/Source/Surfel/Private/DevGuiSubsystem.cpp" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Plugins/Surfel/Source/Surfel/Private/SurfelSceneViewExtension.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Plugins/Surfel/Source/Surfel/Private/SurfelSceneViewExtension.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Plugins/Surfel/Source/Surfel/Public/ComputePasses/VisualizePass.h" beforeDir="false" afterPath="$PROJECT_DIR$/Plugins/Surfel/Source/Surfel/Public/ComputePasses/VisualizePass.h" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -66,61 +71,61 @@
   <component name="MetaFilesCheckinStateConfiguration" checkMetaFiles="true" />
   <component name="NextEditCompletionFeaturesState">
     <decayedCancelled>
-      <entry key="MS100" value="1.0000014964754065" />
-      <entry key="MS500" value="1.0683933563287962" />
-      <entry key="S2" value="1.5113914693736419" />
-      <entry key="S5" value="1.7647181390174072" />
-      <entry key="S10" value="1.874516525906928" />
-      <entry key="S30" value="2.196663688032695" />
-      <entry key="S60" value="4.214998790725664" />
-      <entry key="M2" value="8.839735693118863" />
-      <entry key="M5" value="16.08635304831241" />
-      <entry key="M10" value="24.380167208921566" />
-      <entry key="M15" value="33.82688638392752" />
-      <entry key="M30" value="67.17568453152252" />
-      <entry key="H1" value="134.6483840504052" />
-      <entry key="H2" value="238.25457869723164" />
-      <entry key="H4" value="349.28876796632073" />
-      <entry key="D1" value="511.42884170012195" />
-      <entry key="W1" value="549.3192719850814" />
+      <entry key="MS100" value="1.0" />
+      <entry key="MS500" value="1.0000000406459042" />
+      <entry key="S2" value="1.0178098610213175" />
+      <entry key="S5" value="1.3479922524648429" />
+      <entry key="S10" value="2.36700974279783" />
+      <entry key="S30" value="9.361552665601511" />
+      <entry key="S60" value="18.879898698960762" />
+      <entry key="M2" value="30.379702893291928" />
+      <entry key="M5" value="44.173589005271175" />
+      <entry key="M10" value="52.373838970180195" />
+      <entry key="M15" value="57.72897462475827" />
+      <entry key="M30" value="77.62456737306857" />
+      <entry key="H1" value="132.17996527079174" />
+      <entry key="H2" value="235.44174402531752" />
+      <entry key="H4" value="360.7844951911311" />
+      <entry key="D1" value="561.8091437856745" />
+      <entry key="W1" value="611.2068617448832" />
     </decayedCancelled>
     <decayedSelected>
       <entry key="MS100" value="0.0" />
       <entry key="MS500" value="0.0" />
-      <entry key="S2" value="2.3397879153643828E-183" />
-      <entry key="S5" value="1.2294849723928754E-73" />
-      <entry key="S10" value="4.872708583495932E-37" />
-      <entry key="S30" value="1.244122766315224E-12" />
-      <entry key="S60" value="1.5766184202479835E-6" />
-      <entry key="M2" value="0.001775510488308926" />
-      <entry key="M5" value="0.1203190904550704" />
-      <entry key="M10" value="0.4911213589757607" />
-      <entry key="M15" value="0.7941725935499485" />
-      <entry key="M30" value="1.5194161886654283" />
-      <entry key="H1" value="3.8332075867768514" />
-      <entry key="H2" value="9.971517102445326" />
-      <entry key="H4" value="18.344523196387403" />
-      <entry key="D1" value="32.056506405595634" />
-      <entry key="W1" value="35.40543873970808" />
+      <entry key="S2" value="0.0" />
+      <entry key="S5" value="2.696370931793586E-200" />
+      <entry key="S10" value="1.642063010908407E-100" />
+      <entry key="S30" value="5.475997898116857E-34" />
+      <entry key="S60" value="2.3400879746648517E-17" />
+      <entry key="M2" value="4.845129523001831E-9" />
+      <entry key="M5" value="5.262095506272305E-4" />
+      <entry key="M10" value="0.03215776113024699" />
+      <entry key="M15" value="0.1387760061411381" />
+      <entry key="M30" value="0.6998526619100343" />
+      <entry key="H1" value="2.5455561760231937" />
+      <entry key="H2" value="7.960624948972625" />
+      <entry key="H4" value="16.47716183268954" />
+      <entry key="D1" value="32.184214418408615" />
+      <entry key="W1" value="36.2666210272599" />
     </decayedSelected>
     <decayedShown>
-      <entry key="MS100" value="1.0715068410799711E-5" />
-      <entry key="MS500" value="0.10673439172799945" />
-      <entry key="S2" value="0.8346552925474151" />
-      <entry key="S5" value="1.3880547422294054" />
-      <entry key="S10" value="1.6617236859746425" />
-      <entry key="S30" value="2.1160226881704873" />
-      <entry key="S60" value="4.159847678748438" />
-      <entry key="M2" value="8.797693044515473" />
-      <entry key="M5" value="16.178156114733195" />
-      <entry key="M10" value="24.848040527535126" />
-      <entry key="M15" value="34.59762709793372" />
-      <entry key="M30" value="68.6691014093264" />
-      <entry key="H1" value="138.4537194702359" />
-      <entry key="H2" value="248.19965426706256" />
-      <entry key="H4" value="367.6129038164487" />
-      <entry key="D1" value="543.4801342739553" />
-      <entry key="W1" value="584.7239042046987" />
+      <entry key="MS100" value="0.4413514981453274" />
+      <entry key="MS500" value="0.8490962467740609" />
+      <entry key="S2" value="0.966659384993267" />
+      <entry key="S5" value="1.2306375436721635" />
+      <entry key="S10" value="2.1786779088747252" />
+      <entry key="S30" value="9.138351890507298" />
+      <entry key="S60" value="18.68665562099114" />
+      <entry key="M2" value="30.23440542384766" />
+      <entry key="M5" value="44.08879179071253" />
+      <entry key="M10" value="52.35343071122329" />
+      <entry key="M15" value="57.827739462606786" />
+      <entry key="M30" value="78.2950730882607" />
+      <entry key="H1" value="134.6984301864654" />
+      <entry key="H2" value="243.37649714193716" />
+      <entry key="H4" value="377.2408030509902" />
+      <entry key="D1" value="593.9876777830141" />
+      <entry key="W1" value="647.4725924231101" />
     </decayedShown>
   </component>
   <component name="ProblemsViewState">
@@ -165,7 +170,7 @@
         <option name="PLATFORM" value="x64" />
         <option name="CURRENT_LAUNCH_PROFILE" value="Local" />
         <option name="EXE_PATH" value="$(LocalDebuggerCommand)" />
-        <option name="PROGRAM_PARAMETERS" value="$(LocalDebuggerCommandArguments) -windowed -ResX=1080 -ResY=1920" />
+        <option name="PROGRAM_PARAMETERS" value="$(LocalDebuggerCommandArguments) -game -windowed -ResY=800 -ResX=1600" />
         <option name="WORKING_DIRECTORY" value="$(LocalDebuggerWorkingDirectory)" />
         <option name="PASS_PARENT_ENVS" value="1" />
         <option name="USE_EXTERNAL_CONSOLE" value="0" />

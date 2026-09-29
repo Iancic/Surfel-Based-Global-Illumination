@@ -1,5 +1,8 @@
 #pragma once
 
+// Scatter writes this for pixels whose surface lies outside the grid.
+#define SURFEL_COVERAGE_OUT_OF_GRID 1e20f
+
 // Shared by Scatter and Visualize so the drawn disc is the one Gather's coverage test sees
 float SurfelCoverageWeight(float3 PixelWorldPosition, float3 PixelNormal, float4 PositionAndRadius, float3 SurfelNormal)
 {
