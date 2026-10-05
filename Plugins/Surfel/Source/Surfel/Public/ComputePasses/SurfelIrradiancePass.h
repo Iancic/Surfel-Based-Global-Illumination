@@ -1,4 +1,5 @@
 ﻿#pragma once
+#include "SceneTexturesConfig.h"
 #include "ShaderParameterStruct.h"
 
 /**
@@ -27,12 +28,32 @@ public:
 	SHADER_USE_PARAMETER_STRUCT(FSurfelIrradiancePass, FGlobalShader);
 
 	BEGIN_SHADER_PARAMETER_STRUCT(FParameters, )
-		/**
-		 * Read and write surfel buffers
-		 * Read structure with surfels
-		 */
 	
-		
+		// Surfel related parameters
+		SHADER_PARAMETER(uint32, SurfelBudget)
+		SHADER_PARAMETER(float, SurfelRadius)
+		SHADER_PARAMETER_RDG_BUFFER_UAV(RWStructuredBuffer<uint>, SurfelCount)
+		SHADER_PARAMETER_RDG_BUFFER_UAV(RWStructuredBuffer<float4>, SurfelPositionAndRadius)
+		SHADER_PARAMETER_RDG_BUFFER_UAV(RWStructuredBuffer<float4>, SurfelNormalAndFlags)
+		SHADER_PARAMETER_RDG_BUFFER_UAV(RWStructuredBuffer<float3>, SurfelIrradiance)
+	
+		// View
+		SHADER_PARAMETER_STRUCT_REF(FViewUniformShaderParameters, View)
+		SHADER_PARAMETER(FUintVector2, ViewRectMin)
+		SHADER_PARAMETER(FUintVector2, ViewRectMax)
+		SHADER_PARAMETER(uint32, SpawnTileSize)
+	
+		// Uniform Grid
+		SHADER_PARAMETER_RDG_BUFFER_UAV(RWStructuredBuffer<uint32>, GridCellEntries)
+		SHADER_PARAMETER_RDG_BUFFER_UAV(RWStructuredBuffer<uint32>, GridCounter)
+		SHADER_PARAMETER(FVector3f, GridPosition)
+		SHADER_PARAMETER(uint32, GridCellCount)
+		SHADER_PARAMETER(uint32, CellResolution)
+		SHADER_PARAMETER(uint32, CellCapacity)
+		SHADER_PARAMETER(uint32, CellSize)
+
+		// GBuffers
+		SHADER_PARAMETER_STRUCT_INCLUDE(FSceneTextureShaderParameters, GBufferTextures)
 			
 	END_SHADER_PARAMETER_STRUCT()
 

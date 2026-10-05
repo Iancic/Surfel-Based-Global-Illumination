@@ -8,6 +8,7 @@
 #include "ComputePasses/GatherPass.h"
 #include "ComputePasses/GridAllocationPass.h"
 #include "ComputePasses/ScatterPass.h"
+#include "ComputePasses/SurfelIrradiancePass.h"
 #include "ComputePasses/VisualizePass.h"
 #include "Runtime/Renderer/Private/SceneRendering.h"
 #include "Runtime/Renderer/Private/ScenePrivate.h"
@@ -15,7 +16,6 @@
 FSurfelSceneViewExtension::FSurfelSceneViewExtension(const FAutoRegister& AutoRegister)
 	: FSceneViewExtensionBase(AutoRegister)
 {
-	UE_LOG(LogTemp, Log, TEXT("Surfel: SceneViewExtension registered"));
 }
 
 void FSurfelSceneViewExtension::SetupView(FSceneViewFamily& InViewFamily, FSceneView& InView)
@@ -79,6 +79,8 @@ void FSurfelSceneViewExtension::SubscribeToPostProcessingPass(
 void FSurfelSceneViewExtension::PostRenderBasePassDeferred_RenderThread(FRDGBuilder& GraphBuilder, FSceneView& SceneView,
 	const FRenderTargetBindingSlots& RenderTargets, TRDGUniformBufferRef<FSceneTextureUniformParameters> SceneTextures)
 {
+	DECLARE_GPU_STAT(SurfelGI);
+	
 	// Drop last frame's grid handle before any early return: those RDG buffers belong to a
 	// finished graph, and RunFullscreenPass must never pick them up if this frame skips the grid.
 	if (SceneView.State)
@@ -115,12 +117,14 @@ void FSurfelSceneViewExtension::PostRenderBasePassDeferred_RenderThread(FRDGBuil
 	FRDGBufferRef SurfelPositionAndRadiusBuffer;
 	FRDGBufferRef SurfelNormalAndFlagsBuffer;
 	FRDGBufferRef SurfelCounterBuffer;
+	FRDGBufferRef SurfelIrradianceBuffer;
 
 	if (SurfelState.SurfelPositionAndRadius.IsValid())
 	{
 		SurfelPositionAndRadiusBuffer = GraphBuilder.RegisterExternalBuffer(SurfelState.SurfelPositionAndRadius);
-		SurfelNormalAndFlagsBuffer    = GraphBuilder.RegisterExternalBuffer(SurfelState.SurfelNormalAndFlags);
-		SurfelCounterBuffer           = GraphBuilder.RegisterExternalBuffer(SurfelState.SurfelCounter);
+		SurfelNormalAndFlagsBuffer = GraphBuilder.RegisterExternalBuffer(SurfelState.SurfelNormalAndFlags);
+		SurfelCounterBuffer = GraphBuilder.RegisterExternalBuffer(SurfelState.SurfelCounter);
+		SurfelIrradianceBuffer = GraphBuilder.RegisterExternalBuffer(SurfelState.SurfelIrradiance); 
 	}
 	else // Create them if they are not there
 	{
@@ -135,6 +139,11 @@ void FSurfelSceneViewExtension::PostRenderBasePassDeferred_RenderThread(FRDGBuil
 		SurfelCounterBuffer = GraphBuilder.CreateBuffer(
 			FRDGBufferDesc::CreateStructuredDesc(sizeof(uint32), 1),
 			TEXT("Surfel.Counter"));
+		
+		SurfelIrradianceBuffer = GraphBuilder.CreateBuffer(
+			FRDGBufferDesc::CreateStructuredDesc(sizeof(FVector3f), CVarBudget),
+			TEXT("Surfel.Irradiance")
+			);
 
 		AddClearUAVPass(GraphBuilder, GraphBuilder.CreateUAV(SurfelCounterBuffer), 0u);
 	}
@@ -268,9 +277,9 @@ void FSurfelSceneViewExtension::PostRenderBasePassDeferred_RenderThread(FRDGBuil
 	GatherPassParameters->SurfelBudget =  CVarBudget;
 	GatherPassParameters->SurfelRadius = CVarSurfelRadius.GetValueOnRenderThread();
 
-	GatherPassParameters->SurfelCount              = GraphBuilder.CreateUAV(SurfelCounterBuffer);
-	GatherPassParameters->SurfelPositionAndRadius  = GraphBuilder.CreateUAV(SurfelPositionAndRadiusBuffer);
-	GatherPassParameters->SurfelNormalAndFlags     = GraphBuilder.CreateUAV(SurfelNormalAndFlagsBuffer);
+	GatherPassParameters->SurfelCount = GraphBuilder.CreateUAV(SurfelCounterBuffer);
+	GatherPassParameters->SurfelPositionAndRadius = GraphBuilder.CreateUAV(SurfelPositionAndRadiusBuffer);
+	GatherPassParameters->SurfelNormalAndFlags = GraphBuilder.CreateUAV(SurfelNormalAndFlagsBuffer);
 	
 	GatherPassParameters->GBufferTextures = SceneTextureShaderParameters;
 	
@@ -282,7 +291,44 @@ void FSurfelSceneViewExtension::PostRenderBasePassDeferred_RenderThread(FRDGBuil
 	FComputeShaderUtils::AddPass(GraphBuilder, RDG_EVENT_NAME("Surfel Gather"), ComputeShader, GatherPassParameters, FComputeShaderUtils::GetGroupCount(GridDispatchSize, FIntPoint(SpawnTileSize, SpawnTileSize)));
 
 	UE_LOG(LogTemp, Log, TEXT("Surfel: gather ran, budget %u"), CVarBudget);
+
+	// For RenderDoc
+	RDG_EVENT_SCOPE(GraphBuilder, "Surfel Irradiance Pass");
 	
+	// Allocate memory for IrradiancePass parameters
+	FSurfelIrradiancePass::FParameters* IrradiancePassParameters =
+		GraphBuilder.AllocParameters<FSurfelIrradiancePass::FParameters>();
+	
+	IrradiancePassParameters->View = SceneView.ViewUniformBuffer;
+	IrradiancePassParameters->ViewRectMin = FUintVector2(SceneView.UnscaledViewRect.Min.X, SceneView.UnscaledViewRect.Min.Y);
+	IrradiancePassParameters->ViewRectMax = FUintVector2(SceneView.UnscaledViewRect.Max.X, SceneView.UnscaledViewRect.Max.Y);
+
+	IrradiancePassParameters->SurfelBudget =  CVarBudget;
+	IrradiancePassParameters->SurfelRadius = CVarSurfelRadius.GetValueOnRenderThread();
+
+	IrradiancePassParameters->SurfelCount = GraphBuilder.CreateUAV(SurfelCounterBuffer);
+	IrradiancePassParameters->SurfelPositionAndRadius = GraphBuilder.CreateUAV(SurfelPositionAndRadiusBuffer);
+	IrradiancePassParameters->SurfelNormalAndFlags = GraphBuilder.CreateUAV(SurfelNormalAndFlagsBuffer);
+	IrradiancePassParameters->SurfelIrradiance = GraphBuilder.CreateUAV(SurfelIrradianceBuffer);
+	
+	IrradiancePassParameters->GBufferTextures = SceneTextureShaderParameters;
+	
+	IrradiancePassParameters->GridCellEntries = GraphBuilder.CreateUAV(GridCellEntriesBuffer);
+	IrradiancePassParameters->GridCounter = GraphBuilder.CreateUAV(GridCounterBuffer);
+	
+	IrradiancePassParameters->GridPosition = FVector3f(GridPosition);
+	IrradiancePassParameters->GridCellCount = FUniformGridViewState::GridCellCount;
+	IrradiancePassParameters->CellResolution = FUniformGridViewState::CellResolution;
+	IrradiancePassParameters->CellCapacity = FUniformGridViewState::CellCapacity;
+	IrradiancePassParameters->CellSize = FUniformGridViewState::CellSize;
+	
+	// Add compute shader pass
+	TShaderMapRef<FSurfelIrradiancePass> IrradianceComputeShader(GetGlobalShaderMap(SceneView.GetFeatureLevel()));
+	
+	FComputeShaderUtils::AddPass(GraphBuilder, RDG_EVENT_NAME("Surfel Irradiance"), IrradianceComputeShader, IrradiancePassParameters, FComputeShaderUtils::GetGroupCount(FIntPoint(int(CVarBudget), 1), FIntPoint(64, 1)));
+
+	UE_LOG(LogTemp, Log, TEXT("Surfel: irradiance pass"));
+		
 	// A way to hand over the surfel data to the other hook which is the visualization one
 	SurfelFrameDataByViewKey.Add(ViewKey, FSurfelFrameData{ GridCellEntriesBuffer, GridCounterBuffer, GridPassParameters->GridPosition, CoverageTexture });
 
@@ -315,6 +361,9 @@ void FSurfelSceneViewExtension::PostRenderBasePassDeferred_RenderThread(FRDGBuil
 	SurfelState.SurfelPositionAndRadius = GraphBuilder.ConvertToExternalBuffer(SurfelPositionAndRadiusBuffer);
 	SurfelState.SurfelNormalAndFlags = GraphBuilder.ConvertToExternalBuffer(SurfelNormalAndFlagsBuffer);
 	SurfelState.SurfelCounter = GraphBuilder.ConvertToExternalBuffer(SurfelCounterBuffer);
+	SurfelState.SurfelIrradiance = GraphBuilder.ConvertToExternalBuffer(SurfelIrradianceBuffer);
+	
+	RDG_GPU_STAT_SCOPE(GraphBuilder, SurfelGI);
 }
 
 FScreenPassTexture FSurfelSceneViewExtension::RunVisualizePass(

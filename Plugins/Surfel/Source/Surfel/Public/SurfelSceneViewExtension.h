@@ -36,6 +36,7 @@ public:
 		TRefCountPtr<FRDGPooledBuffer> SurfelCounter;
 		TRefCountPtr<FRDGPooledBuffer> SurfelPositionAndRadius;
 		TRefCountPtr<FRDGPooledBuffer> SurfelNormalAndFlags;
+		TRefCountPtr<FRDGPooledBuffer> SurfelIrradiance;
 	
 		FVector PreviousPreViewTranslation = FVector::ZeroVector;
 		uint32 Budget = 0;

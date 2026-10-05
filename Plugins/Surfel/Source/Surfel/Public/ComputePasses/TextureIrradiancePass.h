@@ -1,5 +1,5 @@
 ﻿#pragma once
-
+#include "ShaderParameterStruct.h"
 
 /**
  * 2D Dispatch
@@ -36,6 +36,4 @@ public:
 		OutEnvironment.SetDefine(TEXT("THREADS_Z"), 1);
 	}
 };
-
-IMPLEMENT_GLOBAL_SHADER(FTextureIrradiancePass, "/Surfel/Surfels/TextureIrradiance.usf", "MainCS", SF_Compute);
 

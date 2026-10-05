@@ -1,5 +1,5 @@
 #include "/Engine/Public/Platform.ush"
-
+/*
 RWTexture2D<float> IrradianceTexture;
 
 RWStructuredBuffer<uint> SurfelCount;
@@ -20,10 +20,11 @@ uint GridCellCount;
 uint CellResolution;
 uint CellCapacity;
 uint CellSize;
-
+*/
 [numthreads(THREADS_X, THREADS_Y, THREADS_Z)]
 void MainCS(uint3 DispatchThreadId : SV_DispatchThreadID)
 {
+	/*
 	// Thread per pixel to find the coverage of this
 	uint2 PixelPos = min(ViewRectMin + DispatchThreadId.xy, ViewRectMax - 1);
 	int3 LoadPos = int3(PixelPos, 0);
@@ -57,4 +58,5 @@ void MainCS(uint3 DispatchThreadId : SV_DispatchThreadID)
 		
 		// IrradianceTexture[PixelPos] = TotalIrradiance;
 	}
+	*/
 }

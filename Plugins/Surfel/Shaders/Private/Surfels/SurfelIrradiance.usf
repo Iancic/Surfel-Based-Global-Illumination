@@ -1,13 +1,18 @@
-#include "/Engine/Public/Platform.ush"
-#include "/Engine/Private/DistanceField/GlobalDistanceFieldUtils.ush"
-#include "/Engine/Private/DistanceField/GlobalDistanceFieldShared.ush"
+//MegaLightsRayTracing.usf:4
+//LumenSoftwareRayTracing.ush:8 set it
+#define DISTANCE_FIELD_IN_VIEW_UB 1
+
 #include "/Engine/Private/Common.ush"
 #include "/Engine/Private/Random.ush"
+
+// Shared must come because of some macros
+#include "/Engine/Private/DistanceField/GlobalDistanceFieldShared.ush"
+#include "/Engine/Private/DistanceField/GlobalDistanceFieldUtils.ush"
 
 RWStructuredBuffer<uint> SurfelCount;
 RWStructuredBuffer<float4> SurfelPositionAndRadius;
 RWStructuredBuffer<float4> SurfelNormalAndFlags;
-RWStructuredBuffer<float> SurfelIrradiance;
+RWStructuredBuffer<float3> SurfelIrradiance;
 
 uint SurfelBudget;
 float SurfelRadius;
@@ -23,6 +28,13 @@ uint GridCellCount;
 uint CellResolution;
 uint CellCapacity;
 uint CellSize;
+
+// TODO: placeholder, every surfel is treated as a mid-grey diffuse surface.
+// Replace with a per-surfel albedo buffer written when the surfel is spawned from the GBuffer.
+float3 GetSurfelAlbedo(uint SurfelIndex)
+{
+	return float3(0.5f, 0.5f, 0.5f);
+}
 
 float3 SampleSurfelRadianceAt(float3 WorldPosition, float3 HitNormal)
 {
@@ -50,8 +62,7 @@ float3 SampleSurfelRadianceAt(float3 WorldPosition, float3 HitNormal)
 
 		if (Weight > 0.0f)
 		{
-			// Outgoing radiance of a diffuse surface = albedo / PI * irradiance
-			float3 Outgoing = GetSurfelAlbedo(Other) / PI * SurfelIrradianceBuffer[Other].rgb;
+			float3 Outgoing = GetSurfelAlbedo(Other) / PI * SurfelIrradiance[Other];
 			RadianceSum += Outgoing * Weight;
 			WeightSum += Weight;
 		}
@@ -64,7 +75,8 @@ float3 SampleSurfelRadianceAt(float3 WorldPosition, float3 HitNormal)
 
 // Unreal probably has something as well like a Hammersley sequence.
 // The following 3 functions are taken from: https://www.shadertoy.com/view/ldBcDt
-void Basis(float3 n, float3 f, float3 r) 
+// f and r must be 'out', HLSL passes by value otherwise and the caller never sees the result
+void Basis(float3 n, out float3 f, out float3 r)
 {
 	if(n.z < -0.999999) {
 		f = float3(0 , -1, 0);
@@ -93,7 +105,7 @@ float3 SphericalToCartesian( float rho, float phi, float theta )
 float3 SampleHemisphereCosWeighted(float3 n, float Xi1, float Xi2 ) 
 {
 	float theta = acos(sqrt(1.0-Xi1));
-	float phi = TWO_PI * Xi2;
+	float phi = 2 * PI * Xi2;
 	return LocalToWorld( SphericalToCartesian( 1.0, phi, theta ), n );
 }
 
@@ -117,30 +129,47 @@ void MainCS(uint3 DispatchThreadId : SV_DispatchThreadID)
 	
 	
 	// Get Ray Direction (random ray on hemisphere weighted by normal)
-	uint3 Hash = Rand3DPCG16(int3(SurfelIdx, View.StateFrameIndex));
+	uint3 Hash = Rand3DPCG16(int3(SurfelIdx, View.StateFrameIndex, 0));
 	
 	// Random values are from 0 to 1
 	float Random1 = Hash.x / 65535.0f;
 	float Random2 = Hash.y / 65535.0f;
 
-	float3 Direction = SampleHemisphereCosWeighted(Normal.xyz, Random1, Random2, 0.f, 250, 1.f, 1.f);
+	float3 Direction = SampleHemisphereCosWeighted(Normal.xyz, Random1, Random2);
+
+	// The global SDF lives in translated world space (world + PreViewTranslation) to keep float precision
+	// near the camera. Surfels are stored in world space, so convert before tracing.
+	float3 PreViewTranslation = DFHackToFloat(PrimaryView.PreViewTranslation);
+	float3 TranslatedPosition = Position + PreViewTranslation;
+
+	// Offset the origin one voxel along the normal so the ray doesn't immediately hit the surface it starts on
 	float3 Origin = TranslatedPosition + Normal * VoxelExtent;
-	
+
+	// TODO: hardcoded trace settings, expose as shader parameters later
+	const float MinTraceDistance = 0.0f;
+	const float MaxTraceDistance = 10000.0f; // 100m in UE units (cm)
+	const float StepFactor = 1.0f;           // 1 = step the full SDF distance each iteration
+	const float MinStepFactor = 1.0f;
+
 	// Using Utilities to ray-march until distance is found
-	FGlobalSDFTraceInput TraceInput = SetupGlobalSDFTraceInput(Position + Normal.xyz * VoxelExtent, Direction);
+	FGlobalSDFTraceInput TraceInput = SetupGlobalSDFTraceInput(Origin, Direction, MinTraceDistance, MaxTraceDistance, StepFactor, MinStepFactor);
 	FGlobalSDFTraceResult TraceResult = RayTraceGlobalDistanceField(TraceInput);
 	
 	uint SDFClimapIndex = TraceResult.HitClipmapIndex;
 	
 	// At this distance where incoming light is to our surfel
-	float4 TotalIncomingRadiance;
+	float3 TotalIncomingRadiance;
 	
 	// Ray hit 
 	if (GlobalSDFTraceResultIsHit(TraceResult))
 	{
-		float3 HitPosition = Origin + Direction * TraceResult.HitTime;
-		float3 HitNormal = ComputeGlobalDistanceFieldNormal(HitPosition, TraceResult.HitClipmapIndex, -Direction);
-		TotalIncomingRadiance = SampleSurfelRadianceAt(HitPosition, HitNormal);
+		// Hit position is in translated world space (same space as the trace origin), which the SDF normal lookup expects
+		float3 TranslatedHitPosition = Origin + Direction * TraceResult.HitTime;
+		float3 HitNormal = ComputeGlobalDistanceFieldNormal(TranslatedHitPosition, TraceResult.HitClipmapIndex, -Direction);
+
+		// The surfel grid (GridPosition) is in world space, so convert back before looking up surfels
+		float3 WorldHitPosition = TranslatedHitPosition - PreViewTranslation;
+		TotalIncomingRadiance = SampleSurfelRadianceAt(WorldHitPosition, HitNormal);
 	}
 	// Ray miss
 	else
@@ -148,5 +177,5 @@ void MainCS(uint3 DispatchThreadId : SV_DispatchThreadID)
 		TotalIncomingRadiance = 0.f; // Skylight Color
 	}
 	
-	SurfelIrradianceBuffer[SurfelIdx] = TotalIncomingRadiance;
+	SurfelIrradiance[SurfelIdx] = TotalIncomingRadiance;
 }
