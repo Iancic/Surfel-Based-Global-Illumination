@@ -16,10 +16,82 @@
   <component name="ChangeListManager">
     <list default="true" id="20fab832-f3ef-4372-8e5d-692461982054" name="Changes" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/.idea.Surfels/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/.idea.Surfels/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Plugins/Developer/RiderLink/Resources/checksum" beforeDir="false" afterPath="$PROJECT_DIR$/Plugins/Developer/RiderLink/Resources/checksum" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Plugins/Developer/RiderLink/RiderLink.uplugin" beforeDir="false" afterPath="$PROJECT_DIR$/Plugins/Developer/RiderLink/RiderLink.uplugin" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Plugins/Developer/RiderLink/Source/RD/RD.Build.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Plugins/Developer/RiderLink/Source/RD/RD.Build.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Plugins/Developer/RiderLink/Source/RD/src/rd_framework_cpp/src/main/wire/ByteBufferAsyncProcessor.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Plugins/Developer/RiderLink/Source/RD/src/rd_framework_cpp/src/main/wire/ByteBufferAsyncProcessor.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Plugins/Developer/RiderLink/Source/RD/src/rd_framework_cpp/src/main/wire/ByteBufferAsyncProcessor.h" beforeDir="false" afterPath="$PROJECT_DIR$/Plugins/Developer/RiderLink/Source/RD/src/rd_framework_cpp/src/main/wire/ByteBufferAsyncProcessor.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Plugins/Developer/RiderLink/Source/RiderAgentTools/Private/AssetRegistrySearcher.cpp" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Plugins/Developer/RiderLink/Source/RiderAgentTools/Private/AssetRegistrySearcher.hpp" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Plugins/Developer/RiderLink/Source/RiderAgentTools/Private/PythonExecutor.cpp" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Plugins/Developer/RiderLink/Source/RiderAgentTools/Private/PythonExecutor.hpp" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Plugins/Developer/RiderLink/Source/RiderAgentTools/Private/RiderAgentBridgeLibrary.cpp" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Plugins/Developer/RiderLink/Source/RiderAgentTools/Private/RiderAgentBridgeLibrary.h" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Plugins/Developer/RiderLink/Source/RiderAgentTools/Private/RiderAgentTools.cpp" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Plugins/Developer/RiderLink/Source/RiderAgentTools/Private/RiderAgentTools.hpp" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Plugins/Developer/RiderLink/Source/RiderAgentTools/Private/SceneActorSpawner.cpp" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Plugins/Developer/RiderLink/Source/RiderAgentTools/Private/SceneActorSpawner.hpp" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Plugins/Developer/RiderLink/Source/RiderAgentTools/Private/ScreenshotCapturer.cpp" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Plugins/Developer/RiderLink/Source/RiderAgentTools/Private/ScreenshotCapturer.hpp" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Plugins/Developer/RiderLink/Source/RiderAgentTools/Private/ViewportCameraController.cpp" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Plugins/Developer/RiderLink/Source/RiderAgentTools/Private/ViewportCameraController.hpp" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Plugins/Developer/RiderLink/Source/RiderAgentTools/RiderAgentTools.Build.cs" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Plugins/Developer/RiderLink/Source/RiderGameControl/Private/RiderGameControl.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Plugins/Developer/RiderLink/Source/RiderGameControl/Private/RiderGameControl.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Plugins/Developer/RiderLink/Source/RiderLink/Public/Model/Library/CMakeLists.txt" beforeDir="false" afterPath="$PROJECT_DIR$/Plugins/Developer/RiderLink/Source/RiderLink/Public/Model/Library/CMakeLists.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Plugins/Developer/RiderLink/Source/RiderLink/Public/Model/Library/UE4Library/AssetLiveSearchAsset.Pregenerated.cpp" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Plugins/Developer/RiderLink/Source/RiderLink/Public/Model/Library/UE4Library/AssetLiveSearchAsset.Pregenerated.h" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Plugins/Developer/RiderLink/Source/RiderLink/Public/Model/Library/UE4Library/AssetLiveSearchRequest.Pregenerated.cpp" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Plugins/Developer/RiderLink/Source/RiderLink/Public/Model/Library/UE4Library/AssetLiveSearchRequest.Pregenerated.h" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Plugins/Developer/RiderLink/Source/RiderLink/Public/Model/Library/UE4Library/AssetLiveSearchResponse.Pregenerated.cpp" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Plugins/Developer/RiderLink/Source/RiderLink/Public/Model/Library/UE4Library/AssetLiveSearchResponse.Pregenerated.h" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Plugins/Developer/RiderLink/Source/RiderLink/Public/Model/Library/UE4Library/BatchScriptRequest.Pregenerated.cpp" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Plugins/Developer/RiderLink/Source/RiderLink/Public/Model/Library/UE4Library/BatchScriptRequest.Pregenerated.h" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Plugins/Developer/RiderLink/Source/RiderLink/Public/Model/Library/UE4Library/BatchScriptResult.Pregenerated.cpp" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Plugins/Developer/RiderLink/Source/RiderLink/Public/Model/Library/UE4Library/BatchScriptResult.Pregenerated.h" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Plugins/Developer/RiderLink/Source/RiderLink/Public/Model/Library/UE4Library/PlayNetMode.Pregenerated.cpp" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Plugins/Developer/RiderLink/Source/RiderLink/Public/Model/Library/UE4Library/PlayNetMode.Pregenerated.h" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Plugins/Developer/RiderLink/Source/RiderLink/Public/Model/Library/UE4Library/PlaySettings.Pregenerated.cpp" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Plugins/Developer/RiderLink/Source/RiderLink/Public/Model/Library/UE4Library/PlaySettings.Pregenerated.h" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Plugins/Developer/RiderLink/Source/RiderLink/Public/Model/Library/UE4Library/Rotator3.Pregenerated.cpp" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Plugins/Developer/RiderLink/Source/RiderLink/Public/Model/Library/UE4Library/Rotator3.Pregenerated.h" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Plugins/Developer/RiderLink/Source/RiderLink/Public/Model/Library/UE4Library/ScreenshotKind.Pregenerated.cpp" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Plugins/Developer/RiderLink/Source/RiderLink/Public/Model/Library/UE4Library/ScreenshotKind.Pregenerated.h" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Plugins/Developer/RiderLink/Source/RiderLink/Public/Model/Library/UE4Library/ScreenshotRequest.Pregenerated.cpp" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Plugins/Developer/RiderLink/Source/RiderLink/Public/Model/Library/UE4Library/ScreenshotRequest.Pregenerated.h" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Plugins/Developer/RiderLink/Source/RiderLink/Public/Model/Library/UE4Library/ScreenshotResult.Pregenerated.cpp" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Plugins/Developer/RiderLink/Source/RiderLink/Public/Model/Library/UE4Library/ScreenshotResult.Pregenerated.h" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Plugins/Developer/RiderLink/Source/RiderLink/Public/Model/Library/UE4Library/ScriptRequest.Pregenerated.cpp" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Plugins/Developer/RiderLink/Source/RiderLink/Public/Model/Library/UE4Library/ScriptRequest.Pregenerated.h" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Plugins/Developer/RiderLink/Source/RiderLink/Public/Model/Library/UE4Library/ScriptResult.Pregenerated.cpp" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Plugins/Developer/RiderLink/Source/RiderLink/Public/Model/Library/UE4Library/ScriptResult.Pregenerated.h" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Plugins/Developer/RiderLink/Source/RiderLink/Public/Model/Library/UE4Library/SpawnActorRequest.Pregenerated.cpp" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Plugins/Developer/RiderLink/Source/RiderLink/Public/Model/Library/UE4Library/SpawnActorRequest.Pregenerated.h" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Plugins/Developer/RiderLink/Source/RiderLink/Public/Model/Library/UE4Library/SpawnActorResponse.Pregenerated.cpp" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Plugins/Developer/RiderLink/Source/RiderLink/Public/Model/Library/UE4Library/SpawnActorResponse.Pregenerated.h" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Plugins/Developer/RiderLink/Source/RiderLink/Public/Model/Library/UE4Library/UE4Library.Pregenerated.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Plugins/Developer/RiderLink/Source/RiderLink/Public/Model/Library/UE4Library/UE4Library.Pregenerated.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Plugins/Developer/RiderLink/Source/RiderLink/Public/Model/Library/UE4Library/Vector3.Pregenerated.cpp" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Plugins/Developer/RiderLink/Source/RiderLink/Public/Model/Library/UE4Library/Vector3.Pregenerated.h" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Plugins/Developer/RiderLink/Source/RiderLink/Public/Model/Library/UE4Library/ViewportCameraAction.Pregenerated.cpp" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Plugins/Developer/RiderLink/Source/RiderLink/Public/Model/Library/UE4Library/ViewportCameraAction.Pregenerated.h" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Plugins/Developer/RiderLink/Source/RiderLink/Public/Model/Library/UE4Library/ViewportCameraRequest.Pregenerated.cpp" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Plugins/Developer/RiderLink/Source/RiderLink/Public/Model/Library/UE4Library/ViewportCameraRequest.Pregenerated.h" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Plugins/Developer/RiderLink/Source/RiderLink/Public/Model/Library/UE4Library/ViewportCameraResponse.Pregenerated.cpp" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Plugins/Developer/RiderLink/Source/RiderLink/Public/Model/Library/UE4Library/ViewportCameraResponse.Pregenerated.h" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Plugins/Developer/RiderLink/Source/RiderLink/Public/Model/RdEditorProtocol/LiveCodingModel/LiveCodingModel.Pregenerated.h" beforeDir="false" afterPath="$PROJECT_DIR$/Plugins/Developer/RiderLink/Source/RiderLink/Public/Model/RdEditorProtocol/LiveCodingModel/LiveCodingModel.Pregenerated.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Plugins/Developer/RiderLink/Source/RiderLink/Public/Model/RdEditorProtocol/RdEditorModel/RdEditorModel.Pregenerated.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Plugins/Developer/RiderLink/Source/RiderLink/Public/Model/RdEditorProtocol/RdEditorModel/RdEditorModel.Pregenerated.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Plugins/Developer/RiderLink/Source/RiderLink/Public/Model/RdEditorProtocol/RdEditorModel/RdEditorModel.Pregenerated.h" beforeDir="false" afterPath="$PROJECT_DIR$/Plugins/Developer/RiderLink/Source/RiderLink/Public/Model/RdEditorProtocol/RdEditorModel/RdEditorModel.Pregenerated.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Plugins/Developer/RiderLink/Source/RiderLink/Public/Model/RdEditorProtocol/RdEditorRoot/RdEditorRoot.Pregenerated.h" beforeDir="false" afterPath="$PROJECT_DIR$/Plugins/Developer/RiderLink/Source/RiderLink/Public/Model/RdEditorProtocol/RdEditorRoot/RdEditorRoot.Pregenerated.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Plugins/Developer/RiderLink/Source/RiderLink/Public/UE4TypesMarshallers.h" beforeDir="false" afterPath="$PROJECT_DIR$/Plugins/Developer/RiderLink/Source/RiderLink/Public/UE4TypesMarshallers.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Plugins/Developer/RiderLink/Source/RiderLink/RiderLink.Build.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Plugins/Developer/RiderLink/Source/RiderLink/RiderLink.Build.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Plugins/Developer/RiderLink/Source/RiderLogging/Private/RiderLogging.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Plugins/Developer/RiderLink/Source/RiderLogging/Private/RiderLogging.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Plugins/Surfel/Shaders/Private/Surfels/Composite.usf" beforeDir="false" afterPath="$PROJECT_DIR$/Plugins/Surfel/Shaders/Private/Surfels/Composite.usf" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Plugins/Surfel/Shaders/Private/Surfels/Gather.usf" beforeDir="false" afterPath="$PROJECT_DIR$/Plugins/Surfel/Shaders/Private/Surfels/Gather.usf" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Plugins/Surfel/Source/Surfel/Private/DevGuiSubsystem.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Plugins/Surfel/Source/Surfel/Private/DevGuiSubsystem.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Plugins/Surfel/Shaders/Private/Surfels/SurfelIrradiance.usf" beforeDir="false" afterPath="$PROJECT_DIR$/Plugins/Surfel/Shaders/Private/Surfels/SurfelIrradiance.usf" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Plugins/Surfel/Shaders/Private/Surfels/TextureIrradiance.usf" beforeDir="false" afterPath="$PROJECT_DIR$/Plugins/Surfel/Shaders/Private/Surfels/TextureIrradiance.usf" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Plugins/Surfel/Source/Surfel/Private/CVarCommands.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Plugins/Surfel/Source/Surfel/Private/CVarCommands.cpp" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Plugins/Surfel/Source/Surfel/Private/SurfelSceneViewExtension.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Plugins/Surfel/Source/Surfel/Private/SurfelSceneViewExtension.cpp" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Plugins/Surfel/Source/Surfel/Public/ComputePasses/GatherPass.h" beforeDir="false" afterPath="$PROJECT_DIR$/Plugins/Surfel/Source/Surfel/Public/ComputePasses/GatherPass.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Plugins/Surfel/Source/Surfel/Public/SurfelSceneViewExtension.h" beforeDir="false" afterPath="$PROJECT_DIR$/Plugins/Surfel/Source/Surfel/Public/SurfelSceneViewExtension.h" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -35,7 +107,12 @@
   <component name="HighlightingSettingsPerFile">
     <setting file="file://$PROJECT_DIR$/../../../../../Program Files/Epic Games/UE_5.8/Engine/Shaders/Private/RandomPCG.ush" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/../../../../../Program Files/Epic Games/UE_5.8/Engine/Source/Runtime/Core/Public/Misc/AssertionMacros.h" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/../../../../../Program Files/Epic Games/UE_5.8/Engine/Source/Runtime/Engine/Public/SceneInterface.h" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/../../../../../Program Files/Epic Games/UE_5.8/Engine/Source/Runtime/Engine/Public/SceneViewExtension.h" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/../../../../../Program Files/Epic Games/UE_5.8/Engine/Source/Runtime/Launch/Private/Launch.cpp" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/../../../../../Program Files/Epic Games/UE_5.8/Engine/Source/Runtime/Launch/Private/LaunchEngineLoop.cpp" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/../../../../../Program Files/Epic Games/UE_5.8/Engine/Source/Runtime/Launch/Public/LaunchEngineLoop.h" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/../../../../../Program Files/Epic Games/UE_5.8/Engine/Source/Runtime/RenderCore/Private/RenderingThread.cpp" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/../../../../../Program Files/Epic Games/UE_5.8/Engine/Source/Runtime/Renderer/Private/BasePassRendering.cpp" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/../../../../../Program Files/Epic Games/UE_5.8/Engine/Source/Runtime/Renderer/Private/MeshDrawCommands.h" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/Plugins/Surfel/Shaders/Private/Surfels/Composite.usf" root0="FORCE_HIGHLIGHTING" />
@@ -67,61 +144,61 @@
   <component name="MetaFilesCheckinStateConfiguration" checkMetaFiles="true" />
   <component name="NextEditCompletionFeaturesState">
     <decayedCancelled>
-      <entry key="MS100" value="0.2708194451073009" />
-      <entry key="MS500" value="1.2740712176496465" />
-      <entry key="S2" value="2.715645459326138" />
-      <entry key="S5" value="3.3894605239197535" />
-      <entry key="S10" value="3.675213666891958" />
-      <entry key="S30" value="3.9016413497896867" />
-      <entry key="S60" value="4.23683312832525" />
-      <entry key="M2" value="6.031312015944974" />
-      <entry key="M5" value="18.63907883664913" />
-      <entry key="M10" value="41.63427489318385" />
-      <entry key="M15" value="58.33208061809066" />
-      <entry key="M30" value="90.75418337765329" />
-      <entry key="H1" value="142.8751529546719" />
-      <entry key="H2" value="244.4699472280682" />
-      <entry key="H4" value="388.31687331816073" />
-      <entry key="D1" value="657.0533928633427" />
-      <entry key="W1" value="728.980038683345" />
+      <entry key="MS100" value="1.0000001606027575" />
+      <entry key="MS500" value="1.0437673850277251" />
+      <entry key="S2" value="1.4573910369375944" />
+      <entry key="S5" value="1.7313328139733546" />
+      <entry key="S10" value="1.8552408649647636" />
+      <entry key="S30" value="2.2657627065849453" />
+      <entry key="S60" value="4.952286540862195" />
+      <entry key="M2" value="12.495446696011287" />
+      <entry key="M5" value="34.42878969883344" />
+      <entry key="M10" value="60.51458781129198" />
+      <entry key="M15" value="78.41459487537568" />
+      <entry key="M30" value="118.00925036835815" />
+      <entry key="H1" value="181.35949422386375" />
+      <entry key="H2" value="292.51280624874" />
+      <entry key="H4" value="455.54393022451774" />
+      <entry key="D1" value="790.8669891572682" />
+      <entry key="W1" value="886.4634676729452" />
     </decayedCancelled>
     <decayedSelected>
       <entry key="MS100" value="0.0" />
       <entry key="MS500" value="0.0" />
       <entry key="S2" value="0.0" />
       <entry key="S5" value="0.0" />
-      <entry key="S10" value="2.112650602253689E-276" />
-      <entry key="S30" value="1.283145462732814E-92" />
-      <entry key="S60" value="1.1327615387405087E-46" />
-      <entry key="M2" value="1.0660032931355934E-23" />
-      <entry key="M5" value="7.213399546206537E-10" />
-      <entry key="M10" value="3.765099310626501E-5" />
-      <entry key="M15" value="0.0015416110171758317" />
-      <entry key="M30" value="0.0737627040644622" />
-      <entry key="H1" value="0.8264142377905426" />
-      <entry key="H2" value="4.535808556591115" />
-      <entry key="H4" value="12.437588485639203" />
-      <entry key="D1" value="30.71038132209925" />
-      <entry key="W1" value="36.024573735930396" />
+      <entry key="S10" value="0.0" />
+      <entry key="S30" value="5.1142132918707733E-144" />
+      <entry key="S60" value="2.2614655003214213E-72" />
+      <entry key="M2" value="1.5062056845605043E-36" />
+      <entry key="M5" value="5.2262512278283076E-15" />
+      <entry key="M10" value="1.0134482640532192E-7" />
+      <entry key="M15" value="2.9830342296749793E-5" />
+      <entry key="M30" value="0.010260736735513165" />
+      <entry key="H1" value="0.30822555881953495" />
+      <entry key="H2" value="2.7700661794508914" />
+      <entry key="H4" value="9.719723217392188" />
+      <entry key="D1" value="29.473937713344206" />
+      <entry key="W1" value="35.81370668921563" />
     </decayedSelected>
     <decayedShown>
-      <entry key="MS100" value="1.016877719310847" />
-      <entry key="MS500" value="1.7582612878579686" />
-      <entry key="S2" value="3.372561802535041" />
-      <entry key="S5" value="4.2102044101322535" />
-      <entry key="S10" value="4.57661351507314" />
-      <entry key="S30" value="4.866411352956261" />
-      <entry key="S60" value="5.217525851204162" />
-      <entry key="M2" value="7.015777736728843" />
-      <entry key="M5" value="19.61090109497025" />
-      <entry key="M10" value="42.59969894716102" />
-      <entry key="M15" value="59.30078850737851" />
-      <entry key="M30" value="91.80159256773346" />
-      <entry key="H1" value="144.67871326714402" />
-      <entry key="H2" value="249.98326775301194" />
-      <entry key="H4" value="401.73465164863177" />
-      <entry key="D1" value="688.7576471363791" />
-      <entry key="W1" value="766.0036263261923" />
+      <entry key="MS100" value="6.962776889217727E-5" />
+      <entry key="MS500" value="0.1635061378363082" />
+      <entry key="S2" value="0.9757750170471993" />
+      <entry key="S5" value="1.4874406237036" />
+      <entry key="S10" value="1.7222087671401356" />
+      <entry key="S30" value="2.2139204674159823" />
+      <entry key="S60" value="4.9042325128627" />
+      <entry key="M2" value="12.433438061260425" />
+      <entry key="M5" value="34.34865120368565" />
+      <entry key="M10" value="60.438968207891044" />
+      <entry key="M15" value="78.3477170393852" />
+      <entry key="M30" value="117.96893081021649" />
+      <entry key="H1" value="181.62994079249276" />
+      <entry key="H2" value="295.2525209494184" />
+      <entry key="H4" value="465.239270480034" />
+      <entry key="D1" value="820.3334706551475" />
+      <entry key="W1" value="922.2759665174782" />
     </decayedShown>
   </component>
   <component name="ProblemsViewState">
@@ -136,29 +213,32 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent">{
-  &quot;keyToString&quot;: {
-    &quot;C/C++ Project.Surfels Headless.executor&quot;: &quot;Run&quot;,
-    &quot;C/C++ Project.Surfels.executor&quot;: &quot;Run&quot;,
-    &quot;RunOnceActivity.MCP Project settings loaded&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.cidr.known.project.marker&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.git.unshallow&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.readMode.enableVisualFormatting&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.typescript.service.memoryLimit.init&quot;: &quot;true&quot;,
-    &quot;cidr.known.project.marker&quot;: &quot;true&quot;,
-    &quot;codeWithMe.voiceChat.enabledByDefault&quot;: &quot;false&quot;,
-    &quot;com.intellij.ml.llm.matterhorn.ej.ui.settings.DefaultModelSelectionForGA.v1&quot;: &quot;true&quot;,
-    &quot;com.jetbrains.opentelemetry.toolwindow.stripe.promo&quot;: &quot;true&quot;,
-    &quot;junie.onboarding.icon.badge.shown&quot;: &quot;true&quot;,
-    &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
-    &quot;node.js.detected.package.tslint&quot;: &quot;true&quot;,
-    &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
-    &quot;node.js.selected.package.tslint&quot;: &quot;(autodetect)&quot;,
-    &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;,
-    &quot;to.speed.mode.migration.done&quot;: &quot;true&quot;
+  <component name="PropertiesComponent"><![CDATA[{
+  "keyToString": {
+    "C/C++ Project.Surfels Headless.executor": "Run",
+    "C/C++ Project.Surfels.executor": "Run",
+    "RunOnceActivity.MCP Project settings loaded": "true",
+    "RunOnceActivity.ShowReadmeOnStart": "true",
+    "RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252": "true",
+    "RunOnceActivity.cidr.known.project.marker": "true",
+    "RunOnceActivity.git.unshallow": "true",
+    "RunOnceActivity.readMode.enableVisualFormatting": "true",
+    "RunOnceActivity.typescript.service.memoryLimit.init": "true",
+    "cidr.known.project.marker": "true",
+    "codeWithMe.voiceChat.enabledByDefault": "false",
+    "com.intellij.ml.llm.matterhorn.ej.ui.settings.DefaultModelSelectionForGA.v1": "true",
+    "com.jetbrains.opentelemetry.toolwindow.stripe.promo": "true",
+    "git-widget-placeholder": "main",
+    "junie.onboarding.icon.badge.shown": "true",
+    "node.js.detected.package.eslint": "true",
+    "node.js.detected.package.tslint": "true",
+    "node.js.selected.package.eslint": "(autodetect)",
+    "node.js.selected.package.tslint": "(autodetect)",
+    "nodejs_package_manager_path": "npm",
+    "to.speed.mode.migration.done": "true",
+    "vue.rearranger.settings.migration": "true"
   }
-}</component>
+}]]></component>
   <component name="RunManager" selected="C/C++ Project.Surfels Headless">
     <configuration name="Surfels Headless" type="CppProject" factoryName="C++ Project">
       <configuration_1 setup="1">
@@ -233,6 +313,7 @@
       <option name="number" value="Default" />
       <option name="presentableId" value="Default" />
       <updated>1790005589375</updated>
+      <workItem from="1791184404811" duration="12137000" />
     </task>
     <servers />
   </component>

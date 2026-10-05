@@ -47,7 +47,8 @@ public:
 		SHADER_PARAMETER_STRUCT_INCLUDE(FSceneTextureShaderParameters, GBufferTextures)
 
 	END_SHADER_PARAMETER_STRUCT()
-
+	
+	// Credit Claude:
 	/**
 	 * Side in pixels of the square that gets one spawn per frame: the diameter a new surfel
 	 * covers on screen. A surfel only blocks spawning where its weight, 1 - smoothstep(0, R, d),

@@ -45,6 +45,8 @@ void MainCS(uint3 GroupId : SV_GroupID, uint3 GroupThreadId : SV_GroupThreadID, 
         float PixelDepthZ = SceneTexturesStruct.SceneDepthTexture.Load(PixelLoadPos).r;
 
         // Only a spawn candidate if not covered and not sky
+        // Coverage Threshold is saying whether close means radiuses touching
+        // Or spaced out
         if (SampledCoverage < SpawnCoverageThreshold && PixelDepthZ > 0.0f)
         {
             // Pixels with equal coverage are treated differently
@@ -52,7 +54,7 @@ void MainCS(uint3 GroupId : SV_GroupID, uint3 GroupThreadId : SV_GroupThreadID, 
             uint3 Hash = Rand3DPCG16(int3(PixelPos, View.StateFrameIndex));
             float Jitter = Hash.x / 65535.0f; // 65535 max 16 bit value, jitter is gonna be float form 0 to 1
 
-            float Candidate = SampledCoverage + Jitter * 0.001f;
+            float Candidate = SampledCoverage + Jitter * 0.1f;
             if (Candidate < CoverageValue)
             {
                 CoverageValue = Candidate;
@@ -91,8 +93,10 @@ void MainCS(uint3 GroupId : SV_GroupID, uint3 GroupThreadId : SV_GroupThreadID, 
     // Don't spawn suitable candidates for every empty cell
     // I add a random factor so some cells get skipped for but get spawned later
     // Best example is the first frame where there is 0 coverage
-    uint3 Hash = Rand3DPCG16(int3(PixelPos, View.StateFrameIndex));
-    float Random01 = Hash.x / 65535.0f;
+    // Per-tile hash
+    uint3 TileHash = Rand3DPCG16(int3(GroupId.xy, View.StateFrameIndex + 0x9E37u));
+    float Random01 = TileHash.x / 65535.0f;
+
     if (Random01 >= SpawnChance)
     {
         return;
@@ -126,6 +130,8 @@ void MainCS(uint3 GroupId : SV_GroupID, uint3 GroupThreadId : SV_GroupThreadID, 
     // SurfelRadius is now in pixels
     float PixelWorldSize = 2.0f * LinearDepth / (View.ViewToClip[0][0] * View.ViewSizeAndInvSize.x);
     
+    // THe original Thomas Talk was not doing this
+    // ALSO idk if i should scale the surfels based on radius because i also scale the tile min based on radius
     float Radius = SurfelRadius * PixelWorldSize;
     
     // Find a better way to clamp

@@ -59,7 +59,7 @@
 #endif
 
 /// <summary>
-/// <p>Generated from: LiveCodingModel.kt:5</p>
+/// <p>Generated from: LiveCodingModel.kt:6</p>
 /// </summary>
 namespace JetBrains {
 namespace EditorPlugin {

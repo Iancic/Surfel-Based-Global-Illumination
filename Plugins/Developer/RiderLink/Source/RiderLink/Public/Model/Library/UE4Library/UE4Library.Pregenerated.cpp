@@ -25,25 +25,6 @@
 #include "UE4Library/BlueprintHighlighter.Pregenerated.h"
 #include "UE4Library/BlueprintReference.Pregenerated.h"
 #include "UE4Library/ConnectionInfo.Pregenerated.h"
-#include "UE4Library/ScriptRequest.Pregenerated.h"
-#include "UE4Library/ScriptResult.Pregenerated.h"
-#include "UE4Library/BatchScriptRequest.Pregenerated.h"
-#include "UE4Library/BatchScriptResult.Pregenerated.h"
-#include "UE4Library/AssetLiveSearchRequest.Pregenerated.h"
-#include "UE4Library/AssetLiveSearchAsset.Pregenerated.h"
-#include "UE4Library/AssetLiveSearchResponse.Pregenerated.h"
-#include "UE4Library/PlayNetMode.Pregenerated.h"
-#include "UE4Library/PlaySettings.Pregenerated.h"
-#include "UE4Library/ScreenshotKind.Pregenerated.h"
-#include "UE4Library/ScreenshotRequest.Pregenerated.h"
-#include "UE4Library/ScreenshotResult.Pregenerated.h"
-#include "UE4Library/Vector3.Pregenerated.h"
-#include "UE4Library/Rotator3.Pregenerated.h"
-#include "UE4Library/ViewportCameraAction.Pregenerated.h"
-#include "UE4Library/ViewportCameraRequest.Pregenerated.h"
-#include "UE4Library/ViewportCameraResponse.Pregenerated.h"
-#include "UE4Library/SpawnActorRequest.Pregenerated.h"
-#include "UE4Library/SpawnActorResponse.Pregenerated.h"
 #include "UE4Library/NotificationType.Pregenerated.h"
 #include "UE4Library/RequestResultBase_Unknown.Pregenerated.h"
 #include "UE4Library/IScriptCallStack_Unknown.Pregenerated.h"
@@ -85,22 +66,6 @@ void UE4Library::UE4LibrarySerializersOwner::registerSerializersCore(rd::Seriali
     serializers.registry<BlueprintHighlighter>();
     serializers.registry<BlueprintReference>();
     serializers.registry<ConnectionInfo>();
-    serializers.registry<ScriptRequest>();
-    serializers.registry<ScriptResult>();
-    serializers.registry<BatchScriptRequest>();
-    serializers.registry<BatchScriptResult>();
-    serializers.registry<AssetLiveSearchRequest>();
-    serializers.registry<AssetLiveSearchAsset>();
-    serializers.registry<AssetLiveSearchResponse>();
-    serializers.registry<PlaySettings>();
-    serializers.registry<ScreenshotRequest>();
-    serializers.registry<ScreenshotResult>();
-    serializers.registry<Vector3>();
-    serializers.registry<Rotator3>();
-    serializers.registry<ViewportCameraRequest>();
-    serializers.registry<ViewportCameraResponse>();
-    serializers.registry<SpawnActorRequest>();
-    serializers.registry<SpawnActorResponse>();
     serializers.registry<RequestResultBase_Unknown>();
     serializers.registry<IScriptCallStack_Unknown>();
     serializers.registry<IScriptMsg_Unknown>();
@@ -118,7 +83,7 @@ void UE4Library::connect(rd::Lifetime lifetime, rd::IProtocol const * protocol)
 // initializer
 void UE4Library::initialize()
 {
-    serializationHash = 5866506434476582004L;
+    serializationHash = 4930583670691204680L;
 }
 // primary ctor
 // secondary constructor

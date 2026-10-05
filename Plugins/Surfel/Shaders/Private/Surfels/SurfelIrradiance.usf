@@ -1,7 +1,152 @@
 #include "/Engine/Public/Platform.ush"
+#include "/Engine/Private/DistanceField/GlobalDistanceFieldUtils.ush"
+#include "/Engine/Private/DistanceField/GlobalDistanceFieldShared.ush"
+#include "/Engine/Private/Common.ush"
+#include "/Engine/Private/Random.ush"
+
+RWStructuredBuffer<uint> SurfelCount;
+RWStructuredBuffer<float4> SurfelPositionAndRadius;
+RWStructuredBuffer<float4> SurfelNormalAndFlags;
+RWStructuredBuffer<float> SurfelIrradiance;
+
+uint SurfelBudget;
+float SurfelRadius;
+
+uint2 ViewRectMin;
+uint2 ViewRectMax;
+
+RWStructuredBuffer<uint> GridCellEntries;
+RWStructuredBuffer<uint> GridCounter;
+
+float3 GridPosition;
+uint GridCellCount;
+uint CellResolution;
+uint CellCapacity;
+uint CellSize;
+
+float3 SampleSurfelRadianceAt(float3 WorldPosition, float3 HitNormal)
+{
+	float3 CellF = (WorldPosition - GridPosition) / (float)CellSize;
+	if (any(CellF < 0.0f) || any(CellF >= (float)CellResolution))
+	{
+		return 0;
+	}
+
+	uint3 Cell = (uint3)CellF;
+	uint CellIndex = Cell.x + (Cell.y + Cell.z * CellResolution) * CellResolution;
+	uint Count = min(GridCounter[CellIndex], CellCapacity);
+
+	float3 RadianceSum = 0;
+	float WeightSum = 0;
+
+	for (uint i = 0; i < Count; ++i)
+	{
+		uint Other = GridCellEntries[CellIndex * CellCapacity + i];
+		float4 OtherPositionAndRadius = SurfelPositionAndRadius[Other];
+		float3 OtherNormal = SurfelNormalAndFlags[Other].xyz;
+
+		float Distance = length(OtherPositionAndRadius.xyz - WorldPosition);
+		float Weight = saturate(1.0f - Distance / max(OtherPositionAndRadius.w, 1e-4f)) * saturate(dot(OtherNormal, HitNormal));
+
+		if (Weight > 0.0f)
+		{
+			// Outgoing radiance of a diffuse surface = albedo / PI * irradiance
+			float3 Outgoing = GetSurfelAlbedo(Other) / PI * SurfelIrradianceBuffer[Other].rgb;
+			RadianceSum += Outgoing * Weight;
+			WeightSum += Weight;
+		}
+	}
+
+	return WeightSum > 0.0f ? RadianceSum / WeightSum : 0;
+}
+
+// Get lights from C++ side and loop through them here
+
+// Unreal probably has something as well like a Hammersley sequence.
+// The following 3 functions are taken from: https://www.shadertoy.com/view/ldBcDt
+void Basis(float3 n, float3 f, float3 r) 
+{
+	if(n.z < -0.999999) {
+		f = float3(0 , -1, 0);
+		r = float3(-1, 0, 0);
+	} else {
+		float a = 1./(1. + n.z);
+		float b = -n.x*n.y*a;
+		f = float3(1. - n.x*n.x*a, b, -n.x);
+		r = float3(b, 1. - n.y*n.y*a , -n.y);
+	}
+}
+
+float3 LocalToWorld( float3 localDir, float3 normal ) 
+{
+	float3 a, b;
+	Basis( normal, a, b );
+	return localDir.x*a + localDir.y*b + localDir.z*normal;
+}
+
+float3 SphericalToCartesian( float rho, float phi, float theta ) 
+{
+	float sinTheta = sin(theta);
+	return float3( sinTheta*cos(phi), sinTheta*sin(phi), cos(theta) )*rho;
+}
+
+float3 SampleHemisphereCosWeighted(float3 n, float Xi1, float Xi2 ) 
+{
+	float theta = acos(sqrt(1.0-Xi1));
+	float phi = TWO_PI * Xi2;
+	return LocalToWorld( SphericalToCartesian( 1.0, phi, theta ), n );
+}
 
 [numthreads(THREADS_X, THREADS_Y, THREADS_Z)]
 void MainCS(uint3 DispatchThreadId : SV_DispatchThreadID)
 {
-	// Scaffold this shader
+	// One thread per Surfel
+	uint SurfelIdx = DispatchThreadId.x;
+	if (SurfelIdx >= min(SurfelCount[0], SurfelBudget)) return;
+	
+	float4 PositionAndRadius = SurfelPositionAndRadius[SurfelIdx];
+	float3 Normal = SurfelNormalAndFlags[SurfelIdx].xyz;
+	
+	float Radius = PositionAndRadius.w;
+	float3 Position = PositionAndRadius.xyz;
+	
+	// Size of one voxel of the finest clipmap
+	const float VoxelExtent = GlobalVolumeTranslatedCenterAndExtent[0].w * GlobalVolumeTexelSize;
+	
+	// Compute direct light on this surfel
+	
+	
+	// Get Ray Direction (random ray on hemisphere weighted by normal)
+	uint3 Hash = Rand3DPCG16(int3(SurfelIdx, View.StateFrameIndex));
+	
+	// Random values are from 0 to 1
+	float Random1 = Hash.x / 65535.0f;
+	float Random2 = Hash.y / 65535.0f;
+
+	float3 Direction = SampleHemisphereCosWeighted(Normal.xyz, Random1, Random2, 0.f, 250, 1.f, 1.f);
+	float3 Origin = TranslatedPosition + Normal * VoxelExtent;
+	
+	// Using Utilities to ray-march until distance is found
+	FGlobalSDFTraceInput TraceInput = SetupGlobalSDFTraceInput(Position + Normal.xyz * VoxelExtent, Direction);
+	FGlobalSDFTraceResult TraceResult = RayTraceGlobalDistanceField(TraceInput);
+	
+	uint SDFClimapIndex = TraceResult.HitClipmapIndex;
+	
+	// At this distance where incoming light is to our surfel
+	float4 TotalIncomingRadiance;
+	
+	// Ray hit 
+	if (GlobalSDFTraceResultIsHit(TraceResult))
+	{
+		float3 HitPosition = Origin + Direction * TraceResult.HitTime;
+		float3 HitNormal = ComputeGlobalDistanceFieldNormal(HitPosition, TraceResult.HitClipmapIndex, -Direction);
+		TotalIncomingRadiance = SampleSurfelRadianceAt(HitPosition, HitNormal);
+	}
+	// Ray miss
+	else
+	{
+		TotalIncomingRadiance = 0.f; // Skylight Color
+	}
+	
+	SurfelIrradianceBuffer[SurfelIdx] = TotalIncomingRadiance;
 }

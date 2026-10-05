@@ -51,19 +51,6 @@
 #include "Containers/UnrealString.h"
 #include "UE4Library/PlayState.Pregenerated.h"
 #include "UE4Library/RequestResultBase.Pregenerated.h"
-#include "UE4Library/PlaySettings.Pregenerated.h"
-#include "UE4Library/ScriptRequest.Pregenerated.h"
-#include "UE4Library/ScriptResult.Pregenerated.h"
-#include "UE4Library/BatchScriptRequest.Pregenerated.h"
-#include "UE4Library/BatchScriptResult.Pregenerated.h"
-#include "UE4Library/AssetLiveSearchRequest.Pregenerated.h"
-#include "UE4Library/AssetLiveSearchResponse.Pregenerated.h"
-#include "UE4Library/ScreenshotRequest.Pregenerated.h"
-#include "UE4Library/ScreenshotResult.Pregenerated.h"
-#include "UE4Library/ViewportCameraRequest.Pregenerated.h"
-#include "UE4Library/ViewportCameraResponse.Pregenerated.h"
-#include "UE4Library/SpawnActorRequest.Pregenerated.h"
-#include "UE4Library/SpawnActorResponse.Pregenerated.h"
 
 #include "UE4TypesMarshallers.h"
 
@@ -78,7 +65,7 @@
 #endif
 
 /// <summary>
-/// <p>Generated from: RdEditorModel.kt:22</p>
+/// <p>Generated from: RdEditorModel.kt:23</p>
 /// </summary>
 namespace JetBrains {
 namespace EditorPlugin {
@@ -124,17 +111,9 @@ protected:
     rd::RdSignal<RequestResultBase, rd::AbstractPolymorphic<RequestResultBase>> notificationReplyFromEditor_;
     rd::RdSignal<int32_t, rd::Polymorphic<int32_t>> playModeFromEditor_;
     rd::RdSignal<int32_t, rd::Polymorphic<int32_t>> playModeFromRider_;
-    rd::RdSignal<PlaySettings, rd::Polymorphic<PlaySettings>> playSettingsFromEditor_;
-    rd::RdSignal<PlaySettings, rd::Polymorphic<PlaySettings>> playSettingsFromRider_;
     rd::RdProperty<bool, rd::Polymorphic<bool>> isHotReloadAvailable_{false};
     rd::RdProperty<bool, rd::Polymorphic<bool>> isHotReloadCompiling_{false};
     rd::RdSignal<rd::Void, rd::Polymorphic<rd::Void>> triggerHotReload_;
-    rd::RdEndpoint<ScriptRequest, ScriptResult, rd::Polymorphic<ScriptRequest>, rd::Polymorphic<ScriptResult>> executeScript_;
-    rd::RdEndpoint<BatchScriptRequest, BatchScriptResult, rd::Polymorphic<BatchScriptRequest>, rd::Polymorphic<BatchScriptResult>> executeBatchScripts_;
-    rd::RdEndpoint<AssetLiveSearchRequest, AssetLiveSearchResponse, rd::Polymorphic<AssetLiveSearchRequest>, rd::Polymorphic<AssetLiveSearchResponse>> searchAssetsLive_;
-    rd::RdEndpoint<ScreenshotRequest, ScreenshotResult, rd::Polymorphic<ScreenshotRequest>, rd::Polymorphic<ScreenshotResult>> takeScreenshot_;
-    rd::RdEndpoint<ViewportCameraRequest, ViewportCameraResponse, rd::Polymorphic<ViewportCameraRequest>, rd::Polymorphic<ViewportCameraResponse>> viewportCamera_;
-    rd::RdEndpoint<SpawnActorRequest, SpawnActorResponse, rd::Polymorphic<SpawnActorRequest>, rd::Polymorphic<SpawnActorResponse>> spawnActor_;
     
 
 private:
@@ -143,7 +122,7 @@ private:
 
 public:
     // primary ctor
-    RdEditorModel(rd::RdProperty<ConnectionInfo, rd::Polymorphic<ConnectionInfo>> connectionInfo_, rd::RdSignal<UnrealLogEvent, rd::Polymorphic<UnrealLogEvent>> unrealLog_, rd::RdSignal<BlueprintReference, rd::Polymorphic<BlueprintReference>> openBlueprint_, rd::RdSignal<UClass, rd::Polymorphic<UClass>> onBlueprintAdded_, rd::RdEndpoint<FString, bool, rd::Polymorphic<FString>, rd::Polymorphic<bool>> isBlueprintPathName_, rd::RdEndpoint<FString, rd::optional<FString>, rd::Polymorphic<FString>, RdEditorModel::__FStringNullableSerializer> getPathNameByPath_, rd::RdCall<int32_t, bool, rd::Polymorphic<int32_t>, rd::Polymorphic<bool>> allowSetForegroundWindow_, rd::RdProperty<bool, rd::Polymorphic<bool>> isGameControlModuleInitialized_, rd::RdSignal<PlayState, rd::Polymorphic<PlayState>> playStateFromEditor_, rd::RdSignal<int32_t, rd::Polymorphic<int32_t>> requestPlayFromRider_, rd::RdSignal<int32_t, rd::Polymorphic<int32_t>> requestPauseFromRider_, rd::RdSignal<int32_t, rd::Polymorphic<int32_t>> requestResumeFromRider_, rd::RdSignal<int32_t, rd::Polymorphic<int32_t>> requestStopFromRider_, rd::RdSignal<int32_t, rd::Polymorphic<int32_t>> requestFrameSkipFromRider_, rd::RdSignal<RequestResultBase, rd::AbstractPolymorphic<RequestResultBase>> notificationReplyFromEditor_, rd::RdSignal<int32_t, rd::Polymorphic<int32_t>> playModeFromEditor_, rd::RdSignal<int32_t, rd::Polymorphic<int32_t>> playModeFromRider_, rd::RdSignal<PlaySettings, rd::Polymorphic<PlaySettings>> playSettingsFromEditor_, rd::RdSignal<PlaySettings, rd::Polymorphic<PlaySettings>> playSettingsFromRider_, rd::RdProperty<bool, rd::Polymorphic<bool>> isHotReloadAvailable_, rd::RdProperty<bool, rd::Polymorphic<bool>> isHotReloadCompiling_, rd::RdSignal<rd::Void, rd::Polymorphic<rd::Void>> triggerHotReload_, rd::RdEndpoint<ScriptRequest, ScriptResult, rd::Polymorphic<ScriptRequest>, rd::Polymorphic<ScriptResult>> executeScript_, rd::RdEndpoint<BatchScriptRequest, BatchScriptResult, rd::Polymorphic<BatchScriptRequest>, rd::Polymorphic<BatchScriptResult>> executeBatchScripts_, rd::RdEndpoint<AssetLiveSearchRequest, AssetLiveSearchResponse, rd::Polymorphic<AssetLiveSearchRequest>, rd::Polymorphic<AssetLiveSearchResponse>> searchAssetsLive_, rd::RdEndpoint<ScreenshotRequest, ScreenshotResult, rd::Polymorphic<ScreenshotRequest>, rd::Polymorphic<ScreenshotResult>> takeScreenshot_, rd::RdEndpoint<ViewportCameraRequest, ViewportCameraResponse, rd::Polymorphic<ViewportCameraRequest>, rd::Polymorphic<ViewportCameraResponse>> viewportCamera_, rd::RdEndpoint<SpawnActorRequest, SpawnActorResponse, rd::Polymorphic<SpawnActorRequest>, rd::Polymorphic<SpawnActorResponse>> spawnActor_);
+    RdEditorModel(rd::RdProperty<ConnectionInfo, rd::Polymorphic<ConnectionInfo>> connectionInfo_, rd::RdSignal<UnrealLogEvent, rd::Polymorphic<UnrealLogEvent>> unrealLog_, rd::RdSignal<BlueprintReference, rd::Polymorphic<BlueprintReference>> openBlueprint_, rd::RdSignal<UClass, rd::Polymorphic<UClass>> onBlueprintAdded_, rd::RdEndpoint<FString, bool, rd::Polymorphic<FString>, rd::Polymorphic<bool>> isBlueprintPathName_, rd::RdEndpoint<FString, rd::optional<FString>, rd::Polymorphic<FString>, RdEditorModel::__FStringNullableSerializer> getPathNameByPath_, rd::RdCall<int32_t, bool, rd::Polymorphic<int32_t>, rd::Polymorphic<bool>> allowSetForegroundWindow_, rd::RdProperty<bool, rd::Polymorphic<bool>> isGameControlModuleInitialized_, rd::RdSignal<PlayState, rd::Polymorphic<PlayState>> playStateFromEditor_, rd::RdSignal<int32_t, rd::Polymorphic<int32_t>> requestPlayFromRider_, rd::RdSignal<int32_t, rd::Polymorphic<int32_t>> requestPauseFromRider_, rd::RdSignal<int32_t, rd::Polymorphic<int32_t>> requestResumeFromRider_, rd::RdSignal<int32_t, rd::Polymorphic<int32_t>> requestStopFromRider_, rd::RdSignal<int32_t, rd::Polymorphic<int32_t>> requestFrameSkipFromRider_, rd::RdSignal<RequestResultBase, rd::AbstractPolymorphic<RequestResultBase>> notificationReplyFromEditor_, rd::RdSignal<int32_t, rd::Polymorphic<int32_t>> playModeFromEditor_, rd::RdSignal<int32_t, rd::Polymorphic<int32_t>> playModeFromRider_, rd::RdProperty<bool, rd::Polymorphic<bool>> isHotReloadAvailable_, rd::RdProperty<bool, rd::Polymorphic<bool>> isHotReloadCompiling_, rd::RdSignal<rd::Void, rd::Polymorphic<rd::Void>> triggerHotReload_);
     
     // default ctors and dtors
     
@@ -183,17 +162,9 @@ public:
     rd::ISignal<RequestResultBase> const & get_notificationReplyFromEditor() const;
     rd::ISignal<int32_t> const & get_playModeFromEditor() const;
     rd::ISource<int32_t> const & get_playModeFromRider() const;
-    rd::ISignal<PlaySettings> const & get_playSettingsFromEditor() const;
-    rd::ISource<PlaySettings> const & get_playSettingsFromRider() const;
     rd::IProperty<bool> const & get_isHotReloadAvailable() const;
     rd::IProperty<bool> const & get_isHotReloadCompiling() const;
     rd::ISource<rd::Void> const & get_triggerHotReload() const;
-    rd::RdEndpoint<ScriptRequest, ScriptResult, rd::Polymorphic<ScriptRequest>, rd::Polymorphic<ScriptResult>> const & get_executeScript() const;
-    rd::RdEndpoint<BatchScriptRequest, BatchScriptResult, rd::Polymorphic<BatchScriptRequest>, rd::Polymorphic<BatchScriptResult>> const & get_executeBatchScripts() const;
-    rd::RdEndpoint<AssetLiveSearchRequest, AssetLiveSearchResponse, rd::Polymorphic<AssetLiveSearchRequest>, rd::Polymorphic<AssetLiveSearchResponse>> const & get_searchAssetsLive() const;
-    rd::RdEndpoint<ScreenshotRequest, ScreenshotResult, rd::Polymorphic<ScreenshotRequest>, rd::Polymorphic<ScreenshotResult>> const & get_takeScreenshot() const;
-    rd::RdEndpoint<ViewportCameraRequest, ViewportCameraResponse, rd::Polymorphic<ViewportCameraRequest>, rd::Polymorphic<ViewportCameraResponse>> const & get_viewportCamera() const;
-    rd::RdEndpoint<SpawnActorRequest, SpawnActorResponse, rd::Polymorphic<SpawnActorRequest>, rd::Polymorphic<SpawnActorResponse>> const & get_spawnActor() const;
     
     // intern
 

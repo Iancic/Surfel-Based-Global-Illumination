@@ -9,14 +9,12 @@ namespace rd
 {
 size_t ByteBufferAsyncProcessor::INITIAL_CAPACITY = 1024 * 1024;
 
-size_t ByteBufferAsyncProcessor::DEFAULT_CHUNK_SIZE = 16370;
-
 std::shared_ptr<spdlog::logger> ByteBufferAsyncProcessor::logger =
 	spdlog::stderr_color_mt<spdlog::synchronous_factory>("byteBufferLog", spdlog::color_mode::automatic);
 
 ByteBufferAsyncProcessor::ByteBufferAsyncProcessor(
-	std::string id, std::function<bool(Buffer::ByteArray const&, sequence_number_t)> processor, size_t chunk_size)
-	: id(std::move(id)), processor(std::move(processor)), chunk_size(chunk_size)
+	std::string id, std::function<bool(Buffer::ByteArray const&, sequence_number_t)> processor)
+	: id(std::move(id)), processor(std::move(processor))
 {
 	data.reserve(INITIAL_CAPACITY);
 }
@@ -78,18 +76,6 @@ void ByteBufferAsyncProcessor::add_data(std::vector<Buffer::ByteArray>&& new_dat
 	//		}
 }
 
-/**
- * @brief Cleanup pending queue. Should be called under queue_lock.
- */
-void ByteBufferAsyncProcessor::cleanup_pending_queue()
-{
-	while (current_seqn <= acknowledged_seqn)
-	{
-		pending_queue.pop_front();
-		++current_seqn;
-	}
-}
-
 bool ByteBufferAsyncProcessor::reprocess()
 {
 	{
@@ -102,7 +88,11 @@ bool ByteBufferAsyncProcessor::reprocess()
 
 		logger->debug("{}: reprocessing waited for main processing", id);
 
-		cleanup_pending_queue();
+		while (current_seqn <= acknowledged_seqn)
+		{
+			pending_queue.pop_front();
+			++current_seqn;
+		}
 		for (int i = 0; i < pending_queue.size(); ++i)
 		{
 			auto const& item = pending_queue[i];
@@ -217,23 +207,7 @@ void ByteBufferAsyncProcessor::put(Buffer::ByteArray new_data)
 		{
 			return;
 		}
-
-		const size_t count = new_data.size();
-
-		if (count <= chunk_size)
-		{
-			data.emplace_back(std::move(new_data));
-		}
-		else
-		{
-			logger->debug("{}: splitting message of {} bytes into packages of {} bytes", id, count, chunk_size);
-			for (size_t ptr = 0; ptr < count; ptr += chunk_size)
-			{
-				const size_t rest = count - ptr;
-				const size_t copylen = rest < chunk_size ? rest : chunk_size;
-				data.emplace_back(new_data.begin() + ptr, new_data.begin() + ptr + copylen);
-			}
-		}
+		data.emplace_back(std::move(new_data));
 	}
 	cv.notify_all();
 }
@@ -279,9 +253,6 @@ void ByteBufferAsyncProcessor::acknowledge(sequence_number_t seqn)
 	{
 		logger->trace("{}: new acknowledged seqn: {}", this->id, seqn);
 		acknowledged_seqn = seqn;
-
-		std::lock_guard<decltype(queue_lock)> queue_guard(queue_lock);
-		cleanup_pending_queue();
 	}
 	else
 	{

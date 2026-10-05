@@ -20,9 +20,9 @@ FSurfelSceneViewExtension::FSurfelSceneViewExtension(const FAutoRegister& AutoRe
 
 void FSurfelSceneViewExtension::SetupView(FSceneViewFamily& InViewFamily, FSceneView& InView)
 {
-	// Game worlds only (PIE / standalone). The mode CVar is global and survives the end of
-	// PIE, so without this, stopping PIE in "Direct Light Only" leaves the editor viewport
-	// unlit as well.
+	// Applies the lighting-reference visualize modes (Lumen / no Lumen / direct only).
+	// Runs after the view's post-process settings are final, so it wins over both the
+	// project's GI method and any Post Process Volume in the level.
 	const UWorld* World = InViewFamily.Scene ? InViewFamily.Scene->GetWorld() : nullptr;
 	if (!World || !World->IsGameWorld())
 	{
@@ -85,9 +85,8 @@ void FSurfelSceneViewExtension::PostRenderBasePassDeferred_RenderThread(FRDGBuil
 	{
 		SurfelFrameDataByViewKey.Remove(SceneView.State->GetViewKey());
 	}
-
-	// Before any early return, so RunFullscreenPass later this frame sees the same
-	// grid layout whether the grid got built.
+	
+	// Update grid if changed by CVar
 	FUniformGridViewState::UpdateFromCVars();
 
 	// Are surfel enabled? Is view valid? Are the GBuffers?
@@ -284,15 +283,10 @@ void FSurfelSceneViewExtension::PostRenderBasePassDeferred_RenderThread(FRDGBuil
 
 	UE_LOG(LogTemp, Log, TEXT("Surfel: gather ran, budget %u"), CVarBudget);
 	
-
-	// Hand this frame's grid buffers and coverage map off to RunFullscreenPass, which runs
-	// later in the same frame's render graph (same GraphBuilder) but is a separate callback
-	// with no access to these locals. Not persisted across frames - overwritten here
-	// every frame before it's read.
+	// A way to hand over the surfel data to the other hook which is the visualization one
 	SurfelFrameDataByViewKey.Add(ViewKey, FSurfelFrameData{ GridCellEntriesBuffer, GridCounterBuffer, GridPassParameters->GridPosition, CoverageTexture });
 
-	// Surfel counter readback for the ImGui budget meter. Resolve last frame's copy first,
-	// then start a new one, so there is only ever a single copy in flight.
+	// Surfel counter readback for the ImGui budget meter
 	if (!SurfelState.CounterReadback)
 	{
 		SurfelState.CounterReadback = MakeUnique<FRHIGPUBufferReadback>(TEXT("Surfel.CounterReadback"));
@@ -303,8 +297,7 @@ void FSurfelSceneViewExtension::PostRenderBasePassDeferred_RenderThread(FRDGBuil
 	{
 		if (const uint32* Counter = static_cast<const uint32*>(SurfelState.CounterReadback->Lock(sizeof(uint32))))
 		{
-			// Gather can overshoot the budget momentarily before it decrements back, so clamp
-			// rather than letting the meter read over 100%.
+			// Gather can overshoot the budget momentarily before it decrements back
 			GSurfelAllocatedCount.store(FMath::Min<int32>(*Counter, CVarBudget), std::memory_order_relaxed);
 		}
 		SurfelState.CounterReadback->Unlock();
@@ -441,8 +434,7 @@ FScreenPassTexture FSurfelSceneViewExtension::RunVisualizePass(
 	PassParameters->bUseGrid       = bUseGrid ? 1u : 0u;
 	PassParameters->SpawnCoverageThreshold = CVarSurfelSpawnCoverageThreshold.GetValueOnRenderThread();
 
-	// Coverage map, for the Coverage visualization. Scatter writes it and Gather reads it,
-	// so by the time this pass runs it holds this frame's finished values.
+	// Coverage map, for the Coverage visualization. Scatter writes it and Gather reads it
 	const bool bHasCoverage = bHasFrameData && SurfelFrameData.CoverageTexture != nullptr;
 	PassParameters->CoverageTexture = SurfelFrameData.CoverageTexture;
 	PassParameters->bHasCoverageTexture = bHasCoverage ? 1u : 0u;
@@ -462,7 +454,7 @@ FScreenPassTexture FSurfelSceneViewExtension::RunVisualizePass(
 		PassParameters,
 		FComputeShaderUtils::GetGroupCount(PassSize, FComputeShaderUtils::kGolden2DGroupSize));
 
-	// The post-process chain expects the result back in the texture it handed us.
+	// The post-process chain expects the result back in the texture handed initially
 	AddCopyTexturePass(GraphBuilder, OutputTexture, SceneColor.Texture);
 
 	return SceneColor;

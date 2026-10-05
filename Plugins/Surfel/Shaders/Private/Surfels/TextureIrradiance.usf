@@ -1,6 +1,60 @@
 #include "/Engine/Public/Platform.ush"
 
+RWTexture2D<float> IrradianceTexture;
+
+RWStructuredBuffer<uint> SurfelCount;
+RWStructuredBuffer<float4> SurfelPositionAndRadius;
+// SurfelIrradiance Buffer
+
+uint SurfelBudget;
+float SurfelRadius;
+
+uint2 ViewRectMin;
+uint2 ViewRectMax;
+
+RWStructuredBuffer<uint> GridCellEntries;
+RWStructuredBuffer<uint> GridCounter;
+
+float3 GridPosition;
+uint GridCellCount;
+uint CellResolution;
+uint CellCapacity;
+uint CellSize;
+
 [numthreads(THREADS_X, THREADS_Y, THREADS_Z)]
 void MainCS(uint3 DispatchThreadId : SV_DispatchThreadID)
 {
+	// Thread per pixel to find the coverage of this
+	uint2 PixelPos = min(ViewRectMin + DispatchThreadId.xy, ViewRectMax - 1);
+	int3 LoadPos = int3(PixelPos, 0);
+	
+	// Get world position at this pixel
+	float DeviceZ = SceneTexturesStruct.SceneDepthTexture.Load(LoadPos).r;
+	float4 SvPosition = float4(PixelPos + 0.5f, DeviceZ, 1.0f);
+	float3 TranslatedWorldPosition = SvPositionToTranslatedWorld(SvPosition);
+	float3 WorldPositionAtPixel = DFFastSubtractDemote(TranslatedWorldPosition, PrimaryView.PreViewTranslation);
+	
+	// Where in the grid is this pixel's position
+	int3 PixelCell = int3(floor((WorldPositionAtPixel - GridPosition) / CellSize));
+	
+	bool bInsideGrid = all(PixelCell >= 0) && all(PixelCell < (int)CellResolution);
+	if (bInsideGrid)
+	{
+		// Retrieve grid cell at this extracted world position 
+		uint CellIdx = (uint)PixelCell.x
+				+ (uint)PixelCell.y * CellResolution
+				+ (uint)PixelCell.z * CellResolution * CellResolution;
+		
+		// Go through all surfels in grid cell
+		uint EntryCount = min(GridCounter[CellIdx], CellCapacity);
+		
+		float TotalIrradiance = 0.f;
+		for (uint i = 0; i < EntryCount; i++)
+		{
+			// int SurfelIdx = GridCellEntries[CellIdx * CellCapacity + i];
+			// TotalIrradiance += Irradiance;
+		}
+		
+		// IrradianceTexture[PixelPos] = TotalIrradiance;
+	}
 }

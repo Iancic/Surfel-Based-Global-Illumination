@@ -1,7 +1,7 @@
 {
   "FileVersion": 3,
   "Version": 1,
-  "VersionName": "2026.2.1",
+  "VersionName": "2025.3.5.1",
   "FriendlyName": "RiderLink",
   "Description": "Plugin for establishing IPC connection with JetBrains Rider IDE",
   "Category": "Programming",
@@ -55,25 +55,6 @@
       "PlatformAllowList": [
         "Win64"
       ]
-    },
-    {
-      "Name": "RiderAgentTools",
-      "Type": "EditorNoCommandlet",
-      "LoadingPhase": "Default"
-    }
-  ],
-  "Plugins": [
-    {
-      "Name": "PythonScriptPlugin",
-      "Enabled": true
-    },
-    {
-      "Name": "EditorScriptingUtilities",
-      "Enabled": true
-    },
-    {
-      "Name": "Niagara",
-      "Enabled": true
     }
   ],
   "EnabledByDefault": true

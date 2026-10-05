@@ -57,7 +57,7 @@
 #endif
 
 /// <summary>
-/// <p>Generated from: RdEditorModel.kt:9</p>
+/// <p>Generated from: RdEditorModel.kt:10</p>
 /// </summary>
 namespace JetBrains {
 namespace EditorPlugin {

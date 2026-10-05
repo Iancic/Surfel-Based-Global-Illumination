@@ -42,24 +42,30 @@ TAutoConsoleVariable<float> CVarSurfelRadius(
 	ECVF_RenderThreadSafe
 	);
 
+// Important to have a lower value
+// The surfels clump up together because first frame on a new wall everything is uncovered. 
+// I should delay spawning some so the algorithm can go through the scatter with new surfels. 
+// Not spawning all surfels from one. Thomas talk on PICA PICA
 TAutoConsoleVariable<int32> CVarSurfelSpawnsPerFrame(
 	TEXT("r.Surfel.SpawnsPerFrame"),
-	15,
-	TEXT("Roughly how many surfels Gather may spawn per frame across the whole screen, independent of resolution."),
+	1,
+	TEXT("Roughly how many surfels Gather may spawn per frame across the screen."),
 	ECVF_RenderThreadSafe);
 
-// Should not be played with too much
-// This avoid overcrowding
+// This avoids over-crowding, sitting next to each other
+// 1 means spaced so for a surfel to spawn that has to be uncovererd fully
+// closer to 0 means touching each other, so covered is considered something in between like a bit covered by another surfel
+// Used by gather after reading the coverage texture
 TAutoConsoleVariable<float> CVarSurfelSpawnCoverageThreshold(
 	TEXT("r.Surfel.SpawnCoverageThreshold"),
-	0.25f,
+	0.1f,
 	TEXT("Pixels with coverage at or above this are considered covered and never spawn a surfel."),
 	ECVF_RenderThreadSafe);
 
 TAutoConsoleVariable<int32> CVarSurfelGridCellResolution(
 	TEXT("r.Surfel.Grid.CellResolution"),
 	64,
-	TEXT("Cells along each axis of the camera-centred uniform grid (8-64). Memory grows with the cube of this."),
+	TEXT("Cells along each axis of the camera."),
 	ECVF_RenderThreadSafe);
 
 TAutoConsoleVariable<int32> CVarSurfelGridCellSize(
@@ -70,8 +76,8 @@ TAutoConsoleVariable<int32> CVarSurfelGridCellSize(
 
 TAutoConsoleVariable<int32> CVarSurfelGridCellCapacity(
 	TEXT("r.Surfel.Grid.CellCapacity"),
-	256,
-	TEXT("Max surfels one cell can reference. Anything past this is dropped from the cell."),
+	512,
+	TEXT("Max surfels one cell can reference."),
 	ECVF_RenderThreadSafe);
 
 TAutoConsoleVariable<int32> CVarSurfelGridVisFlags(
