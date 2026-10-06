@@ -1,4 +1,5 @@
 ﻿#pragma once
+#include "SceneTexturesConfig.h"
 #include "ShaderParameterStruct.h"
 
 /**
@@ -14,12 +15,29 @@ public:
 	SHADER_USE_PARAMETER_STRUCT(FTextureIrradiancePass, FGlobalShader);
 
 	BEGIN_SHADER_PARAMETER_STRUCT(FParameters, )
-		/**
-		 * Write irradiance texture
-		 * Read depth
-		 * Read surfel buffers
-		 * Read and Write surfel structure
-		 */
+		// Output: rgb = surfel irradiance at this pixel, a = summed surfel weight (0 = no surfel reaches it)
+		SHADER_PARAMETER_RDG_TEXTURE_UAV(RWTexture2D<float4>, IrradianceTexture)
+
+		// Surfel related parameters
+		SHADER_PARAMETER_RDG_BUFFER_UAV(RWStructuredBuffer<float4>, SurfelPositionAndRadius)
+		SHADER_PARAMETER_RDG_BUFFER_UAV(RWStructuredBuffer<float4>, SurfelNormalAndFlags)
+		SHADER_PARAMETER_RDG_BUFFER_UAV(RWStructuredBuffer<float3>, SurfelIrradiance)
+
+		// View
+		SHADER_PARAMETER_STRUCT_REF(FViewUniformShaderParameters, View)
+		SHADER_PARAMETER(FUintVector2, ViewRectMin)
+		SHADER_PARAMETER(FUintVector2, ViewRectMax)
+
+		// Uniform Grid
+		SHADER_PARAMETER_RDG_BUFFER_UAV(RWStructuredBuffer<uint32>, GridCellEntries)
+		SHADER_PARAMETER_RDG_BUFFER_UAV(RWStructuredBuffer<uint32>, GridCounter)
+		SHADER_PARAMETER(FVector3f, GridPosition)
+		SHADER_PARAMETER(uint32, CellResolution)
+		SHADER_PARAMETER(uint32, CellCapacity)
+		SHADER_PARAMETER(uint32, CellSize)
+
+		// GBuffers
+		SHADER_PARAMETER_STRUCT_INCLUDE(FSceneTextureShaderParameters, GBufferTextures)
 	END_SHADER_PARAMETER_STRUCT()
 
 	static bool ShouldCompilePermutation(const FGlobalShaderPermutationParameters& Parameters)

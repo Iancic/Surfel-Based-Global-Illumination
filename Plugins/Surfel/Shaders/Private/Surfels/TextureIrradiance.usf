@@ -1,13 +1,13 @@
 #include "/Engine/Public/Platform.ush"
-/*
-RWTexture2D<float> IrradianceTexture;
+#include "/Engine/Private/Common.ush"
+#include "/Engine/Private/DeferredShadingCommon.ush"
+#include "/Surfel/Surfels/SurfelCommon.ush"
 
-RWStructuredBuffer<uint> SurfelCount;
+RWTexture2D<float4> IrradianceTexture;
+
 RWStructuredBuffer<float4> SurfelPositionAndRadius;
-// SurfelIrradiance Buffer
-
-uint SurfelBudget;
-float SurfelRadius;
+RWStructuredBuffer<float4> SurfelNormalAndFlags;
+RWStructuredBuffer<float3> SurfelIrradiance;
 
 uint2 ViewRectMin;
 uint2 ViewRectMax;
@@ -16,18 +16,19 @@ RWStructuredBuffer<uint> GridCellEntries;
 RWStructuredBuffer<uint> GridCounter;
 
 float3 GridPosition;
-uint GridCellCount;
 uint CellResolution;
 uint CellCapacity;
 uint CellSize;
-*/
+
 [numthreads(THREADS_X, THREADS_Y, THREADS_Z)]
 void MainCS(uint3 DispatchThreadId : SV_DispatchThreadID)
 {
-	/*
-	// Thread per pixel to find the coverage of this
+	// Thread per pixel
 	uint2 PixelPos = min(ViewRectMin + DispatchThreadId.xy, ViewRectMax - 1);
 	int3 LoadPos = int3(PixelPos, 0);
+	
+	// Get world surface normal at this pixel
+	float3 WorldNormalAtPixel = normalize(SceneTexturesStruct.GBufferATexture.Load(LoadPos).xyz * 2.0f - 1.0f);
 	
 	// Get world position at this pixel
 	float DeviceZ = SceneTexturesStruct.SceneDepthTexture.Load(LoadPos).r;
@@ -39,24 +40,35 @@ void MainCS(uint3 DispatchThreadId : SV_DispatchThreadID)
 	int3 PixelCell = int3(floor((WorldPositionAtPixel - GridPosition) / CellSize));
 	
 	bool bInsideGrid = all(PixelCell >= 0) && all(PixelCell < (int)CellResolution);
-	if (bInsideGrid)
+	if (!bInsideGrid)
 	{
-		// Retrieve grid cell at this extracted world position 
-		uint CellIdx = (uint)PixelCell.x
-				+ (uint)PixelCell.y * CellResolution
-				+ (uint)PixelCell.z * CellResolution * CellResolution;
-		
-		// Go through all surfels in grid cell
-		uint EntryCount = min(GridCounter[CellIdx], CellCapacity);
-		
-		float TotalIrradiance = 0.f;
-		for (uint i = 0; i < EntryCount; i++)
-		{
-			// int SurfelIdx = GridCellEntries[CellIdx * CellCapacity + i];
-			// TotalIrradiance += Irradiance;
-		}
-		
-		// IrradianceTexture[PixelPos] = TotalIrradiance;
+		IrradianceTexture[PixelPos] = 0;
+		return;
 	}
-	*/
+
+	// Retrieve grid cell at this extracted world position 
+	uint CellIdx = (uint)PixelCell.x
+			+ (uint)PixelCell.y * CellResolution
+			+ (uint)PixelCell.z * CellResolution * CellResolution;
+	
+	// Go through all surfels in grid cell
+	uint EntryCount = min(GridCounter[CellIdx], CellCapacity);
+	
+	// Weight each surfel by how close and how aligned it is with this pixel, so every surfel
+	// leaves a splotch instead of the whole cell getting one flat sum
+	float3 IrradianceSum = 0.f;
+	float WeightSum = 0.f;
+	for (uint i = 0; i < EntryCount; i++)
+	{
+		uint SurfelIdx = GridCellEntries[CellIdx * CellCapacity + i];
+		float Weight = SurfelCoverageWeight(WorldPositionAtPixel, WorldNormalAtPixel,
+			SurfelPositionAndRadius[SurfelIdx], SurfelNormalAndFlags[SurfelIdx].xyz);
+
+		IrradianceSum += SurfelIrradiance[SurfelIdx] * Weight;
+		WeightSum += Weight;
+	}
+
+	// Normalized, so overlapping surfels average instead of adding up. a = 0 where no surfel reaches
+	float3 Irradiance = WeightSum > 0.f ? IrradianceSum / WeightSum : 0.f;
+	IrradianceTexture[PixelPos] = float4(Irradiance, WeightSum);
 }

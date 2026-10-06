@@ -50,6 +50,10 @@ public:
 		SHADER_PARAMETER(uint32, bHasCoverageTexture) // 0 = CoverageTexture is a dummy
 		SHADER_PARAMETER(float, CoverageScale)        // Coverage value that maps to the top of the ramp
 
+		// The per-pixel irradiance TextureIrradiance wrote earlier this frame, for VISUALIZE_MODE_IRRADIANCE.
+		SHADER_PARAMETER_RDG_TEXTURE(Texture2D, IrradianceTexture)
+		SHADER_PARAMETER(uint32, bHasIrradianceTexture) // 0 = IrradianceTexture is a dummy
+
 		// Grid visualization options: ESurfelGridVisFlags bits, and the wireframe width.
 		SHADER_PARAMETER(uint32, GridVisFlags)
 		SHADER_PARAMETER(float, GridVisEdgeThickness)
@@ -77,6 +81,7 @@ public:
 		OutEnvironment.SetDefine(TEXT("VISUALIZE_MODE_SURFELS"),  (uint32)ESurfelVisualizeMode::Surfels);
 		OutEnvironment.SetDefine(TEXT("VISUALIZE_MODE_GRID"),     (uint32)ESurfelVisualizeMode::Grid);
 		OutEnvironment.SetDefine(TEXT("VISUALIZE_MODE_COVERAGE"), (uint32)ESurfelVisualizeMode::Coverage);
+		OutEnvironment.SetDefine(TEXT("VISUALIZE_MODE_IRRADIANCE"), (uint32)ESurfelVisualizeMode::Irradiance);
 
 		OutEnvironment.SetDefine(TEXT("GRID_VIS_WIREFRAME"),  (uint32)ESurfelGridVisFlags::Wireframe);
 		OutEnvironment.SetDefine(TEXT("GRID_VIS_OVERFLOW"),   (uint32)ESurfelGridVisFlags::Overflow);

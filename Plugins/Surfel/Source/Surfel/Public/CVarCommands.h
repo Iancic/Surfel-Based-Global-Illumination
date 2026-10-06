@@ -52,6 +52,7 @@ enum class ESurfelVisualizeMode : int32
 	LumenGI         = 4, // No overlay, engine Lumen GI left on (reference image)
 	SurfelGI        = 5, // No overlay, Lumen off so only our own GI contributes
 	DirectLightOnly = 6, // No overlay, no indirect lighting at all
+	Irradiance      = 7, // Surfel irradiance resolved per pixel by TextureIrradiance. Appended so the numbers above stay put
 	MAX
 };
 
@@ -59,7 +60,8 @@ enum class ESurfelVisualizeMode : int32
 // The rest need no fullscreen dispatch at all.
 inline bool IsSurfelOverlayMode(int32 Mode)
 {
-	return Mode >= (int32)ESurfelVisualizeMode::Surfels && Mode <= (int32)ESurfelVisualizeMode::Coverage;
+	return (Mode >= (int32)ESurfelVisualizeMode::Surfels && Mode <= (int32)ESurfelVisualizeMode::Coverage)
+		|| Mode == (int32)ESurfelVisualizeMode::Irradiance;
 }
 
 // Bumped by r.Surfel.Refresh; Gather clears and respawns from scratch when this changes.

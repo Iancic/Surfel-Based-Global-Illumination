@@ -9,15 +9,17 @@
 #include "ComputePasses/GridAllocationPass.h"
 #include "ComputePasses/ScatterPass.h"
 #include "ComputePasses/SurfelIrradiancePass.h"
+#include "ComputePasses/TextureIrradiancePass.h"
 #include "ComputePasses/VisualizePass.h"
 #include "Runtime/Renderer/Private/SceneRendering.h"
-#include "Runtime/Renderer/Private/ScenePrivate.h"
+#include "SystemTextures.h"
 
 // GPU stats, shown with `stat GPU0_Graphics0`. Must be at file scope.
 DECLARE_GPU_STAT(SurfelGrid);
 DECLARE_GPU_STAT(SurfelScatter);
 DECLARE_GPU_STAT(SurfelGather);
 DECLARE_GPU_STAT(SurfelIrradiance);
+DECLARE_GPU_STAT(SurfelTextureIrradiance);
 DECLARE_GPU_STAT(SurfelVisualize);
 
 FSurfelSceneViewExtension::FSurfelSceneViewExtension(const FAutoRegister& AutoRegister)
@@ -38,7 +40,7 @@ void FSurfelSceneViewExtension::SetupView(FSceneViewFamily& InViewFamily, FScene
 
 	FFinalPostProcessSettings& Settings = InView.FinalPostProcessSettings;
 
-	switch ((ESurfelVisualizeMode)CVarSurfelVisualizeMode.GetValueOnGameThread())
+	switch (static_cast<ESurfelVisualizeMode>(CVarSurfelVisualizeMode.GetValueOnGameThread()))
 	{
 	case ESurfelVisualizeMode::LumenGI:
 		Settings.DynamicGlobalIlluminationMethod = EDynamicGlobalIlluminationMethod::Lumen;
@@ -71,10 +73,7 @@ void FSurfelSceneViewExtension::SubscribeToPostProcessingPass(
 	{
 		return;
 	}
-
-	// Nothing to draw unless the visualize pass is on AND the selected mode is one the
-	// shader actually renders. The lighting-reference modes only reconfigure the
-	// renderer, so skip the fullscreen dispatch for them entirely.
+	
 	if (CVarSurfelMode.GetValueOnRenderThread() == 1
 		&& IsSurfelOverlayMode(CVarSurfelVisualizeMode.GetValueOnRenderThread()))
 	{
@@ -201,12 +200,11 @@ void FSurfelSceneViewExtension::PostRenderBasePassDeferred_RenderThread(FRDGBuil
 
 	// Dispatch Compute
 	TShaderMapRef<FGridAllocationPass> ComputeShaderGrid(GetGlobalShaderMap(SceneView.GetFeatureLevel()));
-	{
-		RDG_EVENT_SCOPE_STAT(GraphBuilder, SurfelGrid, "-------------------------------------------------------------- SurfelGrid");
-		FComputeShaderUtils::AddPass(GraphBuilder, RDG_EVENT_NAME("Surfel Grid"), ComputeShaderGrid, GridPassParameters, FComputeShaderUtils::GetGroupCount(FIntPoint(int(CVarBudget), 1), FIntPoint(64, 1)));
-	}
-		
-	UE_LOG(LogTemp, Log, TEXT("Surfel: grid allocation ran, budget %u"), CVarBudget);
+	
+	RDG_EVENT_SCOPE_STAT(GraphBuilder, SurfelGrid, "-------------------------------------------------------------- SurfelGrid");
+	FComputeShaderUtils::AddPass(GraphBuilder, RDG_EVENT_NAME("Surfel Grid"), ComputeShaderGrid, GridPassParameters, FComputeShaderUtils::GetGroupCount(FIntPoint(static_cast<int>(CVarBudget), 1), FIntPoint(64, 1)));
+	
+	//UE_LOG(LogTemp, Log, TEXT("Surfel: grid allocation ran, budget %u"), CVarBudget);
 
 	// Scatter pass: reads the grid built above, writes the coverage map Gather then reads.
 	// For RenderDoc
@@ -253,12 +251,11 @@ void FSurfelSceneViewExtension::PostRenderBasePassDeferred_RenderThread(FRDGBuil
 	
 	const FIntPoint ViewSizeScatter = SceneView.UnscaledViewRect.Size();
 	const FIntPoint GridDispatchSizeScatter(ViewSizeScatter.X, ViewSizeScatter.Y);
-	{
-		RDG_EVENT_SCOPE_STAT(GraphBuilder, SurfelScatter, "-------------------------------------------------------------- SurfelScatter");
-		FComputeShaderUtils::AddPass(GraphBuilder, RDG_EVENT_NAME("Surfel Scatter"), ComputeShaderScatter, ScatterPassParameters, FComputeShaderUtils::GetGroupCount(GridDispatchSizeScatter, FIntPoint(16, 16)));
-	}
+	
+	RDG_EVENT_SCOPE_STAT(GraphBuilder, SurfelScatter, "-------------------------------------------------------------- SurfelScatter");
+	FComputeShaderUtils::AddPass(GraphBuilder, RDG_EVENT_NAME("Surfel Scatter"), ComputeShaderScatter, ScatterPassParameters, FComputeShaderUtils::GetGroupCount(GridDispatchSizeScatter, FIntPoint(16, 16)));
 
-	UE_LOG(LogTemp, Log, TEXT("Surfel: scatter pass ran, budget %u"), CVarBudget);
+	//UE_LOG(LogTemp, Log, TEXT("Surfel: scatter pass ran, budget %u"), CVarBudget);
 	
 	// For RenderDoc
 	RDG_EVENT_SCOPE(GraphBuilder, "Surfel Gather Pass");
@@ -267,7 +264,7 @@ void FSurfelSceneViewExtension::PostRenderBasePassDeferred_RenderThread(FRDGBuil
 	FGatherSurfelPass::FParameters* GatherPassParameters =
 		GraphBuilder.AllocParameters<FGatherSurfelPass::FParameters>();
 	
-	const float SpawnsPerFrame = (float)FMath::Max(CVarSurfelSpawnsPerFrame.GetValueOnRenderThread(), 0);
+	const float SpawnsPerFrame = static_cast<float>(FMath::Max(CVarSurfelSpawnsPerFrame.GetValueOnRenderThread(), 0));
 	
 	float SpawnChance = SpawnsPerFrame;
 	GatherPassParameters->SpawnChance = SpawnChance;
@@ -275,7 +272,7 @@ void FSurfelSceneViewExtension::PostRenderBasePassDeferred_RenderThread(FRDGBuil
 	const float SpawnCoverageThreshold = CVarSurfelSpawnCoverageThreshold.GetValueOnRenderThread();
 	GatherPassParameters->SpawnCoverageThreshold = SpawnCoverageThreshold;
 
-	// Each group reduces a tile as wide as a new surfel's covered disc, not a fixed 16x16
+	// Each group reduces a tile as wide as a new Surfels covered disc, not a fixed 16x16
 	const uint32 SpawnTileSize = FGatherSurfelPass::ComputeSpawnTileSize(CVarSurfelRadius.GetValueOnRenderThread(), SpawnCoverageThreshold);
 	GatherPassParameters->SpawnTileSize = SpawnTileSize;
 	
@@ -299,12 +296,11 @@ void FSurfelSceneViewExtension::PostRenderBasePassDeferred_RenderThread(FRDGBuil
 	
 	const FIntPoint ViewSize = SceneView.UnscaledViewRect.Size();
 	const FIntPoint GridDispatchSize(ViewSize.X, ViewSize.Y);
-	{
-		RDG_EVENT_SCOPE_STAT(GraphBuilder, SurfelGather, "-------------------------------------------------------------- SurfelGather");
-		FComputeShaderUtils::AddPass(GraphBuilder, RDG_EVENT_NAME("Surfel Gather"), ComputeShader, GatherPassParameters, FComputeShaderUtils::GetGroupCount(GridDispatchSize, FIntPoint(SpawnTileSize, SpawnTileSize)));
-	}
+	
+	RDG_EVENT_SCOPE_STAT(GraphBuilder, SurfelGather, "-------------------------------------------------------------- SurfelGather");
+	FComputeShaderUtils::AddPass(GraphBuilder, RDG_EVENT_NAME("Surfel Gather"), ComputeShader, GatherPassParameters, FComputeShaderUtils::GetGroupCount(GridDispatchSize, FIntPoint(SpawnTileSize, SpawnTileSize)));
 
-	UE_LOG(LogTemp, Log, TEXT("Surfel: gather ran, budget %u"), CVarBudget);
+	//UE_LOG(LogTemp, Log, TEXT("Surfel: gather ran, budget %u"), CVarBudget);
 
 	// For RenderDoc
 	RDG_EVENT_SCOPE(GraphBuilder, "Surfel Irradiance Pass");
@@ -335,19 +331,58 @@ void FSurfelSceneViewExtension::PostRenderBasePassDeferred_RenderThread(FRDGBuil
 	IrradiancePassParameters->CellResolution = FUniformGridViewState::CellResolution;
 	IrradiancePassParameters->CellCapacity = FUniformGridViewState::CellCapacity;
 	IrradiancePassParameters->CellSize = FUniformGridViewState::CellSize;
+		
+	// todo: should be from CVar
+	IrradiancePassParameters->MinTraceDistance = 0.f;
+	IrradiancePassParameters->MaxTraceDistance = 100000.f; // 100 meters, 10.000 cm
+	IrradiancePassParameters->StepFactor = 1.f;
+	IrradiancePassParameters->MinStepFactor = 1.f;
 	
 	// Add compute shader pass
 	TShaderMapRef<FSurfelIrradiancePass> IrradianceComputeShader(GetGlobalShaderMap(SceneView.GetFeatureLevel()));
-	
-	{
-		RDG_EVENT_SCOPE_STAT(GraphBuilder, SurfelIrradiance, "-------------------------------------------------------------- SurfelIrradiance");
-		FComputeShaderUtils::AddPass(GraphBuilder, RDG_EVENT_NAME("Surfel Irradiance"), IrradianceComputeShader, IrradiancePassParameters, FComputeShaderUtils::GetGroupCount(FIntPoint(int(CVarBudget), 1), FIntPoint(64, 1)));
-	}
 
-	UE_LOG(LogTemp, Log, TEXT("Surfel: irradiance pass"));
+	RDG_EVENT_SCOPE_STAT(GraphBuilder, SurfelIrradiance, "-------------------------------------------------------------- SurfelIrradiance");
+	FComputeShaderUtils::AddPass(GraphBuilder, RDG_EVENT_NAME("Surfel Irradiance"), IrradianceComputeShader, IrradiancePassParameters, FComputeShaderUtils::GetGroupCount(FIntPoint(static_cast<int>(CVarBudget), 1), FIntPoint(64, 1)));
+
+	//UE_LOG(LogTemp, Log, TEXT("Surfel: irradiance pass"));
+
+	// Texture irradiance pass: resolves the per-surfel irradiance above into a screen texture.
+	// Same extent and pixel addressing as the coverage texture.
+	FRDGTextureRef IrradianceTexture = GraphBuilder.CreateTexture(
+		FRDGTextureDesc::Create2D(CoverageExtent, PF_FloatRGBA, FClearValueBinding::Black, TexCreate_ShaderResource | TexCreate_UAV),
+		TEXT("Surfel.IrradianceTexture"));
+
+	AddClearUAVPass(GraphBuilder, GraphBuilder.CreateUAV(IrradianceTexture), FLinearColor::Black);
+
+	FTextureIrradiancePass::FParameters* TextureIrradiancePassParameters =
+		GraphBuilder.AllocParameters<FTextureIrradiancePass::FParameters>();
+
+	TextureIrradiancePassParameters->IrradianceTexture = GraphBuilder.CreateUAV(IrradianceTexture);
+
+	TextureIrradiancePassParameters->SurfelPositionAndRadius = GraphBuilder.CreateUAV(SurfelPositionAndRadiusBuffer);
+	TextureIrradiancePassParameters->SurfelNormalAndFlags = GraphBuilder.CreateUAV(SurfelNormalAndFlagsBuffer);
+	TextureIrradiancePassParameters->SurfelIrradiance = GraphBuilder.CreateUAV(SurfelIrradianceBuffer);
+
+	TextureIrradiancePassParameters->View = SceneView.ViewUniformBuffer;
+	TextureIrradiancePassParameters->ViewRectMin = FUintVector2(SceneView.UnscaledViewRect.Min.X, SceneView.UnscaledViewRect.Min.Y);
+	TextureIrradiancePassParameters->ViewRectMax = FUintVector2(SceneView.UnscaledViewRect.Max.X, SceneView.UnscaledViewRect.Max.Y);
+
+	TextureIrradiancePassParameters->GridCellEntries = GraphBuilder.CreateUAV(GridCellEntriesBuffer);
+	TextureIrradiancePassParameters->GridCounter = GraphBuilder.CreateUAV(GridCounterBuffer);
+	TextureIrradiancePassParameters->GridPosition = FVector3f(GridPosition);
+	TextureIrradiancePassParameters->CellResolution = FUniformGridViewState::CellResolution;
+	TextureIrradiancePassParameters->CellCapacity = FUniformGridViewState::CellCapacity;
+	TextureIrradiancePassParameters->CellSize = FUniformGridViewState::CellSize;
+
+	TextureIrradiancePassParameters->GBufferTextures = SceneTextureShaderParameters;
+
+	TShaderMapRef<FTextureIrradiancePass> TextureIrradianceComputeShader(GetGlobalShaderMap(SceneView.GetFeatureLevel()));
+
+	RDG_EVENT_SCOPE_STAT(GraphBuilder, SurfelTextureIrradiance, "SurfelTextureIrradiance");
+	FComputeShaderUtils::AddPass(GraphBuilder, RDG_EVENT_NAME("Surfel Texture Irradiance"), TextureIrradianceComputeShader, TextureIrradiancePassParameters, FComputeShaderUtils::GetGroupCount(SceneView.UnscaledViewRect.Size(), FIntPoint(16, 16)));
 		
 	// A way to hand over the surfel data to the other hook which is the visualization one
-	SurfelFrameDataByViewKey.Add(ViewKey, FSurfelFrameData{ GridCellEntriesBuffer, GridCounterBuffer, GridPassParameters->GridPosition, CoverageTexture });
+	SurfelFrameDataByViewKey.Add(ViewKey, FSurfelFrameData{ GridCellEntriesBuffer, GridCounterBuffer, GridPassParameters->GridPosition, CoverageTexture, IrradianceTexture });
 
 	// Surfel counter readback for the ImGui budget meter
 	if (!SurfelState.CounterReadback)
@@ -462,15 +497,12 @@ FScreenPassTexture FSurfelSceneViewExtension::RunVisualizePass(
 	PassParameters->SurfelNormalAndFlags = GraphBuilder.CreateUAV(SurfelNormalAndFlagsBuffer);
 
 	PassParameters->GBufferTextures = Inputs.SceneTextures;
-
-	TRDGUniformBufferRef<FSceneTextureUniformParameters> SceneTexturesUB =
-		Inputs.SceneTextures.SceneTextures.GetUniformBuffer();
 	
 	FSurfelFrameData SurfelFrameData;
 	const bool bHasFrameData = SurfelFrameDataByViewKey.RemoveAndCopyValue(ViewKey, SurfelFrameData);
 	
 	const int32 VisualizeMode = CVarSurfelVisualizeMode.GetValueOnRenderThread();
-	const bool bUseGrid = bHasFrameData && (CVarSurfelUseGrid.GetValueOnRenderThread() != 0 || VisualizeMode == (int32)ESurfelVisualizeMode::Grid);
+	const bool bUseGrid = bHasFrameData && (CVarSurfelUseGrid.GetValueOnRenderThread() != 0 || VisualizeMode == static_cast<int32>(ESurfelVisualizeMode::Grid));
 
 	if (bUseGrid)
 	{
@@ -504,6 +536,11 @@ FScreenPassTexture FSurfelSceneViewExtension::RunVisualizePass(
 	PassParameters->bHasCoverageTexture = bHasCoverage ? 1u : 0u;
 	PassParameters->CoverageScale = CVarSurfelCoverageScale.GetValueOnRenderThread();
 
+	// Per-pixel irradiance, for the Irradiance visualization. A black dummy keeps RDG happy when it is missing
+	const bool bHasIrradiance = bHasFrameData && SurfelFrameData.IrradianceTexture != nullptr;
+	PassParameters->IrradianceTexture = bHasIrradiance ? SurfelFrameData.IrradianceTexture : GSystemTextures.GetBlackDummy(GraphBuilder);
+	PassParameters->bHasIrradianceTexture = bHasIrradiance ? 1u : 0u;
+
 	PassParameters->VisualizeMode = static_cast<uint32>(VisualizeMode);
 
 	PassParameters->GridVisFlags = static_cast<uint32>(CVarSurfelGridVisFlags.GetValueOnRenderThread());
@@ -511,15 +548,13 @@ FScreenPassTexture FSurfelSceneViewExtension::RunVisualizePass(
 	
 	TShaderMapRef<FVisualizePassCS> ComputeShader(GetGlobalShaderMap(SceneView.GetFeatureLevel()));
 
-	{
-		RDG_EVENT_SCOPE_STAT(GraphBuilder, SurfelVisualize, "SurfelVisualize");
-		FComputeShaderUtils::AddPass(
-			GraphBuilder,
-			RDG_EVENT_NAME("Surfel Fullscreen %dx%d", PassSize.X, PassSize.Y),
-			ComputeShader,
-			PassParameters,
-			FComputeShaderUtils::GetGroupCount(PassSize, FComputeShaderUtils::kGolden2DGroupSize));
-	}
+	RDG_EVENT_SCOPE_STAT(GraphBuilder, SurfelVisualize, "SurfelVisualize");
+	FComputeShaderUtils::AddPass(
+		GraphBuilder,
+		RDG_EVENT_NAME("Surfel Fullscreen %dx%d", PassSize.X, PassSize.Y),
+		ComputeShader,
+		PassParameters,
+		FComputeShaderUtils::GetGroupCount(PassSize, FComputeShaderUtils::kGolden2DGroupSize));
 
 	// The post-process chain expects the result back in the texture handed initially
 	AddCopyTexturePass(GraphBuilder, OutputTexture, SceneColor.Texture);

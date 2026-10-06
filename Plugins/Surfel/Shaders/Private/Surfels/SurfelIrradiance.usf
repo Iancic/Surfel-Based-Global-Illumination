@@ -27,21 +27,39 @@ uint CellResolution;
 uint CellCapacity;
 uint CellSize;
 
-// TODO: placeholder, every surfel is treated as a mid-grey diffuse surface.
-// Replace with a per-surfel albedo buffer written when the surfel is spawned from the GBuffer.
+float MinTraceDistance;
+float MaxTraceDistance;
+float StepFactor;
+float MinStepFactor;
+
+float3 ComputeDirectLight()
+{
+	// Get lights from C++ side and loop through them here
+	
+	// As placeholder the direct light is same as albedo so it shows in the visualizer
+	return float3(0.5f, 0.7f, 0.2f);
+}
+
 float3 GetSurfelAlbedo(uint SurfelIndex)
 {
-	return float3(0.5f, 0.5f, 0.5f);
+	// Per-surfel albedo buffer from Gather pass GBuffer
+	
+	// As placeholder the albedo is same color as light so it shows in the visualizer
+	return float3(0.5f, 0.7f, 0.2f);
 }
 
 float3 SampleSurfelRadianceAt(float3 WorldPosition, float3 HitNormal)
 {
+	// Step 1: Get radiance from the surfels around 
+	
+	// Get surfels from grid
 	int3 PixelCell = int3(floor((WorldPosition - GridPosition) / CellSize));
 	if (any(PixelCell < 0.) || any(PixelCell >= (float)CellResolution))
 	{
 		return 0;
 	}
 	
+	// Get grid cells
 	uint CellIndex = (uint)PixelCell.x
 			+ (uint)PixelCell.y * CellResolution
 			+ (uint)PixelCell.z * CellResolution * CellResolution;
@@ -53,11 +71,11 @@ float3 SampleSurfelRadianceAt(float3 WorldPosition, float3 HitNormal)
 	for (uint i = 0; i < Count; ++i)
 	{
 		uint Other = GridCellEntries[CellIndex * CellCapacity + i];
-		float4 OtherPositionAndRadius = SurfelPositionAndRadius[Other];
-		float3 OtherNormal = SurfelNormalAndFlags[Other].xyz;
+		float4 SecondSurfelPositionAndRadius = SurfelPositionAndRadius[Other];
+		float3 SecondSurfelNormal = SurfelNormalAndFlags[Other].xyz;
 
-		float Distance = length(OtherPositionAndRadius.xyz - WorldPosition);
-		float Weight = saturate(1.0f - Distance / max(OtherPositionAndRadius.w, 1e-4f)) * saturate(dot(OtherNormal, HitNormal));
+		float Distance = length(SecondSurfelPositionAndRadius.xyz - WorldPosition);
+		float Weight = saturate(1.0f - Distance / max(SecondSurfelPositionAndRadius.w, 1e-4f)) * saturate(dot(SecondSurfelNormal, HitNormal));
 
 		if (Weight > 0.0f)
 		{
@@ -66,15 +84,16 @@ float3 SampleSurfelRadianceAt(float3 WorldPosition, float3 HitNormal)
 			WeightSum += Weight;
 		}
 	}
-
+	
+	// Step 2: compute radiance incoming from lights
+	ComputeDirectLight();
+	
+	// Integrate the lights with Monte Carlo correctly
 	return WeightSum > 0.0f ? RadianceSum / WeightSum : 0;
 }
 
-// Get lights from C++ side and loop through them here
-
-// Unreal probably has something as well like a Hammersley sequence.
+// Unreal probably has something as well for the following functions
 // The following 3 functions are taken from: https://www.shadertoy.com/view/ldBcDt
-// f and r must be 'out', HLSL passes by value otherwise and the caller never sees the result
 void Basis(float3 n, out float3 f, out float3 r)
 {
 	if(n.z < -0.999999) {
@@ -121,60 +140,56 @@ void MainCS(uint3 DispatchThreadId : SV_DispatchThreadID)
 	float Radius = PositionAndRadius.w;
 	float3 Position = PositionAndRadius.xyz;
 	
-	// Size of one voxel of the finest clipmap
-	const float VoxelExtent = GlobalVolumeTranslatedCenterAndExtent[0].w * GlobalVolumeTexelSize;
+	float3 TotalIncomingRadiance = float3(0.f, 0.f, 0.f);
 	
 	// Compute direct light on this surfel
+	TotalIncomingRadiance += ComputeDirectLight();
 	
-	
-	// Get Ray Direction (random ray on hemisphere weighted by normal)
-	uint3 Hash = Rand3DPCG16(int3(SurfelIdx, View.StateFrameIndex, 0));
-	
+	// Get Ray Direction
 	// Random values are from 0 to 1
+	uint3 Hash = Rand3DPCG16(int3(SurfelIdx, View.StateFrameIndex, 0));
 	float Random1 = Hash.x / 65535.0f;
 	float Random2 = Hash.y / 65535.0f;
-
+	
+	// Random ray on hemisphere weighted by normal
 	float3 Direction = SampleHemisphereCosWeighted(Normal.xyz, Random1, Random2);
 
-	// The global SDF lives in translated world space (world + PreViewTranslation) to keep float precision
-	// near the camera. Surfels are stored in world space, so convert before tracing.
+	// The global SDF lives in translated world space (world + PreViewTranslation)
+	// Surfels are stored in world space, so convert
 	float3 PreViewTranslation = DFHackToFloat(PrimaryView.PreViewTranslation);
 	float3 TranslatedPosition = Position + PreViewTranslation;
 
 	// Offset the origin one voxel along the normal so the ray doesn't immediately hit the surface it starts on
+	const float VoxelExtent = GlobalVolumeTranslatedCenterAndExtent[0].w * GlobalVolumeTexelSize;
 	float3 Origin = TranslatedPosition + Normal * VoxelExtent;
 
-	// TODO: hardcoded trace settings, expose as shader parameters later
-	const float MinTraceDistance = 0.0f;
-	const float MaxTraceDistance = 10000.0f; // 100m in UE units (cm)
-	const float StepFactor = 15.0f;           // 1 = step the full SDF distance each iteration
-	const float MinStepFactor = 1.0f;
-
-	// Using Utilities to ray-march until distance is found
+	// Ray-march SDF
 	FGlobalSDFTraceInput TraceInput = SetupGlobalSDFTraceInput(Origin, Direction, MinTraceDistance, MaxTraceDistance, StepFactor, MinStepFactor);
 	FGlobalSDFTraceResult TraceResult = RayTraceGlobalDistanceField(TraceInput);
 	
-	uint SDFClimapIndex = TraceResult.HitClipmapIndex;
-	
-	// At this distance where incoming light is to our surfel
-	float3 TotalIncomingRadiance;
-	
-	// Ray hit 
+	// Compute indirect light on this surfel
 	if (GlobalSDFTraceResultIsHit(TraceResult))
 	{
-		// Hit position is in translated world space (same space as the trace origin), which the SDF normal lookup expects
+		// Hit position is in translated world space 
 		float3 TranslatedHitPosition = Origin + Direction * TraceResult.HitTime;
+		
+		// the SDF normal lookup expects
 		float3 HitNormal = ComputeGlobalDistanceFieldNormal(TranslatedHitPosition, TraceResult.HitClipmapIndex, -Direction);
 
-		// The surfel grid (GridPosition) is in world space, so convert back before looking up surfels
+		// The grid is in world space, so convert back before looking up surfels
 		float3 WorldHitPosition = TranslatedHitPosition - PreViewTranslation;
-		TotalIncomingRadiance = SampleSurfelRadianceAt(WorldHitPosition, HitNormal);
+		
+		// Get light from this point (nearby surfel and direct lights)
+		TotalIncomingRadiance += SampleSurfelRadianceAt(WorldHitPosition, HitNormal);
 	}
-	// Ray miss
-	else
+	else // Ray miss
 	{
-		TotalIncomingRadiance = 0.f; // Skylight Color
+		// sky-light
+		// for now red
+		TotalIncomingRadiance += float3(1.f, 1.f, 1.f); 
 	}
 	
+	// TODO: Accumulate/blend the new radiance sample with older
+	// not just overwrite with a new radiance value
 	SurfelIrradiance[SurfelIdx] = TotalIncomingRadiance;
 }

@@ -114,7 +114,8 @@ TAutoConsoleVariable<int32> CVarSurfelVisualizeMode(
 	TEXT("3: Coverage - the coverage texture as a heat map\n")
 	TEXT("4: Lumen GI - no overlay, Lumen left on\n")
 	TEXT("5: Surfel GI - no overlay, Lumen off\n")
-	TEXT("6: Direct Light Only - no overlay, no indirect lighting\n"),
+	TEXT("6: Direct Light Only - no overlay, no indirect lighting\n")
+	TEXT("7: Irradiance - surfel irradiance resolved per pixel\n"),
 	ECVF_RenderThreadSafe);
 
 TAutoConsoleVariable<float> CVarSurfelCoverageScale(

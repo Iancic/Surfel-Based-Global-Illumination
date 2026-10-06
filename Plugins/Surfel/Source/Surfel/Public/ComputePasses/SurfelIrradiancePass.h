@@ -29,6 +29,12 @@ public:
 
 	BEGIN_SHADER_PARAMETER_STRUCT(FParameters, )
 	
+		// Ray-march settings
+		SHADER_PARAMETER(float, MinTraceDistance)
+		SHADER_PARAMETER(float, MaxTraceDistance)
+		SHADER_PARAMETER(float, StepFactor)
+		SHADER_PARAMETER(float, MinStepFactor)
+			
 		// Surfel related parameters
 		SHADER_PARAMETER(uint32, SurfelBudget)
 		SHADER_PARAMETER(float, SurfelRadius)
@@ -54,7 +60,7 @@ public:
 
 		// GBuffers
 		SHADER_PARAMETER_STRUCT_INCLUDE(FSceneTextureShaderParameters, GBufferTextures)
-			
+	
 	END_SHADER_PARAMETER_STRUCT()
 
 	static bool ShouldCompilePermutation(const FGlobalShaderPermutationParameters& Parameters)

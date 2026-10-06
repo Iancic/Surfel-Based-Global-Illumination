@@ -30,6 +30,9 @@ Texture2D CoverageTexture;
 uint bHasCoverageTexture;
 float CoverageScale;
 
+Texture2D IrradianceTexture;
+uint bHasIrradianceTexture;
+
 uint VisualizeMode; // One of the VISUALIZE_MODE_* defines
 uint GridVisFlags;          // GRID_VIS_* bits
 float GridVisEdgeThickness; // Width of the wireframe line drawn on a grid cell boundary, as a fraction of the cell
@@ -137,7 +140,7 @@ float3 VisualizeSurfels(float3 SceneColor, float3 PixelWorldPosition, float3 Pix
 
 // VISUALIZE_MODE_GRID: show the uniform grid the surfels are binned into.
 // What gets drawn is controlled by the GRID_VIS_* bits in GridVisFlags:
-//   default   - color hashed per cell so neighbours are easy to tell apart, brightness = fullness
+//   default   - color hashed per cell so neighbors are easy to tell apart, brightness = fullness
 //   HEATMAP   - color by fullness instead, so dense areas read at a glance
 //   OVERFLOW  - cells that got more surfels than CellCapacity are solid red
 //   HIDE_EMPTY- cells with no surfels are left as scene color
@@ -185,8 +188,6 @@ float3 VisualizeGrid(float3 SceneColor, float3 PixelWorldPosition)
     return lerp(SceneColor, CellColor, saturate(Intensity));
 }
 
-// VISUALIZE_MODE_COVERAGE: the map Scatter writes and Gather reads to decide where to
-// spawn. Shown on its own rather than blended, since the point is to read the values.
 float3 VisualizeCoverage(float3 SceneColor, int3 LoadPos)
 {
     if (bHasCoverageTexture == 0)
@@ -200,6 +201,18 @@ float3 VisualizeCoverage(float3 SceneColor, int3 LoadPos)
         return SceneColor * 0.15f; // Outside the grid: no coverage was computed, spawning is blocked
     }
     return HeatColor(Coverage / max(CoverageScale, 0.0001f));
+}
+
+float3 VisualizeIrradiance(float3 SceneColor, int3 LoadPos)
+{
+    if (bHasIrradianceTexture == 0)
+    {
+        return SceneColor;
+    }
+
+    float4 Irradiance = IrradianceTexture.Load(LoadPos);
+
+    return Irradiance.rgb * Intensity;
 }
 
 [numthreads(THREADS_X, THREADS_Y, THREADS_Z)]
@@ -253,6 +266,10 @@ void MainCS(uint3 DispatchThreadId : SV_DispatchThreadID)
     else if (VisualizeMode == VISUALIZE_MODE_COVERAGE)
     {
         Result = VisualizeCoverage(SceneColor.rgb, LoadPos);
+    }
+    else if (VisualizeMode == VISUALIZE_MODE_IRRADIANCE)
+    {
+        Result = VisualizeIrradiance(SceneColor.rgb, LoadPos);
     }
     // Every other mode leaves scene color alone: the lighting-reference modes only
     // reconfigure the renderer from the game thread, there is nothing to draw here.

@@ -70,11 +70,12 @@ namespace
 	{
 		"None",
 		"Surfels",
-		"Grid",
-		"Coverage Map",
-		"Lumen GI (reference)",
-		"Surfel GI (no Lumen)",
-		"Direct Light Only",
+		"Uniform Grid",
+		"Irradiance Texture",
+		"Coverage Texture",
+		"Lumen Global Illumination",
+		"Surfel Global Illumination",
+		"Direct Light Only"
 	};
 
 	static_assert((int32)UE_ARRAY_COUNT(GVisualizeModeNames) == (int32)ESurfelVisualizeMode::MAX,
@@ -85,10 +86,11 @@ namespace
 		"Scene color",
 		"Surfel discs",
 		"Uniform grid cells, brighter where more surfels are binned",
+		"Surfel irradiance resolved per pixel, dark where no surfel reaches",
 		"Coverage map Scatter writes",
 		"Lumen GI",
 		"Surfel GI",
-		"All indirect lighting off",
+		"All indirect lighting off"
 	};
 
 	// Which preset the current CVars correspond to, or Custom if they match none of them.
@@ -352,7 +354,7 @@ void UDevGuiSubsystem::DrawSurfelSettings()
 		LockedByPresetTooltip();
 
 		float Radius = CVarSurfelRadius.GetValueOnGameThread();
-		if (ImGui::SliderFloat("Radius (px)", &Radius, 1.0f, 256.0f, "%.1f"))
+		if (ImGui::SliderFloat("Radius (px on screen)", &Radius, 1.0f, 256.0f, "%.1f"))
 		{
 			CVarSurfelRadius->Set(Radius, ECVF_SetByConsole);
 			++GSurfelRefreshRequestId;
@@ -363,6 +365,13 @@ void UDevGuiSubsystem::DrawSurfelSettings()
 		if (ImGui::SliderInt("Spawn Rate", &SpawnsPerFrame, 0, 4096))
 		{
 			CVarSurfelSpawnsPerFrame->Set(SpawnsPerFrame, ECVF_SetByConsole);
+		}
+		LockedByPresetTooltip();
+		
+		float CoverageThreshold = CVarSurfelSpawnCoverageThreshold.GetValueOnGameThread();
+		if (ImGui::SliderFloat("Spacing Between Surfels", &CoverageThreshold, 0, 1))
+		{
+			CVarSurfelSpawnCoverageThreshold->Set(CoverageThreshold, ECVF_SetByConsole);
 		}
 		LockedByPresetTooltip();
 	}
