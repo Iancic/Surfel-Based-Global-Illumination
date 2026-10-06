@@ -4,8 +4,6 @@
 
 #include "/Engine/Private/Common.ush"
 #include "/Engine/Private/Random.ush"
-
-// Shared must come because of some macros
 #include "/Engine/Private/DistanceField/GlobalDistanceFieldShared.ush"
 #include "/Engine/Private/DistanceField/GlobalDistanceFieldUtils.ush"
 
@@ -38,14 +36,15 @@ float3 GetSurfelAlbedo(uint SurfelIndex)
 
 float3 SampleSurfelRadianceAt(float3 WorldPosition, float3 HitNormal)
 {
-	float3 CellF = (WorldPosition - GridPosition) / (float)CellSize;
-	if (any(CellF < 0.0f) || any(CellF >= (float)CellResolution))
+	int3 PixelCell = int3(floor((WorldPosition - GridPosition) / CellSize));
+	if (any(PixelCell < 0.) || any(PixelCell >= (float)CellResolution))
 	{
 		return 0;
 	}
-
-	uint3 Cell = (uint3)CellF;
-	uint CellIndex = Cell.x + (Cell.y + Cell.z * CellResolution) * CellResolution;
+	
+	uint CellIndex = (uint)PixelCell.x
+			+ (uint)PixelCell.y * CellResolution
+			+ (uint)PixelCell.z * CellResolution * CellResolution;
 	uint Count = min(GridCounter[CellIndex], CellCapacity);
 
 	float3 RadianceSum = 0;
@@ -148,7 +147,7 @@ void MainCS(uint3 DispatchThreadId : SV_DispatchThreadID)
 	// TODO: hardcoded trace settings, expose as shader parameters later
 	const float MinTraceDistance = 0.0f;
 	const float MaxTraceDistance = 10000.0f; // 100m in UE units (cm)
-	const float StepFactor = 1.0f;           // 1 = step the full SDF distance each iteration
+	const float StepFactor = 15.0f;           // 1 = step the full SDF distance each iteration
 	const float MinStepFactor = 1.0f;
 
 	// Using Utilities to ray-march until distance is found

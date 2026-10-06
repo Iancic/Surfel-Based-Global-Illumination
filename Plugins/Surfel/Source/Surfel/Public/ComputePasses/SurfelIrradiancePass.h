@@ -66,7 +66,7 @@ public:
 	{
 		FGlobalShader::ModifyCompilationEnvironment(Parameters, OutEnvironment);
 
-		OutEnvironment.SetDefine(TEXT("THREADS_X"), 16);
+		OutEnvironment.SetDefine(TEXT("THREADS_X"), 64);
 		OutEnvironment.SetDefine(TEXT("THREADS_Y"), 1);
 		OutEnvironment.SetDefine(TEXT("THREADS_Z"), 1);
 	}
