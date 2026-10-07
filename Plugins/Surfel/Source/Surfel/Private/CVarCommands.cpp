@@ -34,7 +34,7 @@ TAutoConsoleVariable<float> CVarMinStepFactor(
 
 TAutoConsoleVariable<float> CVarMaxSamples(
 	TEXT("r.Surfel.MaxSamples"),
-	10.f,
+	64.f,
 	TEXT("MaxSamples.\n")
 	TEXT("MaxSamples."),
 	ECVF_RenderThreadSafe
