@@ -1,5 +1,45 @@
 #include "CVarCommands.h"
 
+TAutoConsoleVariable<float> CVarMinTraceDistance(
+	TEXT("r.Surfel.MinTraceDistance"),
+	0.f,
+	TEXT("MinTraceDistance.\n")
+	TEXT("MinTraceDistance."),
+	ECVF_RenderThreadSafe
+	);
+
+TAutoConsoleVariable<float> CVarMaxTraceDistance(
+	TEXT("r.Surfel.MaxTraceDistance"),
+	100000.f, // 100 meters, 10.000 cm
+	TEXT("MaxTraceDistance.\n")
+	TEXT("MaxTraceDistance."),
+	ECVF_RenderThreadSafe
+	);
+
+TAutoConsoleVariable<float> CVarStepFactor(
+	TEXT("r.Surfel.StepFactor"),
+	1.f,
+	TEXT("StepFactor.\n")
+	TEXT("StepFactor."),
+	ECVF_RenderThreadSafe
+	);
+
+TAutoConsoleVariable<float> CVarMinStepFactor(
+	TEXT("r.Surfel.MinStepFactor"),
+	1.f,
+	TEXT("MinStepFactor.\n")
+	TEXT("MinStepFactor."),
+	ECVF_RenderThreadSafe
+	);
+
+TAutoConsoleVariable<float> CVarMaxSamples(
+	TEXT("r.Surfel.MaxSamples"),
+	10.f,
+	TEXT("MaxSamples.\n")
+	TEXT("MaxSamples."),
+	ECVF_RenderThreadSafe
+	);
+
 TAutoConsoleVariable<int> CVarSurfelEnable(
 	TEXT("r.Surfel.Enable"),
 	1,
@@ -135,3 +175,15 @@ static FAutoConsoleCommand CVarSurfelRefreshCmd(
 	{
 		++GSurfelRefreshRequestId;
 	}));
+void ForceGlobalSDFBuild()
+{
+	// Owned by the Renderer module, so look it up by name. It only exists once the renderer has loaded.
+	IConsoleVariable* NecessityCheck = IConsoleManager::Get().FindConsoleVariable(TEXT("r.AOGlobalDistanceField.DetailedNecessityCheck"));
+	if (!NecessityCheck)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Surfel: r.AOGlobalDistanceField.DetailedNecessityCheck not found, global SDF may not be built"));
+		return;
+	}
+
+	NecessityCheck->Set(0, ECVF_SetByConsole);
+}

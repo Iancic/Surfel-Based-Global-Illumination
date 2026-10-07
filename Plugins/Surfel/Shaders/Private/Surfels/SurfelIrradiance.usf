@@ -10,7 +10,7 @@
 RWStructuredBuffer<uint> SurfelCount;
 RWStructuredBuffer<float4> SurfelPositionAndRadius;
 RWStructuredBuffer<float4> SurfelNormalAndFlags;
-RWStructuredBuffer<float3> SurfelIrradiance;
+RWStructuredBuffer<float4> SurfelIrradiance;
 
 uint SurfelBudget;
 float SurfelRadius;
@@ -31,6 +31,7 @@ float MinTraceDistance;
 float MaxTraceDistance;
 float StepFactor;
 float MinStepFactor;
+float MaxSamples; 
 
 float3 ComputeDirectLight()
 {
@@ -137,14 +138,8 @@ void MainCS(uint3 DispatchThreadId : SV_DispatchThreadID)
 	float4 PositionAndRadius = SurfelPositionAndRadius[SurfelIdx];
 	float3 Normal = SurfelNormalAndFlags[SurfelIdx].xyz;
 	
-	float Radius = PositionAndRadius.w;
 	float3 Position = PositionAndRadius.xyz;
-	
-	float3 TotalIncomingRadiance = float3(0.f, 0.f, 0.f);
-	
-	// Compute direct light on this surfel
-	TotalIncomingRadiance += ComputeDirectLight();
-	
+
 	// Get Ray Direction
 	// Random values are from 0 to 1
 	uint3 Hash = Rand3DPCG16(int3(SurfelIdx, View.StateFrameIndex, 0));
@@ -167,6 +162,8 @@ void MainCS(uint3 DispatchThreadId : SV_DispatchThreadID)
 	FGlobalSDFTraceInput TraceInput = SetupGlobalSDFTraceInput(Origin, Direction, MinTraceDistance, MaxTraceDistance, StepFactor, MinStepFactor);
 	FGlobalSDFTraceResult TraceResult = RayTraceGlobalDistanceField(TraceInput);
 	
+	float3 TotalIncomingIrradiance;
+	
 	// Compute indirect light on this surfel
 	if (GlobalSDFTraceResultIsHit(TraceResult))
 	{
@@ -180,16 +177,28 @@ void MainCS(uint3 DispatchThreadId : SV_DispatchThreadID)
 		float3 WorldHitPosition = TranslatedHitPosition - PreViewTranslation;
 		
 		// Get light from this point (nearby surfel and direct lights)
-		TotalIncomingRadiance += SampleSurfelRadianceAt(WorldHitPosition, HitNormal);
+		TotalIncomingIrradiance = SampleSurfelRadianceAt(WorldHitPosition, HitNormal);
 	}
 	else // Ray miss
 	{
 		// sky-light
-		// for now red
-		TotalIncomingRadiance += float3(1.f, 1.f, 1.f); 
+		TotalIncomingIrradiance = float3(1.f, 1.f, 1.f); 
 	}
 	
-	// TODO: Accumulate/blend the new radiance sample with older
-	// not just overwrite with a new radiance value
-	SurfelIrradiance[SurfelIdx] = TotalIncomingRadiance;
+	// With cosine-weighted directions, one sample of irradiance is PI times the radiance
+	TotalIncomingIrradiance *= PI;
+	
+	float3 PreviousIrradiance = SurfelIrradiance[SurfelIdx].xyz;
+	
+	// Alpha is the number of samples accumulated so far (0 for a freshly spawned surfel)
+	float SampleCount = min(SurfelIrradiance[SurfelIdx].w + 1.0f, MaxSamples);
+
+	// 1/SampleCount makes the result a true average of all samples until MaxSamples is reached
+	// 1 means new values replaces old one entirely
+	// how much of the new sample is mixed in per frame 
+	float TemporalBlend = 1.0f / SampleCount;
+	
+	float3 NewIrradiance = lerp(PreviousIrradiance, TotalIncomingIrradiance, TemporalBlend);
+	
+	SurfelIrradiance[SurfelIdx] = float4(NewIrradiance, SampleCount);
 }

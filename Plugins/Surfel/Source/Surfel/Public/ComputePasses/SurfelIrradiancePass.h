@@ -34,6 +34,7 @@ public:
 		SHADER_PARAMETER(float, MaxTraceDistance)
 		SHADER_PARAMETER(float, StepFactor)
 		SHADER_PARAMETER(float, MinStepFactor)
+		SHADER_PARAMETER(float, MaxSamples)
 			
 		// Surfel related parameters
 		SHADER_PARAMETER(uint32, SurfelBudget)
@@ -41,7 +42,7 @@ public:
 		SHADER_PARAMETER_RDG_BUFFER_UAV(RWStructuredBuffer<uint>, SurfelCount)
 		SHADER_PARAMETER_RDG_BUFFER_UAV(RWStructuredBuffer<float4>, SurfelPositionAndRadius)
 		SHADER_PARAMETER_RDG_BUFFER_UAV(RWStructuredBuffer<float4>, SurfelNormalAndFlags)
-		SHADER_PARAMETER_RDG_BUFFER_UAV(RWStructuredBuffer<float3>, SurfelIrradiance)
+		SHADER_PARAMETER_RDG_BUFFER_UAV(RWStructuredBuffer<float4>, SurfelIrradiance)
 	
 		// View
 		SHADER_PARAMETER_STRUCT_REF(FViewUniformShaderParameters, View)

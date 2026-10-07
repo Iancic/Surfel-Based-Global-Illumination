@@ -21,7 +21,7 @@ public:
 		// Surfel related parameters
 		SHADER_PARAMETER_RDG_BUFFER_UAV(RWStructuredBuffer<float4>, SurfelPositionAndRadius)
 		SHADER_PARAMETER_RDG_BUFFER_UAV(RWStructuredBuffer<float4>, SurfelNormalAndFlags)
-		SHADER_PARAMETER_RDG_BUFFER_UAV(RWStructuredBuffer<float3>, SurfelIrradiance)
+		SHADER_PARAMETER_RDG_BUFFER_UAV(RWStructuredBuffer<float4>, SurfelIrradiance)
 
 		// View
 		SHADER_PARAMETER_STRUCT_REF(FViewUniformShaderParameters, View)

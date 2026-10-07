@@ -3,8 +3,6 @@
 #include "HAL/IConsoleManager.h"
 #include <atomic>
 
-// Declared here, defined once in CVarCommands.cpp. Defining them `static` in the header
-// gave every including .cpp its own copy (own CVar registration, own refresh counter).
 extern TAutoConsoleVariable<int> CVarSurfelEnable;
 extern TAutoConsoleVariable<int32> CVarSurfelMode;
 extern TAutoConsoleVariable<float> CVarSurfelIntensity;
@@ -16,14 +14,14 @@ extern TAutoConsoleVariable<int32> CVarSurfelVisualizeMode;
 extern TAutoConsoleVariable<float> CVarSurfelCoverageScale;
 extern TAutoConsoleVariable<int32> CVarSurfelSpawnsPerFrame;
 extern TAutoConsoleVariable<float> CVarSurfelSpawnCoverageThreshold;
-
-// Grid layout. Read once per frame on the render thread (FUniformGridViewState::UpdateFromCVars)
-// so every pass in a frame agrees on the same layout.
+extern TAutoConsoleVariable<float> CVarMinTraceDistance;
+extern TAutoConsoleVariable<float> CVarMaxTraceDistance;
+extern TAutoConsoleVariable<float> CVarStepFactor;
+extern TAutoConsoleVariable<float> CVarMinStepFactor;
+extern TAutoConsoleVariable<float> CVarMaxSamples;
 extern TAutoConsoleVariable<int32> CVarSurfelGridCellResolution;
 extern TAutoConsoleVariable<int32> CVarSurfelGridCellSize;
 extern TAutoConsoleVariable<int32> CVarSurfelGridCellCapacity;
-
-// Grid visualization options
 extern TAutoConsoleVariable<int32> CVarSurfelGridVisFlags;
 extern TAutoConsoleVariable<float> CVarSurfelGridVisEdgeThickness;
 
@@ -38,37 +36,29 @@ enum class ESurfelGridVisFlags : uint32
 };
 ENUM_CLASS_FLAGS(ESurfelGridVisFlags);
 
-// What the visualize pass draws on top of scene color.
-// The first four are debug overlays the shader handles; the last three are lighting
-// references that only reconfigure the renderer, so the shader treats them as None.
-// The numbers are baked into Visualize.usf as VISUALIZE_MODE_* defines by
-// FSurfelFullscreenCS::ModifyCompilationEnvironment, so keep the two in sync.
 enum class ESurfelVisualizeMode : int32
 {
-	None            = 0, // Scene color, untouched
-	Surfels         = 1, // Every surfel disc in its own hashed color
-	Grid            = 2, // Uniform grid cells, tinted by how full each cell is
-	Coverage        = 3, // The coverage texture Scatter writes, as a heat map
-	LumenGI         = 4, // No overlay, engine Lumen GI left on (reference image)
-	SurfelGI        = 5, // No overlay, Lumen off so only our own GI contributes
-	DirectLightOnly = 6, // No overlay, no indirect lighting at all
-	Irradiance      = 7, // Surfel irradiance resolved per pixel by TextureIrradiance. Appended so the numbers above stay put
+	None            = 0,
+	Surfels         = 1,
+	Grid            = 2,
+	Coverage        = 3,
+	LumenGI         = 4,
+	SurfelGI        = 5,
+	DirectLightOnly = 6,
+	Irradiance      = 7,
 	MAX
 };
 
-// True for the modes the visualize compute shader actually draws something for.
-// The rest need no fullscreen dispatch at all.
 inline bool IsSurfelOverlayMode(int32 Mode)
 {
 	return (Mode >= (int32)ESurfelVisualizeMode::Surfels && Mode <= (int32)ESurfelVisualizeMode::Coverage)
 		|| Mode == (int32)ESurfelVisualizeMode::Irradiance;
 }
 
-// Bumped by r.Surfel.Refresh; Gather clears and respawns from scratch when this changes.
+// Gather clears and respawns from scratch when this changes.
 extern int32 GSurfelRefreshRequestId;
 
-// How many surfels the GPU had allocated as of the last completed readback, for the ImGui
-// budget meter. Written on the render thread when a readback lands, read on the game thread,
-// hence the atomic. It lags the GPU by a frame or two - fine for a debug gauge, do not use it
-// to size anything.
 extern std::atomic<int32> GSurfelAllocatedCount;
+
+// Sets r.AOGlobalDistanceField.DetailedNecessityCheck 0 so the engine always builds the global SDF
+void ForceGlobalSDFBuild();

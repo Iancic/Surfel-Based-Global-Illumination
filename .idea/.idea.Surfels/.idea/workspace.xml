@@ -15,20 +15,17 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="20fab832-f3ef-4372-8e5d-692461982054" name="Changes" comment="">
-      <change afterPath="$PROJECT_DIR$/ClaudeGuides/RAY_MARCHING.md" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/.idea.Surfels/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/.idea.Surfels/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Plugins/Surfel/Shaders/Private/Surfels/SurfelIrradiance.usf" beforeDir="false" afterPath="$PROJECT_DIR$/Plugins/Surfel/Shaders/Private/Surfels/SurfelIrradiance.usf" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Plugins/Surfel/Shaders/Private/Surfels/TextureIrradiance.usf" beforeDir="false" afterPath="$PROJECT_DIR$/Plugins/Surfel/Shaders/Private/Surfels/TextureIrradiance.usf" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Plugins/Surfel/Shaders/Private/Surfels/Visualize.usf" beforeDir="false" afterPath="$PROJECT_DIR$/Plugins/Surfel/Shaders/Private/Surfels/Visualize.usf" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Plugins/Surfel/Source/Surfel/Private/CVarCommands.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Plugins/Surfel/Source/Surfel/Private/CVarCommands.cpp" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Plugins/Surfel/Source/Surfel/Private/DevGuiSubsystem.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Plugins/Surfel/Source/Surfel/Private/DevGuiSubsystem.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Plugins/Surfel/Source/Surfel/Private/SurfelModule.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Plugins/Surfel/Source/Surfel/Private/SurfelModule.cpp" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Plugins/Surfel/Source/Surfel/Private/SurfelSceneViewExtension.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Plugins/Surfel/Source/Surfel/Private/SurfelSceneViewExtension.cpp" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Plugins/Surfel/Source/Surfel/Public/CVarCommands.h" beforeDir="false" afterPath="$PROJECT_DIR$/Plugins/Surfel/Source/Surfel/Public/CVarCommands.h" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Plugins/Surfel/Source/Surfel/Public/ComputePasses/SurfelIrradiancePass.h" beforeDir="false" afterPath="$PROJECT_DIR$/Plugins/Surfel/Source/Surfel/Public/ComputePasses/SurfelIrradiancePass.h" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Plugins/Surfel/Source/Surfel/Public/ComputePasses/TextureIrradiancePass.h" beforeDir="false" afterPath="$PROJECT_DIR$/Plugins/Surfel/Source/Surfel/Public/ComputePasses/TextureIrradiancePass.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Plugins/Surfel/Source/Surfel/Public/ComputePasses/VisualizePass.h" beforeDir="false" afterPath="$PROJECT_DIR$/Plugins/Surfel/Source/Surfel/Public/ComputePasses/VisualizePass.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Plugins/Surfel/Source/Surfel/Public/DevGuiSubsystem.h" beforeDir="false" afterPath="$PROJECT_DIR$/Plugins/Surfel/Source/Surfel/Public/DevGuiSubsystem.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Plugins/Surfel/Source/Surfel/Public/SurfelSceneViewExtension.h" beforeDir="false" afterPath="$PROJECT_DIR$/Plugins/Surfel/Source/Surfel/Public/SurfelSceneViewExtension.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Surfels.sln.DotSettings.user" beforeDir="false" afterPath="$PROJECT_DIR$/Surfels.sln.DotSettings.user" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -259,7 +256,8 @@
       <updated>1790005589375</updated>
       <workItem from="1791184404811" duration="17517000" />
       <workItem from="1791207152096" duration="27000" />
-      <workItem from="1791207355632" duration="19303000" />
+      <workItem from="1791207355632" duration="19467000" />
+      <workItem from="1791370777449" duration="5434000" />
     </task>
     <servers />
   </component>

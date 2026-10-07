@@ -212,7 +212,7 @@ float3 VisualizeIrradiance(float3 SceneColor, int3 LoadPos)
 
     float4 Irradiance = IrradianceTexture.Load(LoadPos);
 
-    return Irradiance.rgb * Intensity;
+    return Irradiance.rgb / PI * Intensity;
 }
 
 [numthreads(THREADS_X, THREADS_Y, THREADS_Z)]

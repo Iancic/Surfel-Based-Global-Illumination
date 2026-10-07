@@ -71,11 +71,11 @@ namespace
 		"None",
 		"Surfels",
 		"Uniform Grid",
-		"Irradiance Texture",
+		"Direct Light Only",
 		"Coverage Texture",
 		"Lumen Global Illumination",
 		"Surfel Global Illumination",
-		"Direct Light Only"
+		"Irradiance Texture"
 	};
 
 	static_assert((int32)UE_ARRAY_COUNT(GVisualizeModeNames) == (int32)ESurfelVisualizeMode::MAX,
@@ -420,6 +420,16 @@ void UDevGuiSubsystem::DrawBudgetMeter()
 		++GSurfelRefreshRequestId;
 	}
 	ImGui::EndDisabled();
+
+	ImGui::SameLine();
+	if (ImGui::Button("Force SDF Build"))
+	{
+		ForceGlobalSDFBuild();
+	}
+	if (ImGui::IsItemHovered())
+	{
+		ImGui::SetTooltip("r.AOGlobalDistanceField.DetailedNecessityCheck 0\nAlways build the global SDF the irradiance rays march through.");
+	}
 }
 
 void UDevGuiSubsystem::DrawVisualizationSettings()

@@ -144,12 +144,14 @@ void FSurfelSceneViewExtension::PostRenderBasePassDeferred_RenderThread(FRDGBuil
 			FRDGBufferDesc::CreateStructuredDesc(sizeof(uint32), 1),
 			TEXT("Surfel.Counter"));
 		
+		AddClearUAVPass(GraphBuilder, GraphBuilder.CreateUAV(SurfelCounterBuffer), 0u);
+		
 		SurfelIrradianceBuffer = GraphBuilder.CreateBuffer(
-			FRDGBufferDesc::CreateStructuredDesc(sizeof(FVector3f), CVarBudget),
+			FRDGBufferDesc::CreateStructuredDesc(sizeof(FVector4f), CVarBudget),
 			TEXT("Surfel.Irradiance")
 			);
-
-		AddClearUAVPass(GraphBuilder, GraphBuilder.CreateUAV(SurfelCounterBuffer), 0u);
+		
+		AddClearUAVPass(GraphBuilder, GraphBuilder.CreateUAV(SurfelIrradianceBuffer), 0u);
 	}
 	
 	// Create RDG Buffers for the grid
@@ -332,11 +334,11 @@ void FSurfelSceneViewExtension::PostRenderBasePassDeferred_RenderThread(FRDGBuil
 	IrradiancePassParameters->CellCapacity = FUniformGridViewState::CellCapacity;
 	IrradiancePassParameters->CellSize = FUniformGridViewState::CellSize;
 		
-	// todo: should be from CVar
-	IrradiancePassParameters->MinTraceDistance = 0.f;
-	IrradiancePassParameters->MaxTraceDistance = 100000.f; // 100 meters, 10.000 cm
-	IrradiancePassParameters->StepFactor = 1.f;
-	IrradiancePassParameters->MinStepFactor = 1.f;
+	IrradiancePassParameters->MinTraceDistance = CVarMinTraceDistance.GetValueOnRenderThread();
+	IrradiancePassParameters->MaxTraceDistance = CVarMaxTraceDistance.GetValueOnRenderThread();
+	IrradiancePassParameters->StepFactor = CVarStepFactor.GetValueOnRenderThread();
+	IrradiancePassParameters->MinStepFactor = CVarMinStepFactor.GetValueOnRenderThread();
+	IrradiancePassParameters->MaxSamples = CVarMaxSamples.GetValueOnRenderThread();
 	
 	// Add compute shader pass
 	TShaderMapRef<FSurfelIrradiancePass> IrradianceComputeShader(GetGlobalShaderMap(SceneView.GetFeatureLevel()));

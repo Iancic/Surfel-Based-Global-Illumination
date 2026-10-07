@@ -1,5 +1,7 @@
 #include "SurfelModule.h"
 #include "Interfaces/IPluginManager.h"
+#include "Misc/CoreDelegates.h"
+#include "CVarCommands.h"
 
 #define LOCTEXT_NAMESPACE "FSurfelModule"
 
@@ -9,6 +11,9 @@ void FSurfelModule::StartupModule()
 	AddShaderSourceDirectoryMapping(
 		TEXT("/Surfel"), 
 		IPluginManager::Get().FindPlugin("Surfel")->GetBaseDir() + "/Shaders/Private");
+
+	// The module loads at PostConfigInit, before the renderer registers its CVars, so wait for engine init
+	FCoreDelegates::OnPostEngineInit.AddStatic(&ForceGlobalSDFBuild);
 }
 
 void FSurfelModule::ShutdownModule() { }

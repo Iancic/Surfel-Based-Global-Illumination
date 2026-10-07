@@ -7,7 +7,7 @@ RWTexture2D<float4> IrradianceTexture;
 
 RWStructuredBuffer<float4> SurfelPositionAndRadius;
 RWStructuredBuffer<float4> SurfelNormalAndFlags;
-RWStructuredBuffer<float3> SurfelIrradiance;
+RWStructuredBuffer<float4> SurfelIrradiance;
 
 uint2 ViewRectMin;
 uint2 ViewRectMax;
