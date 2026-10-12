@@ -7,10 +7,27 @@
 #include "/Engine/Private/DistanceField/GlobalDistanceFieldShared.ush"
 #include "/Engine/Private/DistanceField/GlobalDistanceFieldUtils.ush"
 
+#define SUPPORT_CONTACT_SHADOWS 0
+#include "/Engine/Private/DeferredLightingCommon.ush"
+
+// TODO: make sure I find a way to share this struct between files
+//#include "SurfelLight.ush"
+struct FSurfelLightStruct
+{
+	float4 PositionAndAttenuation; // attenuation for point light (w)
+	float4 ColorAndType; // type is (w)
+	float4 DirectionAndInverseFalloff; // dictates whether is inverse square or exponential falloff
+	float4 Angle;
+};
+
+StructuredBuffer<FSurfelLightStruct> SurfelLights;
+uint NumSurfelLights;
+
 RWStructuredBuffer<uint> SurfelCount;
 RWStructuredBuffer<float4> SurfelPositionAndRadius;
 RWStructuredBuffer<float4> SurfelNormalAndFlags;
 RWStructuredBuffer<float4> SurfelIrradiance;
+RWStructuredBuffer<float3> SurfelAlbedo;
 
 uint SurfelBudget;
 float SurfelRadius;
@@ -33,30 +50,88 @@ float StepFactor;
 float MinStepFactor;
 float MaxSamples; 
 
-float3 ComputeDirectLight()
+float3 EvaluateSurfelLight(FSurfelLightStruct Light, float3 TranslatedPos, out float3 L, out float ShadowDistance)
 {
-	// Get lights from C++ side and loop through them here
+	uint Type = (uint)Light.ColorAndType.a;
+	if (Type == LIGHT_TYPE_DIRECTIONAL)
+	{
+		L = Light.DirectionAndInverseFalloff.xyz;
+		ShadowDistance = MaxTraceDistance;
+		return Light.ColorAndType.rgb;
+	}
+
+	float3 ToLight = Light.PositionAndAttenuation.xyz - TranslatedPos;
+	float DistSquared = dot(ToLight, ToLight);
+	L = ToLight * rsqrt(DistSquared);
+	ShadowDistance = sqrt(DistSquared);
+
+	float InverseRadius = Light.PositionAndAttenuation.w;
+	float Attenuation;
 	
-	// As placeholder the direct light is same as albedo so it shows in the visualizer
-	return float3(0.5f, 0.7f, 0.2f);
+	// Credit: discovered with Claude that lights can have 2 modes to operate on
+	//	https://dev.epicgames.com/documentation/unreal-engine/4.1---falloff-exponent?application_version=4.27
+	//  https://dev.epicgames.com/documentation/unreal-engine/4.2---inverse-square-falloff?application_version=4.27
+	if (Light.DirectionAndInverseFalloff.w == 0) // inverse squared
+	{
+		Attenuation = 1.0f / (DistSquared + 1.0f);
+		Attenuation *= Square(saturate(1.0f - Square(DistSquared * Square(InverseRadius))));
+	}
+	else
+	{
+		// Included from deferred path (see include), code also inspired from there
+		Attenuation = RadialAttenuation(ToLight * InverseRadius, Light.DirectionAndInverseFalloff.w);
+	}
+
+	if (Type == LIGHT_TYPE_SPOT)
+	{
+		Attenuation *= Square(saturate((dot(L, Light.DirectionAndInverseFalloff.xyz) - Light.Angle.x) * Light.Angle.y));
+	}
+	return Light.ColorAndType.rgb * Attenuation;
+}
+
+bool IsLightVisible(float3 TranslatedPos, float3 Normal, float3 L, float ShadowDistance)
+{
+	const float VoxelExtent = GlobalVolumeTranslatedCenterAndExtent[0].w * GlobalVolumeTexelSize;
+	float3 Origin = TranslatedPos + Normal * VoxelExtent;
+
+	FGlobalSDFTraceInput RayMarchInput = SetupGlobalSDFTraceInput(Origin, L, MinTraceDistance, ShadowDistance - VoxelExtent,StepFactor, MinStepFactor);
+	return !GlobalSDFTraceResultIsHit(RayTraceGlobalDistanceField(RayMarchInput));
+}
+
+// Irradiance
+float3 ComputeDirectLight(float3 TranslatedPos, float3 Normal)
+{
+	float3 Irradiance = 0;
+	for (uint i = 0; i < NumSurfelLights; ++i)
+	{
+		float3 L; 
+		float ShadowDistance;
+		float3 Li = EvaluateSurfelLight(SurfelLights[i], TranslatedPos, L, ShadowDistance);
+		float NdotL = saturate(dot(Normal, L));
+
+		if (NdotL > 0 && any(Li > 0) && IsLightVisible(TranslatedPos, Normal, L, ShadowDistance))
+		{
+			Irradiance += Li * NdotL;
+		}
+	}
+	return Irradiance;
 }
 
 float3 GetSurfelAlbedo(uint SurfelIndex)
 {
 	// Per-surfel albedo buffer from Gather pass GBuffer
-	
-	// As placeholder the albedo is same color as light so it shows in the visualizer
-	return float3(0.5f, 0.7f, 0.2f);
+	return SurfelAlbedo[SurfelIndex];
 }
 
+// Radiance
 float3 SampleSurfelRadianceAt(float3 WorldPosition, float3 HitNormal)
 {
-	// Step 1: Get radiance from the surfels around 
-	
+	// Step 1: Get radiance from the surfels around
 	// Get surfels from grid
 	int3 PixelCell = int3(floor((WorldPosition - GridPosition) / CellSize));
 	if (any(PixelCell < 0.) || any(PixelCell >= (float)CellResolution))
 	{
+		// todo even if not in grid should return the direct light of this surfel?
 		return 0;
 	}
 	
@@ -66,7 +141,8 @@ float3 SampleSurfelRadianceAt(float3 WorldPosition, float3 HitNormal)
 			+ (uint)PixelCell.z * CellResolution * CellResolution;
 	uint Count = min(GridCounter[CellIndex], CellCapacity);
 
-	float3 RadianceSum = 0;
+	float3 IrradianceSum = 0;
+	float3 AlbedoSum = 0;
 	float WeightSum = 0;
 
 	for (uint i = 0; i < Count; ++i)
@@ -77,34 +153,39 @@ float3 SampleSurfelRadianceAt(float3 WorldPosition, float3 HitNormal)
 
 		float Distance = length(SecondSurfelPositionAndRadius.xyz - WorldPosition);
 		float Weight = saturate(1.0f - Distance / max(SecondSurfelPositionAndRadius.w, 1e-4f)) * saturate(dot(SecondSurfelNormal, HitNormal));
-
+		
 		if (Weight > 0.0f)
 		{
-			float3 Outgoing = GetSurfelAlbedo(Other) / PI * SurfelIrradiance[Other];
-			RadianceSum += Outgoing * Weight;
+			IrradianceSum += SurfelIrradiance[Other].xyz * Weight;
+			AlbedoSum += GetSurfelAlbedo(Other) * Weight;
 			WeightSum += Weight;
 		}
 	}
 	
-	// Step 2: compute radiance incoming from lights
-	ComputeDirectLight();
+	// Step 2: Direct light (how much light reaches this surface)
+	float3 PreViewTranslation = DFHackToFloat(PrimaryView.PreViewTranslation);
+	float3 TranslatedPosition = WorldPosition + PreViewTranslation;
+	float3 DirectIrradiance = ComputeDirectLight(TranslatedPosition, HitNormal);
 	
-	// Integrate the lights with Monte Carlo correctly
-	return WeightSum > 0.0f ? RadianceSum / WeightSum : 0;
+	// Integrate the lights with Monte Carlo
+	float3 IndirectIrradiance = WeightSum > 0.0f ? (IrradianceSum) / WeightSum : 0;
+	float3 HitAlbedo = WeightSum > 0.0f ? (AlbedoSum) / WeightSum : 0;
+	
+	return HitAlbedo / PI * (IndirectIrradiance +  DirectIrradiance);
 }
 
 // Unreal probably has something as well for the following functions
 // The following 3 functions are taken from: https://www.shadertoy.com/view/ldBcDt
 void Basis(float3 n, out float3 f, out float3 r)
 {
-	if(n.z < -0.999999) {
-		f = float3(0 , -1, 0);
-		r = float3(-1, 0, 0);
+	if(n.z < -0.999999f) {
+		f = float3(0.f , -1.f, 0.f);
+		r = float3(-1.f, 0.f, 0.f);
 	} else {
-		float a = 1./(1. + n.z);
-		float b = -n.x*n.y*a;
-		f = float3(1. - n.x*n.x*a, b, -n.x);
-		r = float3(b, 1. - n.y*n.y*a , -n.y);
+		float a = 1.f / (1.f + n.z);
+		float b = -n.x * n.y * a;
+		f = float3(1.f - n.x * n.x * a, b, -n.x);
+		r = float3(b, 1.f - n.y * n.y * a , -n.y);
 	}
 }
 
@@ -112,21 +193,27 @@ float3 LocalToWorld( float3 localDir, float3 normal )
 {
 	float3 a, b;
 	Basis( normal, a, b );
-	return localDir.x*a + localDir.y*b + localDir.z*normal;
+	return localDir.x * a + localDir.y * b + localDir.z * normal;
 }
 
+// EXPENSIVE
+// We got to represent it in spherical coordinates
 float3 SphericalToCartesian( float rho, float phi, float theta ) 
 {
 	float sinTheta = sin(theta);
-	return float3( sinTheta*cos(phi), sinTheta*sin(phi), cos(theta) )*rho;
+	return float3(sinTheta * cos(phi), sinTheta * sin(phi), cos(theta)) * rho;
 }
 
+// EXPENSIVE but I think is the only way for hemisphere cosine weighted
 float3 SampleHemisphereCosWeighted(float3 n, float Xi1, float Xi2 ) 
 {
-	float theta = acos(sqrt(1.0-Xi1));
+	float theta = acos(sqrt(1.0f - Xi1));
 	float phi = 2 * PI * Xi2;
-	return LocalToWorld( SphericalToCartesian( 1.0, phi, theta ), n );
+	return LocalToWorld( SphericalToCartesian( 1.0f, phi, theta ), n );
 }
+
+// If you have a Surfel normal some direction will come out of it
+// I use that to bounce the scene for indirect light
 
 [numthreads(THREADS_X, THREADS_Y, THREADS_Z)]
 void MainCS(uint3 DispatchThreadId : SV_DispatchThreadID)
@@ -162,7 +249,7 @@ void MainCS(uint3 DispatchThreadId : SV_DispatchThreadID)
 	FGlobalSDFTraceInput TraceInput = SetupGlobalSDFTraceInput(Origin, Direction, MinTraceDistance, MaxTraceDistance, StepFactor, MinStepFactor);
 	FGlobalSDFTraceResult TraceResult = RayTraceGlobalDistanceField(TraceInput);
 	
-	float3 TotalIncomingIrradiance;
+	float3 TotalIncomingIrradiance = float3(0.f, 0.f, 0.f);
 	
 	// Compute indirect light on this surfel
 	if (GlobalSDFTraceResultIsHit(TraceResult))
@@ -181,8 +268,8 @@ void MainCS(uint3 DispatchThreadId : SV_DispatchThreadID)
 	}
 	else // Ray miss
 	{
-		// sky-light
-		TotalIncomingIrradiance = float3(1.f, 1.f, 1.f); 
+		// Should be sky-light, i assume is white light
+		TotalIncomingIrradiance += float3(1.f, 1.f, 1.f);
 	}
 	
 	// With cosine-weighted directions, one sample of irradiance is PI times the radiance

@@ -9,6 +9,7 @@ float SpawnCoverageThreshold;
 RWStructuredBuffer<uint> SurfelCount;
 RWStructuredBuffer<float4> SurfelPositionAndRadius;
 RWStructuredBuffer<float4> SurfelNormalAndFlags;
+RWStructuredBuffer<float3> SurfelAlbedo;
 
 uint SurfelBudget;
 float SurfelRadius;
@@ -107,6 +108,7 @@ void MainCS(uint3 GroupId : SV_GroupID, uint3 GroupThreadId : SV_GroupThreadID, 
     // Based on alive factor
     
     // Step 3: Spawning the Surfel
+    
     // Get normal at this pixel
     float4 GBufferA = SceneTexturesStruct.GBufferATexture.Load(LoadPos);
     float3 WorldNormal = normalize(GBufferA.xyz * 2.0f - 1.0f);
@@ -139,4 +141,5 @@ void MainCS(uint3 GroupId : SV_GroupID, uint3 GroupThreadId : SV_GroupThreadID, 
     
     SurfelPositionAndRadius[SurfelIndex] = float4(WorldPosition, Radius);
     SurfelNormalAndFlags[SurfelIndex] = float4(WorldNormal, 0.0f);
+    SurfelAlbedo[SurfelIndex] = SceneTexturesStruct.GBufferCTexture.Load(LoadPos);
 }

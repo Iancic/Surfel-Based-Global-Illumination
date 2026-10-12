@@ -1,6 +1,7 @@
 ﻿#pragma once
 #include "SceneTexturesConfig.h"
 #include "ShaderParameterStruct.h"
+#include "SurfelLight.h"
 
 /**
  * Note: after one scatter and one gather, doing scatter again will be done with the newly spawned surfel
@@ -35,7 +36,11 @@ public:
 		SHADER_PARAMETER(float, StepFactor)
 		SHADER_PARAMETER(float, MinStepFactor)
 		SHADER_PARAMETER(float, MaxSamples)
-			
+	
+		// Lights
+		SHADER_PARAMETER_RDG_BUFFER_SRV(StructuredBuffer<FSurfelLightStruct>, SurfelLights)
+		SHADER_PARAMETER(uint32, NumSurfelLights)
+	
 		// Surfel related parameters
 		SHADER_PARAMETER(uint32, SurfelBudget)
 		SHADER_PARAMETER(float, SurfelRadius)
@@ -43,6 +48,7 @@ public:
 		SHADER_PARAMETER_RDG_BUFFER_UAV(RWStructuredBuffer<float4>, SurfelPositionAndRadius)
 		SHADER_PARAMETER_RDG_BUFFER_UAV(RWStructuredBuffer<float4>, SurfelNormalAndFlags)
 		SHADER_PARAMETER_RDG_BUFFER_UAV(RWStructuredBuffer<float4>, SurfelIrradiance)
+		SHADER_PARAMETER_RDG_BUFFER_UAV(RWStructuredBuffer<float3>, SurfelAlbedo)
 	
 		// View
 		SHADER_PARAMETER_STRUCT_REF(FViewUniformShaderParameters, View)

@@ -33,10 +33,9 @@ float CoverageScale;
 Texture2D IrradianceTexture;
 uint bHasIrradianceTexture;
 
-uint VisualizeMode; // One of the VISUALIZE_MODE_* defines
-uint GridVisFlags;          // GRID_VIS_* bits
-float GridVisEdgeThickness; // Width of the wireframe line drawn on a grid cell boundary, as a fraction of the cell
-
+uint VisualizeMode;
+uint GridVisFlags;
+float GridVisEdgeThickness;
 
 // Generated with Claude
 float3 HashColor(uint Seed)
@@ -138,13 +137,6 @@ float3 VisualizeSurfels(float3 SceneColor, float3 PixelWorldPosition, float3 Pix
     return lerp(SceneColor, HashColor(Hit.Index), saturate(Intensity));
 }
 
-// VISUALIZE_MODE_GRID: show the uniform grid the surfels are binned into.
-// What gets drawn is controlled by the GRID_VIS_* bits in GridVisFlags:
-//   default   - color hashed per cell so neighbors are easy to tell apart, brightness = fullness
-//   HEATMAP   - color by fullness instead, so dense areas read at a glance
-//   OVERFLOW  - cells that got more surfels than CellCapacity are solid red
-//   HIDE_EMPTY- cells with no surfels are left as scene color
-//   WIREFRAME - white lines on cell boundaries
 float3 VisualizeGrid(float3 SceneColor, float3 PixelWorldPosition)
 {
     int3 PixelCell;
@@ -212,14 +204,16 @@ float3 VisualizeIrradiance(float3 SceneColor, int3 LoadPos)
 
     float4 Irradiance = IrradianceTexture.Load(LoadPos);
 
+    // GBufferC holds base color in the default deferred layout
+    float3 BaseColor = SceneTexturesStruct.GBufferCTexture.Load(LoadPos).rgb;
+    // This in place of composite
+
     return Irradiance.rgb / PI * Intensity;
 }
 
 [numthreads(THREADS_X, THREADS_Y, THREADS_Z)]
 void MainCS(uint3 DispatchThreadId : SV_DispatchThreadID)
 {
-    // We dispatch in whole groups, so the last group runs past the edge.
-    // Threads outside the viewport must do nothing.
     if (any(DispatchThreadId.xy >= (uint2)InputViewport_ViewportMax))
     {
         return;

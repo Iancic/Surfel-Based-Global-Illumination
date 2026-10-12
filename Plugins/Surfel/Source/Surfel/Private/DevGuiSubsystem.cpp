@@ -27,7 +27,6 @@ UE_DISABLE_OPTIMIZATION
 
 namespace
 {
-
 	struct FDevScene
 	{
 		const char* Name;
@@ -71,9 +70,9 @@ namespace
 		"None",
 		"Surfels",
 		"Uniform Grid",
-		"Direct Light Only",
 		"Coverage Texture",
 		"Lumen Global Illumination",
+		"Direct Light Only",
 		"Surfel Global Illumination",
 		"Irradiance Texture"
 	};

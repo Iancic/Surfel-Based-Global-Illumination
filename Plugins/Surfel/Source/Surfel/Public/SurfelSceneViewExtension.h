@@ -6,6 +6,7 @@
 #include "RHIGPUReadback.h"
 #include "ComputePasses/GatherPass.h"
 #include "ComputePasses/VisualizePass.h"
+#include "SurfelLight.h"
 
 class FSurfelSceneViewExtension : public FSceneViewExtensionBase
 {
@@ -37,6 +38,7 @@ public:
 		TRefCountPtr<FRDGPooledBuffer> SurfelPositionAndRadius;
 		TRefCountPtr<FRDGPooledBuffer> SurfelNormalAndFlags;
 		TRefCountPtr<FRDGPooledBuffer> SurfelIrradiance;
+		TRefCountPtr<FRDGPooledBuffer> SurfelAlbedo;
 	
 		FVector PreviousPreViewTranslation = FVector::ZeroVector;
 		uint32 Budget = 0;
@@ -57,6 +59,7 @@ public:
 		FVector3f GridPosition = FVector3f::ZeroVector;
 		FRDGTextureRef CoverageTexture = nullptr;
 		FRDGTextureRef IrradianceTexture = nullptr;
+		FRDGBufferRef SurfelAlbedo = nullptr;
 	};
 	TMap<uint32, FSurfelFrameData> SurfelFrameDataByViewKey;
 	
@@ -73,6 +76,14 @@ public:
 
 		return GraphBuilder.CreateTexture(Desc, Name);
 	}
+	
+	struct FSurfelLightStruct
+	{
+		FVector4f PositionAndAttenuation; // attenuation for point light (w)
+		FVector4f ColorAndType; // type is (w)
+		FVector4f DirectionAndInverseFalloff; // dictates whether is inverse square or exponential falloff
+		FVector4f Angle;
+	};
 
 private:
 	FScreenPassTexture RunVisualizePass(

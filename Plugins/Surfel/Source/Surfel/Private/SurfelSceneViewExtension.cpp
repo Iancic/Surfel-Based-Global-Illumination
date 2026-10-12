@@ -13,6 +13,7 @@
 #include "ComputePasses/VisualizePass.h"
 #include "Runtime/Renderer/Private/SceneRendering.h"
 #include "SystemTextures.h"
+#include "Runtime/Renderer/Private/ScenePrivate.h"
 
 // GPU stats, shown with `stat GPU0_Graphics0`. Must be at file scope.
 DECLARE_GPU_STAT(SurfelGrid);
@@ -22,10 +23,7 @@ DECLARE_GPU_STAT(SurfelIrradiance);
 DECLARE_GPU_STAT(SurfelTextureIrradiance);
 DECLARE_GPU_STAT(SurfelVisualize);
 
-FSurfelSceneViewExtension::FSurfelSceneViewExtension(const FAutoRegister& AutoRegister)
-	: FSceneViewExtensionBase(AutoRegister)
-{
-}
+FSurfelSceneViewExtension::FSurfelSceneViewExtension(const FAutoRegister& AutoRegister) : FSceneViewExtensionBase(AutoRegister) {}
 
 void FSurfelSceneViewExtension::SetupView(FSceneViewFamily& InViewFamily, FSceneView& InView)
 {
@@ -122,6 +120,7 @@ void FSurfelSceneViewExtension::PostRenderBasePassDeferred_RenderThread(FRDGBuil
 	FRDGBufferRef SurfelNormalAndFlagsBuffer;
 	FRDGBufferRef SurfelCounterBuffer;
 	FRDGBufferRef SurfelIrradianceBuffer;
+	FRDGBufferRef SurfelAlbedoBuffer;
 
 	if (SurfelState.SurfelPositionAndRadius.IsValid())
 	{
@@ -129,6 +128,7 @@ void FSurfelSceneViewExtension::PostRenderBasePassDeferred_RenderThread(FRDGBuil
 		SurfelNormalAndFlagsBuffer = GraphBuilder.RegisterExternalBuffer(SurfelState.SurfelNormalAndFlags);
 		SurfelCounterBuffer = GraphBuilder.RegisterExternalBuffer(SurfelState.SurfelCounter);
 		SurfelIrradianceBuffer = GraphBuilder.RegisterExternalBuffer(SurfelState.SurfelIrradiance); 
+		SurfelAlbedoBuffer = GraphBuilder.RegisterExternalBuffer(SurfelState.SurfelAlbedo);
 	}
 	else // Create them if they are not there
 	{
@@ -152,6 +152,10 @@ void FSurfelSceneViewExtension::PostRenderBasePassDeferred_RenderThread(FRDGBuil
 			);
 		
 		AddClearUAVPass(GraphBuilder, GraphBuilder.CreateUAV(SurfelIrradianceBuffer), 0u);
+		
+		SurfelAlbedoBuffer = GraphBuilder.CreateBuffer(
+			FRDGBufferDesc::CreateStructuredDesc(sizeof(FVector3f), CVarBudget),
+			TEXT("Surfel.Albedo"));
 	}
 	
 	// Create RDG Buffers for the grid
@@ -194,20 +198,16 @@ void FSurfelSceneViewExtension::PostRenderBasePassDeferred_RenderThread(FRDGBuil
 	
 	// Set Parameters For Surfels
 	// Already above just create a new UAV
-	GridPassParameters->SurfelCount              = GraphBuilder.CreateUAV(SurfelCounterBuffer);
-	GridPassParameters->SurfelPositionAndRadius  = GraphBuilder.CreateUAV(SurfelPositionAndRadiusBuffer);
-	GridPassParameters->SurfelNormalAndFlags     = GraphBuilder.CreateUAV(SurfelNormalAndFlagsBuffer);
+	GridPassParameters->SurfelCount = GraphBuilder.CreateUAV(SurfelCounterBuffer);
+	GridPassParameters->SurfelPositionAndRadius = GraphBuilder.CreateUAV(SurfelPositionAndRadiusBuffer);
+	GridPassParameters->SurfelNormalAndFlags = GraphBuilder.CreateUAV(SurfelNormalAndFlagsBuffer);
 	GridPassParameters->SurfelBudget = CVarBudget;
 	GridPassParameters->SurfelRadius = CVarSurfelRadius.GetValueOnRenderThread();
 
 	// Dispatch Compute
 	TShaderMapRef<FGridAllocationPass> ComputeShaderGrid(GetGlobalShaderMap(SceneView.GetFeatureLevel()));
-	
-	RDG_EVENT_SCOPE_STAT(GraphBuilder, SurfelGrid, "-------------------------------------------------------------- SurfelGrid");
 	FComputeShaderUtils::AddPass(GraphBuilder, RDG_EVENT_NAME("Surfel Grid"), ComputeShaderGrid, GridPassParameters, FComputeShaderUtils::GetGroupCount(FIntPoint(static_cast<int>(CVarBudget), 1), FIntPoint(64, 1)));
 	
-	//UE_LOG(LogTemp, Log, TEXT("Surfel: grid allocation ran, budget %u"), CVarBudget);
-
 	// Scatter pass: reads the grid built above, writes the coverage map Gather then reads.
 	// For RenderDoc
 	RDG_EVENT_SCOPE(GraphBuilder, "Surfel Scatter Pass");
@@ -242,9 +242,9 @@ void FSurfelSceneViewExtension::PostRenderBasePassDeferred_RenderThread(FRDGBuil
 
 	ScatterPassParameters->SurfelBudget = CVarBudget;
 	ScatterPassParameters->SurfelRadius = CVarSurfelRadius.GetValueOnRenderThread();
-	ScatterPassParameters->SurfelCount              = GraphBuilder.CreateUAV(SurfelCounterBuffer);
-	ScatterPassParameters->SurfelPositionAndRadius  = GraphBuilder.CreateUAV(SurfelPositionAndRadiusBuffer);
-	ScatterPassParameters->SurfelNormalAndFlags     = GraphBuilder.CreateUAV(SurfelNormalAndFlagsBuffer);
+	ScatterPassParameters->SurfelCount = GraphBuilder.CreateUAV(SurfelCounterBuffer);
+	ScatterPassParameters->SurfelPositionAndRadius = GraphBuilder.CreateUAV(SurfelPositionAndRadiusBuffer);
+	ScatterPassParameters->SurfelNormalAndFlags = GraphBuilder.CreateUAV(SurfelNormalAndFlagsBuffer);
 	
 	ScatterPassParameters->GBufferTextures = SceneTextureShaderParameters;
 	
@@ -254,11 +254,8 @@ void FSurfelSceneViewExtension::PostRenderBasePassDeferred_RenderThread(FRDGBuil
 	const FIntPoint ViewSizeScatter = SceneView.UnscaledViewRect.Size();
 	const FIntPoint GridDispatchSizeScatter(ViewSizeScatter.X, ViewSizeScatter.Y);
 	
-	RDG_EVENT_SCOPE_STAT(GraphBuilder, SurfelScatter, "-------------------------------------------------------------- SurfelScatter");
 	FComputeShaderUtils::AddPass(GraphBuilder, RDG_EVENT_NAME("Surfel Scatter"), ComputeShaderScatter, ScatterPassParameters, FComputeShaderUtils::GetGroupCount(GridDispatchSizeScatter, FIntPoint(16, 16)));
 
-	//UE_LOG(LogTemp, Log, TEXT("Surfel: scatter pass ran, budget %u"), CVarBudget);
-	
 	// For RenderDoc
 	RDG_EVENT_SCOPE(GraphBuilder, "Surfel Gather Pass");
 
@@ -275,6 +272,7 @@ void FSurfelSceneViewExtension::PostRenderBasePassDeferred_RenderThread(FRDGBuil
 	GatherPassParameters->SpawnCoverageThreshold = SpawnCoverageThreshold;
 
 	// Each group reduces a tile as wide as a new Surfels covered disc, not a fixed 16x16
+	// I did this cause otherwise if a Surfel is bigger than the grid size it would cover more grid cells than necessary
 	const uint32 SpawnTileSize = FGatherSurfelPass::ComputeSpawnTileSize(CVarSurfelRadius.GetValueOnRenderThread(), SpawnCoverageThreshold);
 	GatherPassParameters->SpawnTileSize = SpawnTileSize;
 	
@@ -290,6 +288,7 @@ void FSurfelSceneViewExtension::PostRenderBasePassDeferred_RenderThread(FRDGBuil
 	GatherPassParameters->SurfelCount = GraphBuilder.CreateUAV(SurfelCounterBuffer);
 	GatherPassParameters->SurfelPositionAndRadius = GraphBuilder.CreateUAV(SurfelPositionAndRadiusBuffer);
 	GatherPassParameters->SurfelNormalAndFlags = GraphBuilder.CreateUAV(SurfelNormalAndFlagsBuffer);
+	GatherPassParameters->SurfelAlbedo = GraphBuilder.CreateUAV(SurfelAlbedoBuffer);
 	
 	GatherPassParameters->GBufferTextures = SceneTextureShaderParameters;
 	
@@ -299,17 +298,67 @@ void FSurfelSceneViewExtension::PostRenderBasePassDeferred_RenderThread(FRDGBuil
 	const FIntPoint ViewSize = SceneView.UnscaledViewRect.Size();
 	const FIntPoint GridDispatchSize(ViewSize.X, ViewSize.Y);
 	
-	RDG_EVENT_SCOPE_STAT(GraphBuilder, SurfelGather, "-------------------------------------------------------------- SurfelGather");
 	FComputeShaderUtils::AddPass(GraphBuilder, RDG_EVENT_NAME("Surfel Gather"), ComputeShader, GatherPassParameters, FComputeShaderUtils::GetGroupCount(GridDispatchSize, FIntPoint(SpawnTileSize, SpawnTileSize)));
-
-	//UE_LOG(LogTemp, Log, TEXT("Surfel: gather ran, budget %u"), CVarBudget);
 
 	// For RenderDoc
 	RDG_EVENT_SCOPE(GraphBuilder, "Surfel Irradiance Pass");
 	
+	// Populate a buffer with lights
+	FRDGBufferRef LightStruct;
+	LightStruct =  GraphBuilder.CreateBuffer(
+			FRDGBufferDesc::CreateStructuredDesc(sizeof(FSurfelLightStruct), CVarBudget),
+			TEXT("Surfel.Lights"));
+	
+	// Get lights from C++ scene and add to buffer
+	TArray<FSurfelLightStruct> SceneLights;
+	if (SceneView.Family->Scene)
+	{
+		const FScene* Scene = SceneView.Family->Scene->GetRenderScene();
+		if (Scene)
+		{
+			for (const FLightSceneInfoCompact& SceneLightsInfo: Scene->Lights)
+			{
+				const FLightSceneProxy* LightProxy = SceneLightsInfo.LightSceneInfo->Proxy;
+				const uint8_t LightType = LightProxy->GetLightType();
+				if (!LightProxy->AffectGlobalIllumination() || LightType == LightType_Rect)
+				{
+					continue;
+				}
+				
+				FLightRenderParameters RenderParameters;
+				LightProxy->GetLightShaderParameters(RenderParameters);
+				
+				// Translated world position
+				// Same space needed for the global SDF
+				FLightShaderParameters ShaderParameters;
+				RenderParameters.MakeShaderParameters(SceneView.ViewMatrices, 1.0f, ShaderParameters);
+				
+				// Populate array element
+				FSurfelLightStruct& Light = SceneLights.AddDefaulted_GetRef();
+				Light.PositionAndAttenuation = FVector4f(ShaderParameters.TranslatedWorldPosition, ShaderParameters.InvRadius);
+				Light.ColorAndType = FVector4f(ShaderParameters.Color * LightProxy->GetIndirectLightingScale(), static_cast<float>(LightType));
+				Light.DirectionAndInverseFalloff = FVector4f(ShaderParameters.Direction, ShaderParameters.FalloffExponent);
+				Light.Angle = FVector4f(ShaderParameters.SpotAngles.X, ShaderParameters.SpotAngles.Y, 0, 0);
+			}
+		}
+	}
+	
+	// Make sure array is not zero for RDG
+	const uint32 LightsNumber = SceneLights.Num();
+	if (SceneLights.IsEmpty())
+	{
+		SceneLights.AddZeroed();
+	}
+	
+	// Create RDG buffer ref for scene lights
+	FRDGBufferRef LightsBuffer = CreateStructuredBuffer(GraphBuilder, TEXT("Surfel Lights"), SceneLights);
+	
 	// Allocate memory for IrradiancePass parameters
 	FSurfelIrradiancePass::FParameters* IrradiancePassParameters =
 		GraphBuilder.AllocParameters<FSurfelIrradiancePass::FParameters>();
+	
+	IrradiancePassParameters->SurfelLights = GraphBuilder.CreateSRV(LightsBuffer);
+	IrradiancePassParameters->NumSurfelLights = LightsNumber;
 	
 	IrradiancePassParameters->View = SceneView.ViewUniformBuffer;
 	IrradiancePassParameters->ViewRectMin = FUintVector2(SceneView.UnscaledViewRect.Min.X, SceneView.UnscaledViewRect.Min.Y);
@@ -322,6 +371,7 @@ void FSurfelSceneViewExtension::PostRenderBasePassDeferred_RenderThread(FRDGBuil
 	IrradiancePassParameters->SurfelPositionAndRadius = GraphBuilder.CreateUAV(SurfelPositionAndRadiusBuffer);
 	IrradiancePassParameters->SurfelNormalAndFlags = GraphBuilder.CreateUAV(SurfelNormalAndFlagsBuffer);
 	IrradiancePassParameters->SurfelIrradiance = GraphBuilder.CreateUAV(SurfelIrradianceBuffer);
+	IrradiancePassParameters->SurfelAlbedo = GraphBuilder.CreateUAV(SurfelAlbedoBuffer);
 	
 	IrradiancePassParameters->GBufferTextures = SceneTextureShaderParameters;
 	
@@ -340,16 +390,11 @@ void FSurfelSceneViewExtension::PostRenderBasePassDeferred_RenderThread(FRDGBuil
 	IrradiancePassParameters->MinStepFactor = CVarMinStepFactor.GetValueOnRenderThread();
 	IrradiancePassParameters->MaxSamples = CVarMaxSamples.GetValueOnRenderThread();
 	
-	// Add compute shader pass
+	// Add Irradiance pass
 	TShaderMapRef<FSurfelIrradiancePass> IrradianceComputeShader(GetGlobalShaderMap(SceneView.GetFeatureLevel()));
-
-	RDG_EVENT_SCOPE_STAT(GraphBuilder, SurfelIrradiance, "-------------------------------------------------------------- SurfelIrradiance");
 	FComputeShaderUtils::AddPass(GraphBuilder, RDG_EVENT_NAME("Surfel Irradiance"), IrradianceComputeShader, IrradiancePassParameters, FComputeShaderUtils::GetGroupCount(FIntPoint(static_cast<int>(CVarBudget), 1), FIntPoint(64, 1)));
 
-	//UE_LOG(LogTemp, Log, TEXT("Surfel: irradiance pass"));
-
-	// Texture irradiance pass: resolves the per-surfel irradiance above into a screen texture.
-	// Same extent and pixel addressing as the coverage texture.
+	// Texture irradiance pass store screen irradiance into a texture
 	FRDGTextureRef IrradianceTexture = GraphBuilder.CreateTexture(
 		FRDGTextureDesc::Create2D(CoverageExtent, PF_FloatRGBA, FClearValueBinding::Black, TexCreate_ShaderResource | TexCreate_UAV),
 		TEXT("Surfel.IrradianceTexture"));
@@ -416,6 +461,7 @@ void FSurfelSceneViewExtension::PostRenderBasePassDeferred_RenderThread(FRDGBuil
 	SurfelState.SurfelNormalAndFlags = GraphBuilder.ConvertToExternalBuffer(SurfelNormalAndFlagsBuffer);
 	SurfelState.SurfelCounter = GraphBuilder.ConvertToExternalBuffer(SurfelCounterBuffer);
 	SurfelState.SurfelIrradiance = GraphBuilder.ConvertToExternalBuffer(SurfelIrradianceBuffer);
+	SurfelState.SurfelAlbedo = GraphBuilder.ConvertToExternalBuffer(SurfelAlbedoBuffer);
 }
 
 FScreenPassTexture FSurfelSceneViewExtension::RunVisualizePass(
