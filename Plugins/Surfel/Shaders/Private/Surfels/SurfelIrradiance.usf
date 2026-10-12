@@ -81,6 +81,7 @@ float3 EvaluateSurfelLight(FSurfelLightStruct Light, float3 TranslatedPos, out f
 	return Light.ColorAndType.rgb * Attenuation;
 }
 
+// Shadow Rays
 bool IsLightVisible(float3 TranslatedPos, float3 Normal, float3 L, float ShadowDistance)
 {
 	const float VoxelExtent = GlobalVolumeTranslatedCenterAndExtent[0].w * GlobalVolumeTexelSize;
@@ -108,20 +109,20 @@ float3 ComputeDirectLight(float3 TranslatedPos, float3 Normal)
 	return Irradiance;
 }
 
-float3 GetSurfelAlbedo(uint SurfelIndex)
-{
-	return SurfelAlbedo[SurfelIndex];
-}
-
 float3 SampleRadianceAt(float3 WorldPosition, float3 HitNormal)
 {
-	// Step 1: Get radiance from the surfels around
+	// Step 1: Direct light (how much light reaches this surface)
+	float3 PreViewTranslation = DFHackToFloat(PrimaryView.PreViewTranslation);
+	float3 TranslatedPosition = WorldPosition + PreViewTranslation;
+	float3 DirectIrradiance = ComputeDirectLight(TranslatedPosition, HitNormal);
+	
+	// Step 2: Get radiance from the surfels around
 	// Get surfels from grid
 	int3 PixelCell = int3(floor((WorldPosition - GridPosition) / CellSize));
 	if (any(PixelCell < 0.) || any(PixelCell >= (float)CellResolution))
 	{
-		// todo even if not in grid should return the direct light of this surfel?
-		return 0;
+		// If outside the grid (no surfel around) return the direct light at that point
+		return DirectIrradiance;
 	}
 	
 	// Get grid cells
@@ -133,7 +134,8 @@ float3 SampleRadianceAt(float3 WorldPosition, float3 HitNormal)
 	float3 IrradianceSum = 0;
 	float3 AlbedoSum = 0;
 	float WeightSum = 0;
-
+	
+	// Go over the surfels and add their stored irradiance
 	for (uint i = 0; i < Count; ++i)
 	{
 		uint Other = GridCellEntries[CellIndex * CellCapacity + i];
@@ -145,16 +147,16 @@ float3 SampleRadianceAt(float3 WorldPosition, float3 HitNormal)
 		
 		if (Weight > 0.0f)
 		{
+			// Add the irradiance of all nearby surfels
 			IrradianceSum += SurfelIrradiance[Other].xyz * Weight;
-			AlbedoSum += GetSurfelAlbedo(Other) * Weight;
+			
+			// We know the surface color by extracting it from screen space GBuffer to surfels
+			AlbedoSum += SurfelAlbedo[Other] * Weight;
+			
+			// The average
 			WeightSum += Weight;
 		}
 	}
-	
-	// Step 2: Direct light (how much light reaches this surface)
-	float3 PreViewTranslation = DFHackToFloat(PrimaryView.PreViewTranslation);
-	float3 TranslatedPosition = WorldPosition + PreViewTranslation;
-	float3 DirectIrradiance = ComputeDirectLight(TranslatedPosition, HitNormal);
 	
 	// Integrate the lights with Monte Carlo
 	float3 IndirectIrradiance = WeightSum > 0.0f ? (IrradianceSum) / WeightSum : 0;
@@ -172,16 +174,15 @@ void MainCS(uint3 DispatchThreadId : SV_DispatchThreadID)
 	
 	float4 PositionAndRadius = SurfelPositionAndRadius[SurfelIdx];
 	float3 Normal = SurfelNormalAndFlags[SurfelIdx].xyz;
-	
 	float3 Position = PositionAndRadius.xyz;
 
-	// Get Ray Direction
+	// Get Random Hemisphere Ray Direction
 	// Random values are normalized directions
 	uint3 Hash = Rand3DPCG16(int3(SurfelIdx, View.StateFrameIndex, 0));
 	float Random1 = Hash.x / 65535.0f;
 	float Random2 = Hash.y / 65535.0f;
 	
-	// Random ray on hemisphere weighted by normal
+	// Weighted by normal
 	float3 Direction = SampleHemisphereCosWeighted(Normal.xyz, Random1, Random2);
 
 	// The global SDF lives in translated world space (world + PreViewTranslation)
@@ -189,20 +190,18 @@ void MainCS(uint3 DispatchThreadId : SV_DispatchThreadID)
 	float3 PreViewTranslation = DFHackToFloat(PrimaryView.PreViewTranslation);
 	float3 TranslatedPosition = Position + PreViewTranslation;
 
-	// Offset the origin one voxel along the normal so the ray doesn't accidently hit the surface it starts on
+	// Offset the origin one voxel along the normal to avoid self-intersection
 	const float VoxelExtent = GlobalVolumeTranslatedCenterAndExtent[0].w * GlobalVolumeTexelSize;
 	float3 Origin = TranslatedPosition + Normal * VoxelExtent;
 
-	// Ray-march SDF
+	// Ray-march SDF using Unreal Utilities
 	FGlobalSDFTraceInput TraceInput = SetupGlobalSDFTraceInput(Origin, Direction, MinTraceDistance, MaxTraceDistance, StepFactor, MinStepFactor);
 	FGlobalSDFTraceResult TraceResult = RayTraceGlobalDistanceField(TraceInput);
 	
 	float3 TotalIncomingIrradiance = float3(0.f, 0.f, 0.f);
-	
-	// Compute indirect light on this surfel
 	if (GlobalSDFTraceResultIsHit(TraceResult))
 	{
-		// Hit position is in translated world space 
+		// Hit position is in translated world space
 		float3 TranslatedHitPosition = Origin + Direction * TraceResult.HitTime;
 		
 		// the SDF normal lookup expects
