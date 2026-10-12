@@ -31,8 +31,8 @@ void MainCS(uint3 DispatchThreadId : SV_DispatchThreadID)
 	
 	int3 MaxIndex = int3((int)CellResolution - 1, (int)CellResolution - 1, (int)CellResolution - 1);
 	
-	// Conservative bounds (safe over-estimate)
 	// How many grid widths does the disk cover? Clamp to grid bounds
+	// Conservative bounds (safe over-estimate)
 	int3 MinimumLowCorner = max(int3(floor((LocalPosition - Radius) / CellSize)), int3(0, 0, 0));
 	int3 MaximumHighCorner = min(int3(floor((LocalPosition + Radius) / CellSize)), MaxIndex);
 	
@@ -44,7 +44,7 @@ void MainCS(uint3 DispatchThreadId : SV_DispatchThreadID)
 		uint CellIdx = x + y * CellResolution + z * CellResolution * CellResolution;
 
 		uint Slot;
-		InterlockedAdd(GridCounter[CellIdx], 1u, Slot);
+		InterlockedAdd(GridCounter[CellIdx], 1, Slot);
 		
 		// Every cell has a max amount of surfels it can hold
 		if (Slot < CellCapacity)

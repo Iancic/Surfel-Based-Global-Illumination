@@ -1,7 +1,7 @@
 ﻿#pragma once
 #include "SceneTexturesConfig.h"
 #include "ShaderParameterStruct.h"
-#include "SurfelLight.h"
+#include "LightStruct.h"
 
 /**
  * Note: after one scatter and one gather, doing scatter again will be done with the newly spawned surfel

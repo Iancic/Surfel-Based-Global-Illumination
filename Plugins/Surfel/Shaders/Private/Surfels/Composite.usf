@@ -2,7 +2,13 @@
 
 Texture2D<float> IrradianceTexture;
 
+
+// One important note 
+// The Surfel GI lacks high frequency detail
+// Combine with a Screen Space AO solution like GTAO
+
 [numthreads(THREADS_X, THREADS_Y, THREADS_Z)]
 void MainCS(uint3 DispatchThreadId : SV_DispatchThreadID)
 {
+	
 }

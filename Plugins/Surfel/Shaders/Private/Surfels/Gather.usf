@@ -19,7 +19,7 @@ uint2 ViewRectMax;
 
 uint SpawnTileSize;
 
-// in GatherPass.h
+// defined in GatherPass.h
 #define GROUP_SIZE (THREADS_X * THREADS_Y * THREADS_Z) 
 
 groupshared float SharedCoverage[GROUP_SIZE];
@@ -32,8 +32,9 @@ void MainCS(uint3 GroupId : SV_GroupID, uint3 GroupThreadId : SV_GroupThreadID, 
     float CoverageValue = 1e9f;
     uint2 CandidatePixel = uint2(0, 0);
 
-    // One group per SpawnTileSize square, on CPU based scales with surfel radius.
-    // Because if the radius is bigger tile reduction should also change.
+    // One group per SpawnTileSize square, 
+    // SpawnTileSize scales based on surfel radius
+    // Because if the surfel radius is bigger than the tile, one huge surfel will contain way too many tiles.
     uint2 TileOrigin = ViewRectMin + GroupId.xy * SpawnTileSize;
     for (uint Y = GroupThreadId.y; Y < SpawnTileSize; Y += THREADS_Y)
     for (uint X = GroupThreadId.x; X < SpawnTileSize; X += THREADS_X)
@@ -46,16 +47,17 @@ void MainCS(uint3 GroupId : SV_GroupID, uint3 GroupThreadId : SV_GroupThreadID, 
         float PixelDepthZ = SceneTexturesStruct.SceneDepthTexture.Load(PixelLoadPos).r;
 
         // Only a spawn candidate if not covered and not sky
-        // Coverage Threshold is saying whether close means radiuses touching
-        // Or spaced out
+        // Coverage Threshold is saying whether close means the radiuses are touching
+        // Or the radiusews are more spaced out
         if (SampledCoverage < SpawnCoverageThreshold && PixelDepthZ > 0.0f)
         {
-            // Pixels with equal coverage are treated differently
-            // Breaks uniformity
             uint3 Hash = Rand3DPCG16(int3(PixelPos, View.StateFrameIndex));
-            float Jitter = Hash.x / 65535.0f; // 65535 max 16 bit value, jitter is gonna be float form 0 to 1
-
+            float Jitter = Hash.x / 65535.0f; // value from 0 to 1 (65535 max 16 bit value)
+    
+            // AVOIDS the effect of spawning surfels in a grid uniformly
+            // Also a tie-breaker when coverage is the same
             float Candidate = SampledCoverage + Jitter * 0.1f;
+            
             if (Candidate < CoverageValue)
             {
                 CoverageValue = Candidate;
@@ -63,12 +65,15 @@ void MainCS(uint3 GroupId : SV_GroupID, uint3 GroupThreadId : SV_GroupThreadID, 
             }
         }
     }
-
+    
+    // Parallel min-reduction across the tile: halve the active range each pass.
+    // Credit algorithm: Stochastic All the Things talk - Tomasz Stachowiak
+    //                   iterative hole filler
+    // Credit stride idea to Claude
     SharedCoverage[GroupIndex] = CoverageValue;
     SharedWinnerPixel[GroupIndex] = CandidatePixel;
     GroupMemoryBarrierWithGroupSync();
 
-    // Parallel min-reduction across the tile: halve the active range each pass.
     [unroll]
     for (uint Stride = GROUP_SIZE / 2; Stride > 0; Stride >>= 1)
     {
@@ -84,7 +89,7 @@ void MainCS(uint3 GroupId : SV_GroupID, uint3 GroupThreadId : SV_GroupThreadID, 
         GroupMemoryBarrierWithGroupSync();
     }
 
-    // One thread spawns at the tile's least-covered pixel, if the tile had any candidate.
+    // Only spawn if there is a real candidate
     if (GroupIndex != 0 || SharedCoverage[0] >= 1e9f) return;
 
     uint2 PixelPos = SharedWinnerPixel[0];
@@ -92,12 +97,10 @@ void MainCS(uint3 GroupId : SV_GroupID, uint3 GroupThreadId : SV_GroupThreadID, 
     float DepthZ = SceneTexturesStruct.SceneDepthTexture.Load(LoadPos).r;
 
     // Don't spawn suitable candidates for every empty cell
-    // I add a random factor so some cells get skipped for but get spawned later
+    // I add a random factor so some cells get skipped to get spawned later
     // Best example is the first frame where there is 0 coverage
-    // Per-tile hash
     uint3 TileHash = Rand3DPCG16(int3(GroupId.xy, View.StateFrameIndex + 0x9E37u));
     float Random01 = TileHash.x / 65535.0f;
-
     if (Random01 >= SpawnChance)
     {
         return;
@@ -105,10 +108,11 @@ void MainCS(uint3 GroupId : SV_GroupID, uint3 GroupThreadId : SV_GroupThreadID, 
     
     // Step 2: Recycle
     // Moving camera to a new space should recycle old surfels if it needs them
-    // Based on alive factor
+    // Based on a live factor
+    // Here culling should also happen (what happens when object moves in front of old surfels)
+    // For culling Mahalanobis metric
     
     // Step 3: Spawning the Surfel
-    
     // Get normal at this pixel
     float4 GBufferA = SceneTexturesStruct.GBufferATexture.Load(LoadPos);
     float3 WorldNormal = normalize(GBufferA.xyz * 2.0f - 1.0f);
@@ -127,18 +131,15 @@ void MainCS(uint3 GroupId : SV_GroupID, uint3 GroupThreadId : SV_GroupThreadID, 
         return;
     }
     
+    // SurfelRadius is now represented in pixels
     float LinearDepth = ConvertFromDeviceZ(DepthZ);
-    
-    // SurfelRadius is now in pixels
     float PixelWorldSize = 2.0f * LinearDepth / (View.ViewToClip[0][0] * View.ViewSizeAndInvSize.x);
     
-    // THe original Thomas Talk was not doing this
-    // ALSO idk if i should scale the surfels based on radius because i also scale the tile min based on radius
+    // Scale surfels with distance
+    // Closer means smaller surfel
+    // Further means bigger surfel more coverage
     float Radius = SurfelRadius * PixelWorldSize;
-    
-    // Find a better way to clamp
-    //if (Radius < SurfelRadius) Radius = SurfelRadius;
-    
+
     SurfelPositionAndRadius[SurfelIndex] = float4(WorldPosition, Radius);
     SurfelNormalAndFlags[SurfelIndex] = float4(WorldNormal, 0.0f);
     SurfelAlbedo[SurfelIndex] = SceneTexturesStruct.GBufferCTexture.Load(LoadPos);

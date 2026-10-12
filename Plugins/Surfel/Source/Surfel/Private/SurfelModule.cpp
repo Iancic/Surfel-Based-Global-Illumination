@@ -11,7 +11,14 @@ void FSurfelModule::StartupModule()
 	AddShaderSourceDirectoryMapping(
 		TEXT("/Surfel"), 
 		IPluginManager::Get().FindPlugin("Surfel")->GetBaseDir() + "/Shaders/Private");
-
+	// Here I also map where the shared files are like the lights struct
+	AddShaderSourceDirectoryMapping(
+		TEXT("/SurfelShared"), 
+		IPluginManager::Get().FindPlugin("Surfel")->GetBaseDir() + "/Shaders/Shared");
+	
+	// So the C++ side sees the light struct
+	AddShaderSourceSharedVirtualDirectory(TEXT("/SurfelShared/"));
+	
 	// The module loads at PostConfigInit, before the renderer registers its CVars, so wait for engine init
 	FCoreDelegates::OnPostEngineInit.AddStatic(&ForceGlobalSDFBuild);
 }

@@ -33,6 +33,9 @@ public class Surfel : ModuleRules
         // ImGui    	
         PrivateDependencyModuleNames.Add("ImGui");
         
+        // Headers shared between C++ and shaders (LightStruct.h)
+        PublicIncludePaths.Add(Path.Combine(PluginDirectory, "Shaders", "Shared"));
+
         // For the Translucent header error
         PrivateIncludePaths.Add(Path.Combine(GetModuleDirectory("Renderer"), "Internal"));
     }

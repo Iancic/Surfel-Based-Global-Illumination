@@ -1,5 +1,5 @@
-#include "DevGuiSubsystem.generated.h"
 #pragma once
+#include "DevGuiSubsystem.generated.h"
 
 UCLASS()
 class UDevGuiSubsystem : public UGameInstanceSubsystem, public FTickableGameObject

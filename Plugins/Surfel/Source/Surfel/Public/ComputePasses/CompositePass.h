@@ -1,7 +1,6 @@
 ﻿#pragma once
 #include "ShaderParameterStruct.h"
 
-/** Composites the Irradiance texture */
 class FCompositePass : public FGlobalShader
 {
 public:
@@ -11,8 +10,8 @@ public:
 	BEGIN_SHADER_PARAMETER_STRUCT(FParameters, )
 		/**
 		 * Read irradiance texture
-		 * Read the framebuffer without post process
-		 * Write new framebuffer image to be displayed
+		 * Read the framebuffer before post-process and after direct light
+		 * Write the new framebuffer image to be displayed
 		 */
 	END_SHADER_PARAMETER_STRUCT()
 

@@ -2,11 +2,9 @@
 #include "CoreMinimal.h"
 #include "Runtime/Engine/Public/SceneViewExtension.h"
 #include "RenderGraphResources.h"
-#include "RenderGraphUtils.h"
 #include "RHIGPUReadback.h"
 #include "ComputePasses/GatherPass.h"
 #include "ComputePasses/VisualizePass.h"
-#include "SurfelLight.h"
 
 class FSurfelSceneViewExtension : public FSceneViewExtensionBase
 {
@@ -76,14 +74,6 @@ public:
 
 		return GraphBuilder.CreateTexture(Desc, Name);
 	}
-	
-	struct FSurfelLightStruct
-	{
-		FVector4f PositionAndAttenuation; // attenuation for point light (w)
-		FVector4f ColorAndType; // type is (w)
-		FVector4f DirectionAndInverseFalloff; // dictates whether is inverse square or exponential falloff
-		FVector4f Angle;
-	};
 
 private:
 	FScreenPassTexture RunVisualizePass(

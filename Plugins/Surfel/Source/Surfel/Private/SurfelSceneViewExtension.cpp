@@ -15,14 +15,6 @@
 #include "SystemTextures.h"
 #include "Runtime/Renderer/Private/ScenePrivate.h"
 
-// GPU stats, shown with `stat GPU0_Graphics0`. Must be at file scope.
-DECLARE_GPU_STAT(SurfelGrid);
-DECLARE_GPU_STAT(SurfelScatter);
-DECLARE_GPU_STAT(SurfelGather);
-DECLARE_GPU_STAT(SurfelIrradiance);
-DECLARE_GPU_STAT(SurfelTextureIrradiance);
-DECLARE_GPU_STAT(SurfelVisualize);
-
 FSurfelSceneViewExtension::FSurfelSceneViewExtension(const FAutoRegister& AutoRegister) : FSceneViewExtensionBase(AutoRegister) {}
 
 void FSurfelSceneViewExtension::SetupView(FSceneViewFamily& InViewFamily, FSceneView& InView)
@@ -302,14 +294,8 @@ void FSurfelSceneViewExtension::PostRenderBasePassDeferred_RenderThread(FRDGBuil
 
 	// For RenderDoc
 	RDG_EVENT_SCOPE(GraphBuilder, "Surfel Irradiance Pass");
-	
-	// Populate a buffer with lights
-	FRDGBufferRef LightStruct;
-	LightStruct =  GraphBuilder.CreateBuffer(
-			FRDGBufferDesc::CreateStructuredDesc(sizeof(FSurfelLightStruct), CVarBudget),
-			TEXT("Surfel.Lights"));
-	
-	// Get lights from C++ scene and add to buffer
+
+	// Get lights from scene and add to buffer for irradiance
 	TArray<FSurfelLightStruct> SceneLights;
 	if (SceneView.Family->Scene)
 	{
@@ -425,7 +411,6 @@ void FSurfelSceneViewExtension::PostRenderBasePassDeferred_RenderThread(FRDGBuil
 
 	TShaderMapRef<FTextureIrradiancePass> TextureIrradianceComputeShader(GetGlobalShaderMap(SceneView.GetFeatureLevel()));
 
-	RDG_EVENT_SCOPE_STAT(GraphBuilder, SurfelTextureIrradiance, "SurfelTextureIrradiance");
 	FComputeShaderUtils::AddPass(GraphBuilder, RDG_EVENT_NAME("Surfel Texture Irradiance"), TextureIrradianceComputeShader, TextureIrradiancePassParameters, FComputeShaderUtils::GetGroupCount(SceneView.UnscaledViewRect.Size(), FIntPoint(16, 16)));
 		
 	// A way to hand over the surfel data to the other hook which is the visualization one
@@ -596,7 +581,6 @@ FScreenPassTexture FSurfelSceneViewExtension::RunVisualizePass(
 	
 	TShaderMapRef<FVisualizePassCS> ComputeShader(GetGlobalShaderMap(SceneView.GetFeatureLevel()));
 
-	RDG_EVENT_SCOPE_STAT(GraphBuilder, SurfelVisualize, "SurfelVisualize");
 	FComputeShaderUtils::AddPass(
 		GraphBuilder,
 		RDG_EVENT_NAME("Surfel Fullscreen %dx%d", PassSize.X, PassSize.Y),

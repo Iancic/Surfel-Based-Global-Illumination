@@ -1,24 +1,15 @@
-//MegaLightsRayTracing.usf:4
-//LumenSoftwareRayTracing.ush:8 set it
-#define DISTANCE_FIELD_IN_VIEW_UB 1
-
 #include "/Engine/Private/Common.ush"
 #include "/Engine/Private/Random.ush"
+
+#define DISTANCE_FIELD_IN_VIEW_UB 1
 #include "/Engine/Private/DistanceField/GlobalDistanceFieldShared.ush"
 #include "/Engine/Private/DistanceField/GlobalDistanceFieldUtils.ush"
 
 #define SUPPORT_CONTACT_SHADOWS 0
 #include "/Engine/Private/DeferredLightingCommon.ush"
 
-// TODO: make sure I find a way to share this struct between files
-//#include "SurfelLight.ush"
-struct FSurfelLightStruct
-{
-	float4 PositionAndAttenuation; // attenuation for point light (w)
-	float4 ColorAndType; // type is (w)
-	float4 DirectionAndInverseFalloff; // dictates whether is inverse square or exponential falloff
-	float4 Angle;
-};
+#include "SurfelCommon.ush"
+#include "/SurfelShared/LightStruct.h"
 
 StructuredBuffer<FSurfelLightStruct> SurfelLights;
 uint NumSurfelLights;
@@ -78,7 +69,8 @@ float3 EvaluateSurfelLight(FSurfelLightStruct Light, float3 TranslatedPos, out f
 	}
 	else
 	{
-		// Included from deferred path (see include), code also inspired from there
+		// Included from deferred path (see include)
+		// Most of the light code also inspired from there
 		Attenuation = RadialAttenuation(ToLight * InverseRadius, Light.DirectionAndInverseFalloff.w);
 	}
 
@@ -98,7 +90,6 @@ bool IsLightVisible(float3 TranslatedPos, float3 Normal, float3 L, float ShadowD
 	return !GlobalSDFTraceResultIsHit(RayTraceGlobalDistanceField(RayMarchInput));
 }
 
-// Irradiance
 float3 ComputeDirectLight(float3 TranslatedPos, float3 Normal)
 {
 	float3 Irradiance = 0;
@@ -119,12 +110,10 @@ float3 ComputeDirectLight(float3 TranslatedPos, float3 Normal)
 
 float3 GetSurfelAlbedo(uint SurfelIndex)
 {
-	// Per-surfel albedo buffer from Gather pass GBuffer
 	return SurfelAlbedo[SurfelIndex];
 }
 
-// Radiance
-float3 SampleSurfelRadianceAt(float3 WorldPosition, float3 HitNormal)
+float3 SampleRadianceAt(float3 WorldPosition, float3 HitNormal)
 {
 	// Step 1: Get radiance from the surfels around
 	// Get surfels from grid
@@ -174,47 +163,6 @@ float3 SampleSurfelRadianceAt(float3 WorldPosition, float3 HitNormal)
 	return HitAlbedo / PI * (IndirectIrradiance +  DirectIrradiance);
 }
 
-// Unreal probably has something as well for the following functions
-// The following 3 functions are taken from: https://www.shadertoy.com/view/ldBcDt
-void Basis(float3 n, out float3 f, out float3 r)
-{
-	if(n.z < -0.999999f) {
-		f = float3(0.f , -1.f, 0.f);
-		r = float3(-1.f, 0.f, 0.f);
-	} else {
-		float a = 1.f / (1.f + n.z);
-		float b = -n.x * n.y * a;
-		f = float3(1.f - n.x * n.x * a, b, -n.x);
-		r = float3(b, 1.f - n.y * n.y * a , -n.y);
-	}
-}
-
-float3 LocalToWorld( float3 localDir, float3 normal ) 
-{
-	float3 a, b;
-	Basis( normal, a, b );
-	return localDir.x * a + localDir.y * b + localDir.z * normal;
-}
-
-// EXPENSIVE
-// We got to represent it in spherical coordinates
-float3 SphericalToCartesian( float rho, float phi, float theta ) 
-{
-	float sinTheta = sin(theta);
-	return float3(sinTheta * cos(phi), sinTheta * sin(phi), cos(theta)) * rho;
-}
-
-// EXPENSIVE but I think is the only way for hemisphere cosine weighted
-float3 SampleHemisphereCosWeighted(float3 n, float Xi1, float Xi2 ) 
-{
-	float theta = acos(sqrt(1.0f - Xi1));
-	float phi = 2 * PI * Xi2;
-	return LocalToWorld( SphericalToCartesian( 1.0f, phi, theta ), n );
-}
-
-// If you have a Surfel normal some direction will come out of it
-// I use that to bounce the scene for indirect light
-
 [numthreads(THREADS_X, THREADS_Y, THREADS_Z)]
 void MainCS(uint3 DispatchThreadId : SV_DispatchThreadID)
 {
@@ -228,7 +176,7 @@ void MainCS(uint3 DispatchThreadId : SV_DispatchThreadID)
 	float3 Position = PositionAndRadius.xyz;
 
 	// Get Ray Direction
-	// Random values are from 0 to 1
+	// Random values are normalized directions
 	uint3 Hash = Rand3DPCG16(int3(SurfelIdx, View.StateFrameIndex, 0));
 	float Random1 = Hash.x / 65535.0f;
 	float Random2 = Hash.y / 65535.0f;
@@ -241,7 +189,7 @@ void MainCS(uint3 DispatchThreadId : SV_DispatchThreadID)
 	float3 PreViewTranslation = DFHackToFloat(PrimaryView.PreViewTranslation);
 	float3 TranslatedPosition = Position + PreViewTranslation;
 
-	// Offset the origin one voxel along the normal so the ray doesn't immediately hit the surface it starts on
+	// Offset the origin one voxel along the normal so the ray doesn't accidently hit the surface it starts on
 	const float VoxelExtent = GlobalVolumeTranslatedCenterAndExtent[0].w * GlobalVolumeTexelSize;
 	float3 Origin = TranslatedPosition + Normal * VoxelExtent;
 
@@ -263,12 +211,12 @@ void MainCS(uint3 DispatchThreadId : SV_DispatchThreadID)
 		// The grid is in world space, so convert back before looking up surfels
 		float3 WorldHitPosition = TranslatedHitPosition - PreViewTranslation;
 		
-		// Get light from this point (nearby surfel and direct lights)
-		TotalIncomingIrradiance = SampleSurfelRadianceAt(WorldHitPosition, HitNormal);
+		// Get radiance from this point (nearby surfel and direct lights)
+		TotalIncomingIrradiance = SampleRadianceAt(WorldHitPosition, HitNormal);
 	}
 	else // Ray miss
 	{
-		// Should be sky-light, i assume is white light
+		// TODO: should be skylight
 		TotalIncomingIrradiance += float3(1.f, 1.f, 1.f);
 	}
 	
@@ -277,15 +225,15 @@ void MainCS(uint3 DispatchThreadId : SV_DispatchThreadID)
 	
 	float3 PreviousIrradiance = SurfelIrradiance[SurfelIdx].xyz;
 	
+	// Temporal Blending / Accumulation
 	// Alpha is the number of samples accumulated so far (0 for a freshly spawned surfel)
 	float SampleCount = min(SurfelIrradiance[SurfelIdx].w + 1.0f, MaxSamples);
 
-	// 1/SampleCount makes the result a true average of all samples until MaxSamples is reached
-	// 1 means new values replaces old one entirely
-	// how much of the new sample is mixed in per frame 
+	// 1.0f/SampleCount makes the result a true average of all samples until MaxSamples is reached
+	// Temporal Blend = 1 means new values replaces old ones entirely
+	// how much of the new sample is mixed in per frame
 	float TemporalBlend = 1.0f / SampleCount;
 	
 	float3 NewIrradiance = lerp(PreviousIrradiance, TotalIncomingIrradiance, TemporalBlend);
-	
 	SurfelIrradiance[SurfelIdx] = float4(NewIrradiance, SampleCount);
 }

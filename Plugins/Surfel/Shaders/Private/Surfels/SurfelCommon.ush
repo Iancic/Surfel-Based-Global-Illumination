@@ -1,7 +1,44 @@
 #pragma once
-
 // Scatter writes this for pixels whose surface lies outside the grid.
 #define SURFEL_COVERAGE_OUT_OF_GRID 1e20f
+
+// Unreal probably has something as well for the following functions
+// The following 3 functions (Basis, SphericalToCartesian, Hemisphere) are taken from: https://www.shadertoy.com/view/ldBcDt
+void Basis(float3 n, out float3 f, out float3 r)
+{
+	if(n.z < -0.999999f) {
+		f = float3(0.f , -1.f, 0.f);
+		r = float3(-1.f, 0.f, 0.f);
+	} else {
+		float a = 1.f / (1.f + n.z);
+		float b = -n.x * n.y * a;
+		f = float3(1.f - n.x * n.x * a, b, -n.x);
+		r = float3(b, 1.f - n.y * n.y * a , -n.y);
+	}
+}
+
+float3 LocalToWorld( float3 localDir, float3 normal ) 
+{
+	float3 a, b;
+	Basis( normal, a, b );
+	return localDir.x * a + localDir.y * b + localDir.z * normal;
+}
+
+// We got to represent a direction from center in spherical coordinates
+float3 SphericalToCartesian( float rho, float phi, float theta ) 
+{
+	float sinTheta = sin(theta);
+	return float3(sinTheta * cos(phi), sinTheta * sin(phi), cos(theta)) * rho;
+}
+
+// If you have a Surfel normal some direction will come out of it
+// I use that to bounce the scene for indirect light
+float3 SampleHemisphereCosWeighted(float3 Normal, float Xi1, float Xi2 ) 
+{
+	float theta = acos(sqrt(1.0f - Xi1));
+	float phi = 2 * PI * Xi2;
+	return LocalToWorld( SphericalToCartesian( 1.0f, phi, theta ), Normal );
+}
 
 // Shared by Scatter and Visualize so the drawn disc is the one Gather's coverage test sees
 float SurfelCoverageWeight(float3 PixelWorldPosition, float3 PixelNormal, float4 PositionAndRadius, float3 SurfelNormal)
