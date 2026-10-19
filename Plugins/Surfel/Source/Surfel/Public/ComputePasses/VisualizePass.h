@@ -53,6 +53,8 @@ public:
 		// The per-pixel irradiance TextureIrradiance wrote earlier this frame, for VISUALIZE_MODE_IRRADIANCE.
 		SHADER_PARAMETER_RDG_TEXTURE(Texture2D, IrradianceTexture)
 		SHADER_PARAMETER(uint32, bHasIrradianceTexture) // 0 = IrradianceTexture is a dummy
+		SHADER_PARAMETER(float, GIIntensity)            // Same multiplier the composite uses, for VISUALIZE_MODE_INDIRECT
+		SHADER_PARAMETER_RDG_TEXTURE(Texture2D, AmbientOcclusionTexture) // Same AO the composite uses, white dummy when missing
 
 		// Grid visualization options: ESurfelGridVisFlags bits, and the wireframe width.
 		SHADER_PARAMETER(uint32, GridVisFlags)
@@ -82,6 +84,8 @@ public:
 		OutEnvironment.SetDefine(TEXT("VISUALIZE_MODE_GRID"),     (uint32)ESurfelVisualizeMode::Grid);
 		OutEnvironment.SetDefine(TEXT("VISUALIZE_MODE_COVERAGE"), (uint32)ESurfelVisualizeMode::Coverage);
 		OutEnvironment.SetDefine(TEXT("VISUALIZE_MODE_IRRADIANCE"), (uint32)ESurfelVisualizeMode::Irradiance);
+		OutEnvironment.SetDefine(TEXT("VISUALIZE_MODE_INDIRECT"), (uint32)ESurfelVisualizeMode::IndirectLight);
+		OutEnvironment.SetDefine(TEXT("VISUALIZE_MODE_SSAO"), (uint32)ESurfelVisualizeMode::SSAO);
 
 		OutEnvironment.SetDefine(TEXT("GRID_VIS_WIREFRAME"),  (uint32)ESurfelGridVisFlags::Wireframe);
 		OutEnvironment.SetDefine(TEXT("GRID_VIS_OVERFLOW"),   (uint32)ESurfelGridVisFlags::Overflow);

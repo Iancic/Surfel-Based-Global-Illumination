@@ -24,7 +24,7 @@ float3 LocalToWorld( float3 localDir, float3 normal )
 	return localDir.x * a + localDir.y * b + localDir.z * normal;
 }
 
-// We got to represent a direction from center in spherical coordinates
+// Represent a direction from center in spherical coordinates
 float3 SphericalToCartesian( float rho, float phi, float theta ) 
 {
 	float sinTheta = sin(theta);
@@ -38,6 +38,16 @@ float3 SampleHemisphereCosWeighted(float3 Normal, float Xi1, float Xi2 )
 	float theta = acos(sqrt(1.0f - Xi1));
 	float phi = 2 * PI * Xi2;
 	return LocalToWorld( SphericalToCartesian( 1.0f, phi, theta ), Normal );
+}
+
+float3 SurfelIndirectRadiance(float4 IrradianceAndWeight, float3 DiffuseColor)
+{
+	// The edge of the surfel coverage doesn't show as a hard line while surfels are still spawning
+	const float FullCoverageWeight = 0.25f;
+	float CoverageFade = saturate(IrradianceAndWeight.a / FullCoverageWeight);
+
+	// Lambert BRDF (albedo / PI) turns incoming irradiance into outgoing radiance, same as at the ray hit in SurfelIrradiance.usf
+	return DiffuseColor / PI * IrradianceAndWeight.rgb * CoverageFade;
 }
 
 // Shared by Scatter and Visualize so the drawn disc is the one Gather's coverage test sees

@@ -2,8 +2,10 @@
 #include "/Engine/Private/Common.ush"
 #include "/Engine/Private/DeferredShadingCommon.ush"
 #include "/Surfel/Surfels/SurfelCommon.ush"
+#include "/Surfel/Surfels/AmbientOcclusion.ush"
 
 RWTexture2D<float4> IrradianceTexture;
+RWTexture2D<float> AmbientOcclusionTexture;
 
 RWStructuredBuffer<float4> SurfelPositionAndRadius;
 RWStructuredBuffer<float4> SurfelNormalAndFlags;
@@ -43,6 +45,7 @@ void MainCS(uint3 DispatchThreadId : SV_DispatchThreadID)
 	if (!bInsideGrid)
 	{
 		IrradianceTexture[PixelPos] = 0;
+		AmbientOcclusionTexture[PixelPos] = 1.0f; // No surfel light to occlude out here
 		return;
 	}
 
@@ -70,5 +73,15 @@ void MainCS(uint3 DispatchThreadId : SV_DispatchThreadID)
 
 	// Normalized, so overlapping surfels average instead of adding up. a = 0 where no surfel reaches
 	float3 Irradiance = WeightSum > 0.f ? IrradianceSum / WeightSum : 0.f;
+
+	// Surfel light, what the surfels gathered
 	IrradianceTexture[PixelPos] = float4(Irradiance, WeightSum);
+	
+	// Small surfel contact points between meshes the surfels are too coarse to see so I use SSAO for details
+	float ScreenSpaceAO = SurfelScreenSpaceAO(SceneTexturesStruct.SceneDepthTexture, PixelPos, TranslatedWorldPosition, WorldNormalAtPixel, ViewRectMin, ViewRectMax);
+	float MaterialAO = GetGBufferDataUint(PixelPos).GBufferAO;
+
+	// The material AO captures detail inside one mesh (a crack in the stone)
+	// SSAO captures contact between meshes (a chair leg on the floor)
+	AmbientOcclusionTexture[PixelPos] = ScreenSpaceAO * MaterialAO;
 }

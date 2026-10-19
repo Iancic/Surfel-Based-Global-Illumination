@@ -65,6 +65,7 @@ namespace
 	const int32 GNumQualityPresets = (int32)UE_ARRAY_COUNT(GSurfelQualityPresets);
 	const int32 GCustomPresetIndex = GNumQualityPresets - 1;
 
+	// Same order as ESurfelVisualizeMode, the combo index is written straight into the CVar
 	const char* const GVisualizeModeNames[] =
 	{
 		"None",
@@ -72,9 +73,11 @@ namespace
 		"Uniform Grid",
 		"Coverage Texture",
 		"Lumen Global Illumination",
-		"Direct Light Only",
 		"Surfel Global Illumination",
-		"Irradiance Texture"
+		"Direct Light Only",
+		"Irradiance Texture",
+		"Surfel Indirect Light + AO",
+		"SSAO Only"
 	};
 
 	static_assert((int32)UE_ARRAY_COUNT(GVisualizeModeNames) == (int32)ESurfelVisualizeMode::MAX,
@@ -85,12 +88,17 @@ namespace
 		"Scene color",
 		"Surfel discs",
 		"Uniform grid cells, brighter where more surfels are binned",
-		"Surfel irradiance resolved per pixel, dark where no surfel reaches",
 		"Coverage map Scatter writes",
 		"Lumen GI",
-		"Surfel GI",
-		"All indirect lighting off"
+		"Direct light + surfel indirect light composited under it, Lumen off",
+		"All indirect lighting off",
+		"Raw surfel irradiance resolved per pixel, no AO, dark where no surfel reaches",
+		"Surfel bounce light with screen space + material AO, exactly what the composite adds",
+		"Ambient occlusion buffer, white = open, black = occluded"
 	};
+
+	static_assert((int32)UE_ARRAY_COUNT(GVisualizeModeHelp) == (int32)ESurfelVisualizeMode::MAX,
+		"GVisualizeModeHelp must have one entry per ESurfelVisualizeMode");
 
 	// Which preset the current CVars correspond to, or Custom if they match none of them.
 	int32 FindPresetForCurrentSettings()
@@ -376,6 +384,16 @@ void UDevGuiSubsystem::DrawSurfelSettings()
 	}
 	ImGui::EndDisabled();
 
+	int MaxSamples = FMath::RoundToInt(CVarMaxSamples.GetValueOnGameThread());
+	if (ImGui::SliderInt("Max Samples", &MaxSamples, 1, 256))
+	{
+		CVarMaxSamples->Set(static_cast<float>(MaxSamples), ECVF_SetByConsole);
+	}
+	if (ImGui::IsItemHovered())
+	{
+		ImGui::SetTooltip("r.Surfel.MaxSamples\nHow many frames of rays each surfel averages over.\nHigher = less noise, slower to react to moving lights.");
+	}
+
 	DrawBudgetMeter();
 	
 	DrawVisualizationSettings();
@@ -462,11 +480,6 @@ void UDevGuiSubsystem::DrawVisualizationSettings()
 		ImGui::EndCombo();
 	}
 
-	ImGui::TextWrapped("%s", GVisualizeModeHelp[VisualizeMode]);
-
-	// The Lumen mode forces the GI method on, but scalability can still veto it through
-	// r.Lumen.DiffuseIndirect.Allow (e.g. sg.GlobalIlluminationQuality 0 / Low settings).
-	// Say so, rather than leaving you to wonder why the image didn't change.
 	if (VisualizeMode == (int32)ESurfelVisualizeMode::LumenGI)
 	{
 		static const IConsoleVariable* LumenAllowCVar =
@@ -478,14 +491,6 @@ void UDevGuiSubsystem::DrawVisualizationSettings()
 		}
 	}
 
-	/*
-	int VisualizeSurfels = CVarSurfelMode.GetValueOnGameThread();
-	if (ImGui::SliderInt("Visualize Pass Enabled", &VisualizeSurfels, 0, 1))
-	{
-		CVarSurfelMode->Set(VisualizeSurfels, ECVF_SetByConsole);
-	}
-	*/
-	
 	if (VisualizeMode == (int32)ESurfelVisualizeMode::Surfels
 		|| VisualizeMode == (int32)ESurfelVisualizeMode::Grid)
 	{
@@ -493,6 +498,43 @@ void UDevGuiSubsystem::DrawVisualizationSettings()
 		if (ImGui::SliderFloat("Color Strenght", &SurfelIntensity, 0.0f, 1.0f))
 		{
 			CVarSurfelIntensity->Set(SurfelIntensity, ECVF_SetByConsole);
+		}
+	}
+
+	// Irradiance view brightness reuses the overlay intensity, it's a raw debug view with no exposure
+	if (VisualizeMode == (int32)ESurfelVisualizeMode::Irradiance)
+	{
+		float IrradianceScale = CVarSurfelIntensity.GetValueOnGameThread();
+		if (ImGui::SliderFloat("Irradiance Scale", &IrradianceScale, 0.0f, 10.0f))
+		{
+			CVarSurfelIntensity->Set(IrradianceScale, ECVF_SetByConsole);
+		}
+	}
+
+	if (VisualizeMode == (int32)ESurfelVisualizeMode::SurfelGI
+		|| VisualizeMode == (int32)ESurfelVisualizeMode::IndirectLight)
+	{
+		float GIIntensity = CVarSurfelGIIntensity.GetValueOnGameThread();
+		if (ImGui::SliderFloat("GI Intensity", &GIIntensity, 0.0f, 4.0f))
+		{
+			CVarSurfelGIIntensity->Set(GIIntensity, ECVF_SetByConsole);
+		}
+		if (ImGui::IsItemHovered())
+		{
+			ImGui::SetTooltip("r.Surfel.GIIntensity\nMultiplier on the surfel indirect light added to scene color.\n1 is physically correct.");
+		}
+	}
+
+	if (VisualizeMode == (int32)ESurfelVisualizeMode::SurfelGI)
+	{
+		bool bUseAO = CVarSurfelUseAO.GetValueOnGameThread() != 0;
+		if (ImGui::Checkbox("Apply Ambient Occlusion", &bUseAO))
+		{
+			CVarSurfelUseAO->Set(bUseAO ? 1 : 0, ECVF_SetByConsole);
+		}
+		if (ImGui::IsItemHovered())
+		{
+			ImGui::SetTooltip("r.Surfel.UseAO\nOff composites the raw surfel indirect light with no occlusion,\nfor comparing against AO on.");
 		}
 	}
 }

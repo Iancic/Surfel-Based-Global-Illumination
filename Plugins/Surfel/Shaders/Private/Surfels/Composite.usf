@@ -1,14 +1,48 @@
 #include "/Engine/Public/Platform.ush"
+#include "/Engine/Private/Common.ush"
+#include "/Engine/Private/DeferredShadingCommon.ush"
+#include "/Surfel/Surfels/SurfelCommon.ush"
 
-Texture2D<float> IrradianceTexture;
+RWTexture2D<float4> SceneColor;
+Texture2D<float4> IrradianceTexture;
+Texture2D<float> AmbientOcclusionTexture;
 
+float GIIntensity;
+uint bUseAO; // 0 = skip AO, show the raw indirect light (comparison)
 
-// One important note 
+uint2 ViewRectMin;
+uint2 ViewRectMax;
+
+// One important note
 // The Surfel GI lacks high frequency detail
 // Combine with a Screen Space AO solution like GTAO
 
 [numthreads(THREADS_X, THREADS_Y, THREADS_Z)]
 void MainCS(uint3 DispatchThreadId : SV_DispatchThreadID)
 {
-	
+	// Thread per pixel
+	uint2 PixelPos = ViewRectMin + DispatchThreadId.xy;
+	if (any(PixelPos >= ViewRectMax))
+	{
+		return;
+	}
+
+	// Unlit covers the sky and anything that shouldn't receive lighting
+	FGBufferData GBuffer = GetGBufferDataUint(PixelPos);
+	if (GBuffer.ShadingModelID == SHADINGMODELID_UNLIT)
+	{
+		return;
+	}
+
+	float4 IrradianceAndWeight = IrradianceTexture.Load(int3(PixelPos, 0));
+	float3 Indirect = SurfelIndirectRadiance(IrradianceAndWeight, GBuffer.DiffuseColor);
+
+	// AO only darkens the indirect light, the direct lights added after this pass stay unoccluded
+	if (bUseAO != 0)
+	{
+		Indirect *= AmbientOcclusionTexture.Load(int3(PixelPos, 0));
+	}
+
+	// Scene color is pre-exposed, the surfel irradiance is in absolute light units
+	SceneColor[PixelPos] += float4(Indirect * View.PreExposure * GIIntensity, 0.0f);
 }

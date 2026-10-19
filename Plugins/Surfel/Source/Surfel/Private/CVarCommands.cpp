@@ -153,9 +153,24 @@ TAutoConsoleVariable<int32> CVarSurfelVisualizeMode(
 	TEXT("2: Grid - uniform grid cells tinted by occupancy\n")
 	TEXT("3: Coverage - the coverage texture as a heat map\n")
 	TEXT("4: Lumen GI - no overlay, Lumen left on\n")
-	TEXT("5: Surfel GI - no overlay, Lumen off\n")
+	TEXT("5: Surfel GI - Lumen off, surfel indirect light composited under the direct lights\n")
 	TEXT("6: Direct Light Only - no overlay, no indirect lighting\n")
-	TEXT("7: Irradiance - surfel irradiance resolved per pixel\n"),
+	TEXT("7: Irradiance - surfel irradiance resolved per pixel\n")
+	TEXT("8: Indirect Light - only the surfel bounce light, as the composite would add it\n")
+	TEXT("9: SSAO - the ambient occlusion buffer on its own\n"),
+	ECVF_RenderThreadSafe);
+
+TAutoConsoleVariable<float> CVarSurfelGIIntensity(
+	TEXT("r.Surfel.GIIntensity"),
+	1.0f,
+	TEXT("Multiplier on the surfel indirect light the composite pass adds to scene color."),
+	ECVF_RenderThreadSafe);
+
+TAutoConsoleVariable<int32> CVarSurfelUseAO(
+	TEXT("r.Surfel.UseAO"),
+	1,
+	TEXT("1: multiply ambient occlusion onto the composited surfel indirect light.\n")
+	TEXT("0: skip it, so the composite shows the raw indirect light (for comparison)."),
 	ECVF_RenderThreadSafe);
 
 TAutoConsoleVariable<float> CVarSurfelCoverageScale(

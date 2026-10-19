@@ -57,6 +57,7 @@ public:
 		FVector3f GridPosition = FVector3f::ZeroVector;
 		FRDGTextureRef CoverageTexture = nullptr;
 		FRDGTextureRef IrradianceTexture = nullptr;
+		FRDGTextureRef AmbientOcclusionTexture = nullptr;
 		FRDGBufferRef SurfelAlbedo = nullptr;
 	};
 	TMap<uint32, FSurfelFrameData> SurfelFrameDataByViewKey;

@@ -15,8 +15,8 @@ public:
 	SHADER_USE_PARAMETER_STRUCT(FTextureIrradiancePass, FGlobalShader);
 
 	BEGIN_SHADER_PARAMETER_STRUCT(FParameters, )
-		// Output: rgb = surfel irradiance at this pixel, a = summed surfel weight (0 = no surfel reaches it)
 		SHADER_PARAMETER_RDG_TEXTURE_UAV(RWTexture2D<float4>, IrradianceTexture)
+		SHADER_PARAMETER_RDG_TEXTURE_UAV(RWTexture2D<float>, AmbientOcclusionTexture)
 
 		// Surfel related parameters
 		SHADER_PARAMETER_RDG_BUFFER_UAV(RWStructuredBuffer<float4>, SurfelPositionAndRadius)

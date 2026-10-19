@@ -1,0 +1,75 @@
+#pragma once
+#include "/Engine/Private/Random.ush"
+
+// Credit: written with Claude Code
+// Surfels can't resolve the darkening where two surfaces meet (a chair leg on the floor,
+// the corner between two meshes). Surfel GI surfaces surrounded by nearby geometry get less indirect light.
+// Only meant to multiply indirect light, never direct light, otherwise sunlit corners get dark halos.
+
+#define SURFEL_SSAO_SAMPLES        12     // Depth taps per pixel
+#define SURFEL_SSAO_SPIRAL_TURNS   7.0f   // Turns of the sample spiral, co-prime with the sample count so taps don't line up
+#define SURFEL_SSAO_RADIUS         30.0f  // World radius in cm, small scale contact only, the surfels handle the rest
+#define SURFEL_SSAO_MAX_PIXELS     128.0f // Caps the screen radius up close, wide taps thrash the cache and stop being "contact"
+#define SURFEL_SSAO_INTENSITY      1.0f   // Darkening strength
+#define SURFEL_SSAO_BIAS           0.01f  // Meters. Ignores near-coplanar taps so flat surfaces don't occlude themselves
+
+float SurfelScreenSpaceAO(Texture2D DepthTexture, uint2 PixelPos, float3 TranslatedPosition, float3 Normal, uint2 ViewRectMin, uint2 ViewRectMax)
+{
+	float DeviceZ = DepthTexture.Load(int3(PixelPos, 0)).r;
+	if (DeviceZ <= 0.0f)
+	{
+		return 1.0f; // Sky
+	}
+
+	// World size of one pixel at this depth (same formula as Gather.usf), turns the world radius into a screen radius
+	float SceneDepth = ConvertFromDeviceZ(DeviceZ);
+	float PixelWorldSize = 2.0f * SceneDepth / (View.ViewToClip[0][0] * View.ViewSizeAndInvSize.x);
+	float RadiusPixels = min(SURFEL_SSAO_RADIUS / PixelWorldSize, SURFEL_SSAO_MAX_PIXELS);
+	if (RadiusPixels < 1.0f)
+	{
+		return 1.0f; // Far away the whole radius fits in one pixel, nothing to sample
+	}
+
+	// Rotate the spiral per pixel and per frame, TAA averages the different rotations into smooth AO
+	float RotationAngle = InterleavedGradientNoise(float2(PixelPos), View.StateFrameIndexMod8) * 2.0f * PI;
+
+	// SAO's constants are tuned in meters, so work in meters (UE is in cm)
+	const float Radius = SURFEL_SSAO_RADIUS * 0.01f;
+	const float Radius2 = Radius * Radius;
+
+	float Occlusion = 0.0f;
+	for (uint i = 0; i < SURFEL_SSAO_SAMPLES; ++i)
+	{
+		// Spiral: taps go from the center to the edge of the radius while turning around it
+		float Alpha = (i + 0.5f) / SURFEL_SSAO_SAMPLES;
+		float Angle = Alpha * SURFEL_SSAO_SPIRAL_TURNS * 2.0f * PI + RotationAngle;
+		float2 Offset = float2(cos(Angle), sin(Angle)) * Alpha * RadiusPixels;
+
+		int2 SamplePos = int2(float2(PixelPos) + Offset + 0.5f);
+		if (any(SamplePos < (int2)ViewRectMin) || any(SamplePos >= (int2)ViewRectMax))
+		{
+			continue;
+		}
+
+		float SampleDeviceZ = DepthTexture.Load(int3(SamplePos, 0)).r;
+		if (SampleDeviceZ <= 0.0f)
+		{
+			continue; // Sky never occludes
+		}
+
+		float3 SampleTranslatedPosition = SvPositionToTranslatedWorld(float4(float2(SamplePos) + 0.5f, SampleDeviceZ, 1.0f));
+
+		// Alchemy estimator: a tap occludes when it sits above the surface (V·N > 0), more when it's close
+		float3 V = (SampleTranslatedPosition - TranslatedPosition) * 0.01f;
+		float VV = dot(V, V);
+		float VN = dot(V, Normal);
+
+		// SAO falloff: smooth to zero at the radius, so geometry far behind or in front stops counting
+		float Falloff = max(Radius2 - VV, 0.0f);
+		Occlusion += Falloff * Falloff * Falloff * max((VN - SURFEL_SSAO_BIAS) / (VV + 0.01f), 0.0f);
+	}
+
+	// SAO normalization: 1 / R^6 undoes the cubed falloff, 5 / N rescales for the sample count
+	float IntensityDivR6 = SURFEL_SSAO_INTENSITY / (Radius2 * Radius2 * Radius2);
+	return max(0.0f, 1.0f - Occlusion * IntensityDivR6 * (5.0f / SURFEL_SSAO_SAMPLES));
+}

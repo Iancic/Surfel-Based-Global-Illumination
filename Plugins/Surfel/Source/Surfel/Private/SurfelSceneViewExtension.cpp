@@ -5,6 +5,7 @@
 #include "PostProcess/PostProcessMaterialInputs.h"
 
 #include "CVarCommands.h"
+#include "ComputePasses/CompositePass.h"
 #include "ComputePasses/GatherPass.h"
 #include "ComputePasses/GridAllocationPass.h"
 #include "ComputePasses/ScatterPass.h"
@@ -38,6 +39,7 @@ void FSurfelSceneViewExtension::SetupView(FSceneViewFamily& InViewFamily, FScene
 		break;
 
 	case ESurfelVisualizeMode::SurfelGI:
+	case ESurfelVisualizeMode::IndirectLight: // Overwritten by the visualize pass anyway, so don't pay for Lumen
 		Settings.DynamicGlobalIlluminationMethod = EDynamicGlobalIlluminationMethod::None;
 		Settings.ReflectionMethod = EReflectionMethod::None;
 		break;
@@ -387,10 +389,19 @@ void FSurfelSceneViewExtension::PostRenderBasePassDeferred_RenderThread(FRDGBuil
 
 	AddClearUAVPass(GraphBuilder, GraphBuilder.CreateUAV(IrradianceTexture), FLinearColor::Black);
 
+	// Ambient occlusion (screen space * material), kept out of the irradiance so that stays pure surfel light
+	// Cleared to white, 1 = unoccluded
+	FRDGTextureRef AmbientOcclusionTexture = GraphBuilder.CreateTexture(
+		FRDGTextureDesc::Create2D(CoverageExtent, PF_R16F, FClearValueBinding::White, TexCreate_ShaderResource | TexCreate_UAV),
+		TEXT("Surfel.AmbientOcclusionTexture"));
+
+	AddClearUAVPass(GraphBuilder, GraphBuilder.CreateUAV(AmbientOcclusionTexture), FLinearColor::White);
+
 	FTextureIrradiancePass::FParameters* TextureIrradiancePassParameters =
 		GraphBuilder.AllocParameters<FTextureIrradiancePass::FParameters>();
 
 	TextureIrradiancePassParameters->IrradianceTexture = GraphBuilder.CreateUAV(IrradianceTexture);
+	TextureIrradiancePassParameters->AmbientOcclusionTexture = GraphBuilder.CreateUAV(AmbientOcclusionTexture);
 
 	TextureIrradiancePassParameters->SurfelPositionAndRadius = GraphBuilder.CreateUAV(SurfelPositionAndRadiusBuffer);
 	TextureIrradiancePassParameters->SurfelNormalAndFlags = GraphBuilder.CreateUAV(SurfelNormalAndFlagsBuffer);
@@ -412,9 +423,35 @@ void FSurfelSceneViewExtension::PostRenderBasePassDeferred_RenderThread(FRDGBuil
 	TShaderMapRef<FTextureIrradiancePass> TextureIrradianceComputeShader(GetGlobalShaderMap(SceneView.GetFeatureLevel()));
 
 	FComputeShaderUtils::AddPass(GraphBuilder, RDG_EVENT_NAME("Surfel Texture Irradiance"), TextureIrradianceComputeShader, TextureIrradiancePassParameters, FComputeShaderUtils::GetGroupCount(SceneView.UnscaledViewRect.Size(), FIntPoint(16, 16)));
-		
+
+	// Composite: add the surfel indirect light into scene color
+	// Scene color only holds the base pass here, UE's direct lights get added on top of it afterwards
+	FRDGTextureRef SceneColorTexture = RenderTargets[0].GetTexture();
+	if (ShouldCompositeSurfelGI(CVarSurfelVisualizeMode.GetValueOnRenderThread()) && SceneColorTexture)
+	{
+		RDG_EVENT_SCOPE(GraphBuilder, "Surfel Composite Pass");
+
+		FCompositePass::FParameters* CompositePassParameters =
+			GraphBuilder.AllocParameters<FCompositePass::FParameters>();
+
+		CompositePassParameters->SceneColor = GraphBuilder.CreateUAV(SceneColorTexture);
+		CompositePassParameters->IrradianceTexture = IrradianceTexture;
+		CompositePassParameters->AmbientOcclusionTexture = AmbientOcclusionTexture;
+		CompositePassParameters->GIIntensity = CVarSurfelGIIntensity.GetValueOnRenderThread();
+		CompositePassParameters->bUseAO = CVarSurfelUseAO.GetValueOnRenderThread() != 0 ? 1u : 0u;
+
+		CompositePassParameters->View = SceneView.ViewUniformBuffer;
+		CompositePassParameters->ViewRectMin = FUintVector2(SceneView.UnscaledViewRect.Min.X, SceneView.UnscaledViewRect.Min.Y);
+		CompositePassParameters->ViewRectMax = FUintVector2(SceneView.UnscaledViewRect.Max.X, SceneView.UnscaledViewRect.Max.Y);
+
+		CompositePassParameters->GBufferTextures = SceneTextureShaderParameters;
+
+		TShaderMapRef<FCompositePass> CompositeComputeShader(GetGlobalShaderMap(SceneView.GetFeatureLevel()));
+		FComputeShaderUtils::AddPass(GraphBuilder, RDG_EVENT_NAME("Surfel Composite"), CompositeComputeShader, CompositePassParameters, FComputeShaderUtils::GetGroupCount(SceneView.UnscaledViewRect.Size(), FIntPoint(16, 16)));
+	}
+
 	// A way to hand over the surfel data to the other hook which is the visualization one
-	SurfelFrameDataByViewKey.Add(ViewKey, FSurfelFrameData{ GridCellEntriesBuffer, GridCounterBuffer, GridPassParameters->GridPosition, CoverageTexture, IrradianceTexture });
+	SurfelFrameDataByViewKey.Add(ViewKey, FSurfelFrameData{ GridCellEntriesBuffer, GridCounterBuffer, GridPassParameters->GridPosition, CoverageTexture, IrradianceTexture, AmbientOcclusionTexture });
 
 	// Surfel counter readback for the ImGui budget meter
 	if (!SurfelState.CounterReadback)
@@ -573,6 +610,11 @@ FScreenPassTexture FSurfelSceneViewExtension::RunVisualizePass(
 	const bool bHasIrradiance = bHasFrameData && SurfelFrameData.IrradianceTexture != nullptr;
 	PassParameters->IrradianceTexture = bHasIrradiance ? SurfelFrameData.IrradianceTexture : GSystemTextures.GetBlackDummy(GraphBuilder);
 	PassParameters->bHasIrradianceTexture = bHasIrradiance ? 1u : 0u;
+
+	// AO for the Indirect Light view. White dummy = no occlusion when it is missing
+	const bool bHasAmbientOcclusion = bHasFrameData && SurfelFrameData.AmbientOcclusionTexture != nullptr;
+	PassParameters->AmbientOcclusionTexture = bHasAmbientOcclusion ? SurfelFrameData.AmbientOcclusionTexture : GSystemTextures.GetWhiteDummy(GraphBuilder);
+	PassParameters->GIIntensity = CVarSurfelGIIntensity.GetValueOnRenderThread();
 
 	PassParameters->VisualizeMode = static_cast<uint32>(VisualizeMode);
 

@@ -3,12 +3,13 @@
 #include "ShaderParameterStruct.h"
 #include "Runtime/Engine/Public/SceneView.h"
 #include "SceneTexturesConfig.h"
+
 /**
- * 2D dispatch of sizeXsize groups
+ * 2D dispatch of size X size groups
  * 
  * Gather Pass
  *
- * Find the tile minimum and it's pixel coordinate (tile min reduction)
+ * Find the tile minimum, and it's pixel coordinate (tile min reduction)
  * Using that pixel coordinate of the worst pixel, sample the GBuffer for depth and normal.
  * Depth: GBuffer is not enough as a position, I need to reconstruct to world position + depth + inverse VP
  * Normal: is good as is just read
@@ -44,17 +45,16 @@ public:
 		SHADER_PARAMETER(FUintVector2, ViewRectMax)
 		SHADER_PARAMETER(uint32, SpawnTileSize)
 
-		// GBuffers
 		SHADER_PARAMETER_STRUCT_INCLUDE(FSceneTextureShaderParameters, GBufferTextures)
 
 	END_SHADER_PARAMETER_STRUCT()
 	
-	// Credit Claude:
 	/**
+	 * Credit Claude: 
 	 * Side in pixels of the square that gets one spawn per frame: the diameter a new surfel
 	 * covers on screen. A surfel only blocks spawning where its weight, 1 - smoothstep(0, R, d),
 	 * stays at or above the threshold, which is out to t * R with t = inverse smoothstep(1 - threshold).
-	 * Smaller tiles let neighbours spawn inside each other's disc in the same frame.
+	 * Smaller tiles let neighbors spawn inside each other's disc in the same frame.
 	 */
 	static uint32 ComputeSpawnTileSize(float SurfelRadiusPixels, float SpawnCoverageThreshold)
 	{
@@ -63,7 +63,7 @@ public:
 		const float CoveredDiameter = 2.0f * CoveredFraction * SurfelRadiusPixels;
 
 		// At least one group's worth of pixels; capped so a huge radius can't stall a group
-		return (uint32)FMath::Clamp(FMath::CeilToInt(CoveredDiameter), 16, 256);
+		return static_cast<uint32>(FMath::Clamp(FMath::CeilToInt(CoveredDiameter), 16, 256));
 	}
 
 	static bool ShouldCompilePermutation(const FGlobalShaderPermutationParameters& Parameters)

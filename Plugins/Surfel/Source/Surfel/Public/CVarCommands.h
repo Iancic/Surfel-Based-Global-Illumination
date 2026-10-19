@@ -12,6 +12,8 @@ extern TAutoConsoleVariable<float> CVarSurfelRadius;
 extern TAutoConsoleVariable<int32> CVarSurfelUseGrid;
 extern TAutoConsoleVariable<int32> CVarSurfelVisualizeMode;
 extern TAutoConsoleVariable<float> CVarSurfelCoverageScale;
+extern TAutoConsoleVariable<float> CVarSurfelGIIntensity;
+extern TAutoConsoleVariable<int32> CVarSurfelUseAO;
 extern TAutoConsoleVariable<int32> CVarSurfelSpawnsPerFrame;
 extern TAutoConsoleVariable<float> CVarSurfelSpawnCoverageThreshold;
 extern TAutoConsoleVariable<float> CVarMinTraceDistance;
@@ -46,13 +48,24 @@ enum class ESurfelVisualizeMode : int32
 	SurfelGI        = 5,
 	DirectLightOnly = 6,
 	Irradiance      = 7,
+	IndirectLight   = 8,
+	SSAO            = 9,
 	MAX
 };
 
+// Modes the post-process visualize pass draws something for
 inline bool IsSurfelOverlayMode(int32 Mode)
 {
 	return (Mode >= (int32)ESurfelVisualizeMode::Surfels && Mode <= (int32)ESurfelVisualizeMode::Coverage)
-		|| Mode == (int32)ESurfelVisualizeMode::Irradiance;
+		|| Mode == (int32)ESurfelVisualizeMode::Irradiance
+		|| Mode == (int32)ESurfelVisualizeMode::IndirectLight
+		|| Mode == (int32)ESurfelVisualizeMode::SSAO;
+}
+
+// Modes where the composite pass adds surfel GI into scene color (before UE's direct lights)
+inline bool ShouldCompositeSurfelGI(int32 Mode)
+{
+	return Mode == (int32)ESurfelVisualizeMode::SurfelGI;
 }
 
 // Gather clears and respawns from scratch when this changes.

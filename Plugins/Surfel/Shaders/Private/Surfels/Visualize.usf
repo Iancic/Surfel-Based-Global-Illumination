@@ -1,6 +1,7 @@
 #include "/Engine/Public/Platform.ush"
 #include "/Engine/Private/Common.ush"
 #include "/Engine/Private/ScreenPass.ush"
+#include "/Engine/Private/DeferredShadingCommon.ush"
 #include "/Surfel/Surfels/SurfelCommon.ush"
 
 Texture2D InputSceneColor;
@@ -32,6 +33,8 @@ float CoverageScale;
 
 Texture2D IrradianceTexture;
 uint bHasIrradianceTexture;
+float GIIntensity;
+Texture2D AmbientOcclusionTexture;
 
 uint VisualizeMode;
 uint GridVisFlags;
@@ -211,6 +214,35 @@ float3 VisualizeIrradiance(float3 SceneColor, int3 LoadPos)
     return Irradiance.rgb / PI * Intensity;
 }
 
+// Only the surfel bounce light, computed exactly like Composite.usf adds it to scene color
+float3 VisualizeIndirect(float3 SceneColor, int3 LoadPos)
+{
+    if (bHasIrradianceTexture == 0)
+    {
+        return SceneColor;
+    }
+
+    FGBufferData GBuffer = GetGBufferDataUint(LoadPos.xy);
+    if (GBuffer.ShadingModelID == SHADINGMODELID_UNLIT)
+    {
+        return 0;
+    }
+
+    float4 IrradianceAndWeight = IrradianceTexture.Load(LoadPos);
+    float3 Indirect = SurfelIndirectRadiance(IrradianceAndWeight, GBuffer.DiffuseColor);
+    Indirect *= AmbientOcclusionTexture.Load(LoadPos).r;
+
+    // Post-process scene color is still pre-exposed linear HDR, so this lines up with the composited image
+    return Indirect * View.PreExposure * GIIntensity;
+}
+
+// The ambient occlusion buffer on its own, white = open, black = fully occluded
+float3 VisualizeSSAO(float3 SceneColor, int3 LoadPos)
+{
+    float AmbientOcclusion = AmbientOcclusionTexture.Load(LoadPos).r;
+    return AmbientOcclusion.xxx;
+}
+
 [numthreads(THREADS_X, THREADS_Y, THREADS_Z)]
 void MainCS(uint3 DispatchThreadId : SV_DispatchThreadID)
 {
@@ -264,6 +296,14 @@ void MainCS(uint3 DispatchThreadId : SV_DispatchThreadID)
     else if (VisualizeMode == VISUALIZE_MODE_IRRADIANCE)
     {
         Result = VisualizeIrradiance(SceneColor.rgb, LoadPos);
+    }
+    else if (VisualizeMode == VISUALIZE_MODE_INDIRECT)
+    {
+        Result = VisualizeIndirect(SceneColor.rgb, LoadPos);
+    }
+    else if (VisualizeMode == VISUALIZE_MODE_SSAO)
+    {
+        Result = VisualizeSSAO(SceneColor.rgb, LoadPos);
     }
     // Every other mode leaves scene color alone: the lighting-reference modes only
     // reconfigure the renderer from the game thread, there is nothing to draw here.
