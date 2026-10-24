@@ -1,5 +1,5 @@
 #pragma once
-// Scatter writes this for pixels whose surface lies outside the grid.
+// Gather writes this for pixels whose surface lies outside the grid.
 #define SURFEL_COVERAGE_OUT_OF_GRID 1e20f
 
 // Unreal probably has something as well for the following functions
@@ -50,7 +50,7 @@ float3 SurfelIndirectRadiance(float4 IrradianceAndWeight, float3 DiffuseColor)
 	return DiffuseColor / PI * IrradianceAndWeight.rgb * CoverageFade;
 }
 
-// Shared by Scatter and Visualize so the drawn disc is the one Gather's coverage test sees
+// Shared by Gather and Visualize so the drawn disc is the one Spawn's coverage test sees
 float SurfelCoverageWeight(float3 PixelWorldPosition, float3 PixelNormal, float4 PositionAndRadius, float3 SurfelNormal)
 {
 	float Distance = length(PixelWorldPosition - PositionAndRadius.xyz);

@@ -3,7 +3,7 @@
 #include "Runtime/Engine/Public/SceneViewExtension.h"
 #include "RenderGraphResources.h"
 #include "RHIGPUReadback.h"
-#include "ComputePasses/GatherPass.h"
+#include "ComputePasses/SpawnPass.h"
 #include "ComputePasses/VisualizePass.h"
 
 class FSurfelSceneViewExtension : public FSceneViewExtensionBase

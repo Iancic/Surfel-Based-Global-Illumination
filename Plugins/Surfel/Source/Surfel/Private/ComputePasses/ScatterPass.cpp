@@ -1,3 +1,3 @@
-﻿#include "ComputePasses/ScatterPass.h"
+#include "ComputePasses/ScatterPass.h"
 
-IMPLEMENT_GLOBAL_SHADER(FScatterSurfelPass, "/Surfel/Surfels/Scatter.usf", "MainCS", SF_Compute);
+IMPLEMENT_GLOBAL_SHADER(FScatterPass, "/Surfel/Surfels/Scatter.usf", "MainCS", SF_Compute);

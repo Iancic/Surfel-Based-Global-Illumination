@@ -1,50 +1,52 @@
-﻿#pragma once
+#pragma once
 #include "GlobalShader.h"
 #include "ShaderParameterStruct.h"
-#include "SceneTexturesConfig.h"
+#include "Runtime/Engine/Public/SceneView.h"
+#include "CVarCommands.h"
 
-/**
- * NOTE: explaining nomenclature
- * called scatter because one surfel writes to many pixels
- * gather because one pixel from many in a tile finds the worst value
- *
- * Scatter answers this question:
- * Where on the screen are no surfels? So I know where to spawn more
- * To store this I use a coverage texture used in the gather step (where surfels get spawned)
- * Scatter is a screen space pass even though surfels are spawned and exist in world-space
- *
- * Get every surfel we can see that exists, make the coverage map to detect gaps where we can spawn more
- * It's an iterative hole filler because every frame I found holes to fill until budget is done of we filled it.
- *
- * When a frame has everywhere 0 coverage (first ever frame)
- * Make sure first time it runs I use blue noise to make the first surfel un-uniform. 
- *
- * One thread per surfel and see where it lands on screen
- */
-class FScatterSurfelPass : public FGlobalShader
+
+class FUniformGridViewState
 {
 public:
-	DECLARE_GLOBAL_SHADER(FScatterSurfelPass);
-	SHADER_USE_PARAMETER_STRUCT(FScatterSurfelPass, FGlobalShader);
+	TRefCountPtr<FRDGPooledBuffer> GridCellEntries;
+	TRefCountPtr<FRDGPooledBuffer> GridCounter;
+
+	// Driven by r.Surfel.Grid.* (exposed in the ImGui panel), see UpdateFromCVars
+	inline static uint32 CellResolution = 32;
+	inline static uint32 GridCellCount = CellResolution * CellResolution * CellResolution;
+	// Surfels are now inserted into every cell they overlap, so cells fill up faster
+	inline static uint32 CellCapacity = 128; // Cells near the camera hold many small surfels; overflow gets dropped
+	inline static uint32 CellSize = 64; // Measured in World Units per cell
+
+	// Pull the grid layout from the CVars. Render thread only, once at the top of the frame:
+	// the grid buffers are recreated every frame, so a new layout is safe to pick up here,
+	// and every pass after this point in the frame sees the same numbers.
+	static void UpdateFromCVars()
+	{
+		check(IsInRenderingThread());
+
+		// Clamped because the entries buffer is Resolution^3 * Capacity * 4 bytes:
+		// 64^3 cells * 256 entries is already ~268 MB.
+		CellResolution = (uint32)FMath::Clamp(CVarSurfelGridCellResolution.GetValueOnRenderThread(), 8, 64);
+		CellCapacity   = (uint32)FMath::Clamp(CVarSurfelGridCellCapacity.GetValueOnRenderThread(), 8, 256);
+		CellSize       = (uint32)FMath::Max(CVarSurfelGridCellSize.GetValueOnRenderThread(), 1);
+		GridCellCount  = CellResolution * CellResolution * CellResolution;
+	}
+};
+class FScatterPass : public FGlobalShader
+{
+public:
+	DECLARE_GLOBAL_SHADER(FScatterPass);
+	SHADER_USE_PARAMETER_STRUCT(FScatterPass, FGlobalShader);
 
 	BEGIN_SHADER_PARAMETER_STRUCT(FParameters, )
-		// View
-		SHADER_PARAMETER_STRUCT_REF(FViewUniformShaderParameters, View)
-		SHADER_PARAMETER(FUintVector2, ViewRectMin)
-		SHADER_PARAMETER(FUintVector2, ViewRectMax)
-	
-		// Coverage Texture
-		SHADER_PARAMETER_RDG_TEXTURE_UAV(RWTexture2D<float>, CoverageTexture)
-		
-		// Surfels buffers
-		SHADER_PARAMETER(uint32, SurfelBudget)
-		SHADER_PARAMETER(float, SurfelRadius) // Temporarily from the CVar
+
+		// Surfels
 		SHADER_PARAMETER_RDG_BUFFER_UAV(RWStructuredBuffer<uint>, SurfelCount)
 		SHADER_PARAMETER_RDG_BUFFER_UAV(RWStructuredBuffer<float4>, SurfelPositionAndRadius)
 		SHADER_PARAMETER_RDG_BUFFER_UAV(RWStructuredBuffer<float4>, SurfelNormalAndFlags)
-	
-		// GBuffers
-		SHADER_PARAMETER_STRUCT_INCLUDE(FSceneTextureShaderParameters, GBufferTextures)
+		SHADER_PARAMETER(uint32, SurfelBudget)
+		SHADER_PARAMETER(float, SurfelRadius)
 	
 		// Uniform Grid
 		SHADER_PARAMETER_RDG_BUFFER_UAV(RWStructuredBuffer<uint32>, GridCellEntries)
@@ -54,7 +56,7 @@ public:
 		SHADER_PARAMETER(uint32, CellResolution)
 		SHADER_PARAMETER(uint32, CellCapacity)
 		SHADER_PARAMETER(uint32, CellSize)
-	
+
 	END_SHADER_PARAMETER_STRUCT()
 
 	static bool ShouldCompilePermutation(const FGlobalShaderPermutationParameters& Parameters)
@@ -66,8 +68,8 @@ public:
 	{
 		FGlobalShader::ModifyCompilationEnvironment(Parameters, OutEnvironment);
 	
-		OutEnvironment.SetDefine(TEXT("THREADS_X"), 16);
-		OutEnvironment.SetDefine(TEXT("THREADS_Y"), 16);
+		OutEnvironment.SetDefine(TEXT("THREADS_X"), 64);
+		OutEnvironment.SetDefine(TEXT("THREADS_Y"), 1);
 		OutEnvironment.SetDefine(TEXT("THREADS_Z"), 1);
 	}
 };

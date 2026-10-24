@@ -8,7 +8,7 @@
 #define SUPPORT_CONTACT_SHADOWS 0
 #include "/Engine/Private/DeferredLightingCommon.ush"
 
-#include "SurfelCommon.ush"
+#include "/Surfel/Surfels/Utilities/SurfelCommon.ush"
 #include "/SurfelShared/LightStruct.h"
 
 StructuredBuffer<FSurfelLightStruct> SurfelLights;

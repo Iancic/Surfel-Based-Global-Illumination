@@ -68,7 +68,7 @@ inline bool ShouldCompositeSurfelGI(int32 Mode)
 	return Mode == (int32)ESurfelVisualizeMode::SurfelGI;
 }
 
-// Gather clears and respawns from scratch when this changes.
+// Spawn clears and respawns from scratch when this changes.
 extern int32 GSurfelRefreshRequestId;
 
 extern std::atomic<int32> GSurfelAllocatedCount;

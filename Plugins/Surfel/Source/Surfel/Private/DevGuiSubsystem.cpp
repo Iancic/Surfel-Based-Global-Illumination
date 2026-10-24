@@ -88,7 +88,7 @@ namespace
 		"Scene color",
 		"Surfel discs",
 		"Uniform grid cells, brighter where more surfels are binned",
-		"Coverage map Scatter writes",
+		"Coverage map Gather writes",
 		"Lumen GI",
 		"Direct light + surfel indirect light composited under it, Lumen off",
 		"All indirect lighting off",
@@ -408,7 +408,7 @@ void UDevGuiSubsystem::DrawBudgetMeter()
 	const int32 Budget = FMath::Max(CVarSurfelBudget.GetValueOnGameThread(), 1);
 	const float Fraction = FMath::Clamp((float)Used / (float)Budget, 0.0f, 1.0f);
 
-	// The meter earns its place at the top of the range: once the pool is full, Gather silently
+	// The meter earns its place at the top of the range: once the pool is full, Spawn silently
 	// stops spawning and coverage gaps never fill, which looks like a spawning bug rather than
 	// an exhausted budget. Colour makes that state obvious before you go hunting.
 	ImVec4 BarColor(0.20f, 0.70f, 0.30f, 1.0f);            // healthy

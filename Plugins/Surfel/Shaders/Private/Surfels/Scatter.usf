@@ -1,9 +1,4 @@
 #include "/Engine/Public/Platform.ush"
-#include "/Engine/Private/Common.ush"
-#include "/Engine/Private/DeferredShadingCommon.ush"
-#include "/Surfel/Surfels/SurfelCommon.ush"
-
-RWTexture2D<float> CoverageTexture;
 
 RWStructuredBuffer<uint> SurfelCount;
 RWStructuredBuffer<float4> SurfelPositionAndRadius;
@@ -21,56 +16,40 @@ uint CellResolution;
 uint CellCapacity;
 uint CellSize;
 
-uint2 ViewRectMin;
-uint2 ViewRectMax;
-
 [numthreads(THREADS_X, THREADS_Y, THREADS_Z)]
 void MainCS(uint3 DispatchThreadId : SV_DispatchThreadID)
 {
-	// Thread per pixel to find the coverage of this
-	uint2 PixelPos = min(ViewRectMin + DispatchThreadId.xy, ViewRectMax - 1);
-	int3 LoadPos = int3(PixelPos, 0);
+	// One thread per ALIVE surfel
+	uint SurfelIdx = DispatchThreadId.x;
+	if (SurfelIdx >= min(SurfelCount[0], SurfelBudget)) return;
+
+	float4 PositionAndRadius = SurfelPositionAndRadius[SurfelIdx];
+	float Radius = PositionAndRadius.w;
+
+	// Local Position To Grid
+	float3 LocalPosition = PositionAndRadius.xyz - GridPosition;
 	
-	// Get world surface normal at this pixel
-	float4 GBufferA = SceneTexturesStruct.GBufferATexture.Load(LoadPos);
-	float3 WorldNormalAtPixel = normalize(GBufferA.xyz * 2.0f - 1.0f);
+	int3 MaxIndex = int3((int)CellResolution - 1, (int)CellResolution - 1, (int)CellResolution - 1);
 	
-	// Get world position at this pixel
-	float DeviceZ = SceneTexturesStruct.SceneDepthTexture.Load(LoadPos).r;
-	float4 SvPosition = float4(PixelPos + 0.5f, DeviceZ, 1.0f);
-	float3 TranslatedWorldPosition = SvPositionToTranslatedWorld(SvPosition);
-	float3 WorldPositionAtPixel = DFFastSubtractDemote(TranslatedWorldPosition, PrimaryView.PreViewTranslation);
+	// How many grid widths does the disk cover? Clamp to grid bounds
+	// Conservative bounds (safe over-estimate)
+	int3 MinimumLowCorner = max(int3(floor((LocalPosition - Radius) / CellSize)), int3(0, 0, 0));
+	int3 MaximumHighCorner = min(int3(floor((LocalPosition + Radius) / CellSize)), MaxIndex);
 	
-	// Where in the grid is this pixel's position
-	int3 PixelCell = int3(floor((WorldPositionAtPixel - GridPosition) / CellSize));
-	
-	bool bInsideGrid = all(PixelCell >= 0) && all(PixelCell < (int)CellResolution);
-	if (bInsideGrid)
+	// Insert into every cell the surfel overlaps
+	for (int z = MinimumLowCorner.z; z <= MaximumHighCorner.z; z++)
+	for (int y = MinimumLowCorner.y; y <= MaximumHighCorner.y; y++)
+	for (int x = MinimumLowCorner.x; x <= MaximumHighCorner.x; x++)
 	{
-		// Retrieve grid cell at this extracted world position 
-		uint CellIdx = (uint)PixelCell.x
-				+ (uint)PixelCell.y * CellResolution
-				+ (uint)PixelCell.z * CellResolution * CellResolution;
+		uint CellIdx = x + y * CellResolution + z * CellResolution * CellResolution;
+
+		uint Slot;
+		InterlockedAdd(GridCounter[CellIdx], 1, Slot);
 		
-		// Go through all surfels in grid cell
-		uint EntryCount = min(GridCounter[CellIdx], CellCapacity);
-		
-		// Coverage weight is computed based on:
-		// 1. How close the surfel center is to this retrieved position
-		// 2. How aligned is the surfel to the surface normal
-		float CoverageWeight = 0.f;
-		for (uint i = 0; i < EntryCount; i++)            
+		// Every cell has a max amount of surfels it can hold
+		if (Slot < CellCapacity)
 		{
-			int SurfelIdx = GridCellEntries[CellIdx * CellCapacity + i];
-			CoverageWeight += SurfelCoverageWeight(WorldPositionAtPixel, WorldNormalAtPixel,
-				SurfelPositionAndRadius[SurfelIdx], SurfelNormalAndFlags[SurfelIdx].xyz);
+			GridCellEntries[CellIdx * CellCapacity + Slot] = SurfelIdx;
 		}
-		
-		CoverageTexture[PixelPos] = CoverageWeight;
-	}
-	else
-	{
-		// Mark it covered: spawning resumes once the grid moves over it.
-		CoverageTexture[PixelPos] = SURFEL_COVERAGE_OUT_OF_GRID;
 	}
 }

@@ -2,7 +2,7 @@
 #include "/Engine/Private/Common.ush"
 #include "/Engine/Private/ScreenPass.ush"
 #include "/Engine/Private/DeferredShadingCommon.ush"
-#include "/Surfel/Surfels/SurfelCommon.ush"
+#include "/Surfel/Surfels/Utilities/SurfelCommon.ush"
 
 Texture2D InputSceneColor;
 
@@ -85,7 +85,7 @@ void TestSurfel(uint SurfelIndex, float3 PixelWorldPosition, float3 PixelNormal,
     float Weight = SurfelCoverageWeight(PixelWorldPosition, PixelNormal,
         SurfelPositionAndRadius[SurfelIndex], SurfelNormalAndFlags[SurfelIndex].xyz);
 
-    // Drawn only where this surfel alone stops Gather from spawning
+    // Drawn only where this surfel alone stops Spawn from spawning
     if (Weight <= 0.0f || Weight < SpawnCoverageThreshold)
     {
         return;
@@ -108,7 +108,7 @@ float3 VisualizeSurfels(float3 SceneColor, float3 PixelWorldPosition, float3 Pix
 
     if (bUseGrid != 0)
     {
-        // Outside the grid Scatter sees no surfels either, so draw none
+        // Outside the grid Gather sees no surfels either, so draw none
         int3 PixelCell;
         uint CellIdx;
         if (!GetGridCell(PixelWorldPosition, PixelCell, CellIdx))

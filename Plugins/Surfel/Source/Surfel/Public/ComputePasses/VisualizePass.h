@@ -1,4 +1,4 @@
-﻿#pragma once
+#pragma once
 #include "GlobalShader.h"
 #include "RenderGraphUtils.h"
 #include "ScreenPass.h"
@@ -45,7 +45,7 @@ public:
 		// Which overlay to draw: one of the VISUALIZE_MODE_* values below.
 		SHADER_PARAMETER(uint32, VisualizeMode)
 
-		// The coverage map Scatter wrote earlier this frame, for VISUALIZE_MODE_COVERAGE.
+		// The coverage map Gather wrote earlier this frame, for VISUALIZE_MODE_COVERAGE.
 		SHADER_PARAMETER_RDG_TEXTURE(Texture2D, CoverageTexture)
 		SHADER_PARAMETER(uint32, bHasCoverageTexture) // 0 = CoverageTexture is a dummy
 		SHADER_PARAMETER(float, CoverageScale)        // Coverage value that maps to the top of the ramp

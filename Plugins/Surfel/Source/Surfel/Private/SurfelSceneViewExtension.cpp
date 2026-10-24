@@ -6,9 +6,9 @@
 
 #include "CVarCommands.h"
 #include "ComputePasses/CompositePass.h"
-#include "ComputePasses/GatherPass.h"
-#include "ComputePasses/GridAllocationPass.h"
+#include "ComputePasses/SpawnPass.h"
 #include "ComputePasses/ScatterPass.h"
+#include "ComputePasses/GatherPass.h"
 #include "ComputePasses/SurfelIrradiancePass.h"
 #include "ComputePasses/TextureIrradiancePass.h"
 #include "ComputePasses/VisualizePass.h"
@@ -175,39 +175,39 @@ void FSurfelSceneViewExtension::PostRenderBasePassDeferred_RenderThread(FRDGBuil
 	FVector GridPosition = (CameraCell - FVector((double)(FUniformGridViewState::CellResolution / 2))) * CellSize;
 	
 	// For RenderDoc
-	RDG_EVENT_SCOPE(GraphBuilder, "Grid Allocation Pass");
+	RDG_EVENT_SCOPE(GraphBuilder, "Surfel Scatter Pass");
 	
-	// Allocate memory for GridPass parameters
-	FGridAllocationPass::FParameters* GridPassParameters =
-		GraphBuilder.AllocParameters<FGridAllocationPass::FParameters>();
+	// Allocate memory for ScatterPass parameters
+	FScatterPass::FParameters* ScatterPassParameters =
+		GraphBuilder.AllocParameters<FScatterPass::FParameters>();
 	
 	// Set Parameters For Grid
-	GridPassParameters->GridCellEntries = GraphBuilder.CreateUAV(GridCellEntriesBuffer);
-	GridPassParameters->GridCounter = GraphBuilder.CreateUAV(GridCounterBuffer);
-	GridPassParameters->GridPosition = FVector3f(GridPosition);
-	GridPassParameters->GridCellCount = FUniformGridViewState::GridCellCount;
-	GridPassParameters->CellResolution = FUniformGridViewState::CellResolution;
-	GridPassParameters->CellCapacity = FUniformGridViewState::CellCapacity;
-	GridPassParameters->CellSize = FUniformGridViewState::CellSize;
+	ScatterPassParameters->GridCellEntries = GraphBuilder.CreateUAV(GridCellEntriesBuffer);
+	ScatterPassParameters->GridCounter = GraphBuilder.CreateUAV(GridCounterBuffer);
+	ScatterPassParameters->GridPosition = FVector3f(GridPosition);
+	ScatterPassParameters->GridCellCount = FUniformGridViewState::GridCellCount;
+	ScatterPassParameters->CellResolution = FUniformGridViewState::CellResolution;
+	ScatterPassParameters->CellCapacity = FUniformGridViewState::CellCapacity;
+	ScatterPassParameters->CellSize = FUniformGridViewState::CellSize;
 	
 	// Set Parameters For Surfels
 	// Already above just create a new UAV
-	GridPassParameters->SurfelCount = GraphBuilder.CreateUAV(SurfelCounterBuffer);
-	GridPassParameters->SurfelPositionAndRadius = GraphBuilder.CreateUAV(SurfelPositionAndRadiusBuffer);
-	GridPassParameters->SurfelNormalAndFlags = GraphBuilder.CreateUAV(SurfelNormalAndFlagsBuffer);
-	GridPassParameters->SurfelBudget = CVarBudget;
-	GridPassParameters->SurfelRadius = CVarSurfelRadius.GetValueOnRenderThread();
+	ScatterPassParameters->SurfelCount = GraphBuilder.CreateUAV(SurfelCounterBuffer);
+	ScatterPassParameters->SurfelPositionAndRadius = GraphBuilder.CreateUAV(SurfelPositionAndRadiusBuffer);
+	ScatterPassParameters->SurfelNormalAndFlags = GraphBuilder.CreateUAV(SurfelNormalAndFlagsBuffer);
+	ScatterPassParameters->SurfelBudget = CVarBudget;
+	ScatterPassParameters->SurfelRadius = CVarSurfelRadius.GetValueOnRenderThread();
 
 	// Dispatch Compute
-	TShaderMapRef<FGridAllocationPass> ComputeShaderGrid(GetGlobalShaderMap(SceneView.GetFeatureLevel()));
-	FComputeShaderUtils::AddPass(GraphBuilder, RDG_EVENT_NAME("Surfel Grid"), ComputeShaderGrid, GridPassParameters, FComputeShaderUtils::GetGroupCount(FIntPoint(static_cast<int>(CVarBudget), 1), FIntPoint(64, 1)));
+	TShaderMapRef<FScatterPass> ComputeShaderScatter(GetGlobalShaderMap(SceneView.GetFeatureLevel()));
+	FComputeShaderUtils::AddPass(GraphBuilder, RDG_EVENT_NAME("Surfel Scatter"), ComputeShaderScatter, ScatterPassParameters, FComputeShaderUtils::GetGroupCount(FIntPoint(static_cast<int>(CVarBudget), 1), FIntPoint(64, 1)));
 	
-	// Scatter pass: reads the grid built above, writes the coverage map Gather then reads.
+	// Gather pass: reads the grid built above, writes the coverage map Spawn then reads.
 	// For RenderDoc
-	RDG_EVENT_SCOPE(GraphBuilder, "Surfel Scatter Pass");
+	RDG_EVENT_SCOPE(GraphBuilder, "Surfel Gather Pass");
 	
-	FScatterSurfelPass::FParameters* ScatterPassParameters =
-		GraphBuilder.AllocParameters<FScatterSurfelPass::FParameters>();
+	FGatherSurfelPass::FParameters* GatherPassParameters =
+		GraphBuilder.AllocParameters<FGatherSurfelPass::FParameters>();
 	
 	const FIntPoint CoverageExtent(SceneView.UnscaledViewRect.Max.X, SceneView.UnscaledViewRect.Max.Y);
 	
@@ -218,81 +218,81 @@ void FSurfelSceneViewExtension::PostRenderBasePassDeferred_RenderThread(FRDGBuil
 	
 	AddClearUAVPass(GraphBuilder, GraphBuilder.CreateUAV(CoverageTexture), FLinearColor::Black);
 	
-	// Parameters for Scatter
-	ScatterPassParameters->CoverageTexture = GraphBuilder.CreateUAV(CoverageTexture);
+	// Parameters for Gather
+	GatherPassParameters->CoverageTexture = GraphBuilder.CreateUAV(CoverageTexture);
 
-	ScatterPassParameters->GridCellEntries = GraphBuilder.CreateUAV(GridCellEntriesBuffer);
-	ScatterPassParameters->GridCounter = GraphBuilder.CreateUAV(GridCounterBuffer);
+	GatherPassParameters->GridCellEntries = GraphBuilder.CreateUAV(GridCellEntriesBuffer);
+	GatherPassParameters->GridCounter = GraphBuilder.CreateUAV(GridCounterBuffer);
 	
-	ScatterPassParameters->GridPosition = FVector3f(GridPosition);
-	ScatterPassParameters->GridCellCount = FUniformGridViewState::GridCellCount;
-	ScatterPassParameters->CellResolution = FUniformGridViewState::CellResolution;
-	ScatterPassParameters->CellCapacity = FUniformGridViewState::CellCapacity;
-	ScatterPassParameters->CellSize = FUniformGridViewState::CellSize;
+	GatherPassParameters->GridPosition = FVector3f(GridPosition);
+	GatherPassParameters->GridCellCount = FUniformGridViewState::GridCellCount;
+	GatherPassParameters->CellResolution = FUniformGridViewState::CellResolution;
+	GatherPassParameters->CellCapacity = FUniformGridViewState::CellCapacity;
+	GatherPassParameters->CellSize = FUniformGridViewState::CellSize;
 	
-	ScatterPassParameters->View = SceneView.ViewUniformBuffer;
-	ScatterPassParameters->ViewRectMin = FUintVector2(SceneView.UnscaledViewRect.Min.X, SceneView.UnscaledViewRect.Min.Y);
-	ScatterPassParameters->ViewRectMax = FUintVector2(SceneView.UnscaledViewRect.Max.X, SceneView.UnscaledViewRect.Max.Y);
-
-	ScatterPassParameters->SurfelBudget = CVarBudget;
-	ScatterPassParameters->SurfelRadius = CVarSurfelRadius.GetValueOnRenderThread();
-	ScatterPassParameters->SurfelCount = GraphBuilder.CreateUAV(SurfelCounterBuffer);
-	ScatterPassParameters->SurfelPositionAndRadius = GraphBuilder.CreateUAV(SurfelPositionAndRadiusBuffer);
-	ScatterPassParameters->SurfelNormalAndFlags = GraphBuilder.CreateUAV(SurfelNormalAndFlagsBuffer);
-	
-	ScatterPassParameters->GBufferTextures = SceneTextureShaderParameters;
-	
-	// Add compute shader pass
-	TShaderMapRef<FScatterSurfelPass> ComputeShaderScatter(GetGlobalShaderMap(SceneView.GetFeatureLevel()));
-	
-	const FIntPoint ViewSizeScatter = SceneView.UnscaledViewRect.Size();
-	const FIntPoint GridDispatchSizeScatter(ViewSizeScatter.X, ViewSizeScatter.Y);
-	
-	FComputeShaderUtils::AddPass(GraphBuilder, RDG_EVENT_NAME("Surfel Scatter"), ComputeShaderScatter, ScatterPassParameters, FComputeShaderUtils::GetGroupCount(GridDispatchSizeScatter, FIntPoint(16, 16)));
-
-	// For RenderDoc
-	RDG_EVENT_SCOPE(GraphBuilder, "Surfel Gather Pass");
-
-	// Allocate memory for GatherPass parameters
-	FGatherSurfelPass::FParameters* GatherPassParameters =
-		GraphBuilder.AllocParameters<FGatherSurfelPass::FParameters>();
-	
-	const float SpawnsPerFrame = static_cast<float>(FMath::Max(CVarSurfelSpawnsPerFrame.GetValueOnRenderThread(), 0));
-	
-	float SpawnChance = SpawnsPerFrame;
-	GatherPassParameters->SpawnChance = SpawnChance;
-
-	const float SpawnCoverageThreshold = CVarSurfelSpawnCoverageThreshold.GetValueOnRenderThread();
-	GatherPassParameters->SpawnCoverageThreshold = SpawnCoverageThreshold;
-
-	// Each group reduces a tile as wide as a new Surfels covered disc, not a fixed 16x16
-	// I did this cause otherwise if a Surfel is bigger than the grid size it would cover more grid cells than necessary
-	const uint32 SpawnTileSize = FGatherSurfelPass::ComputeSpawnTileSize(CVarSurfelRadius.GetValueOnRenderThread(), SpawnCoverageThreshold);
-	GatherPassParameters->SpawnTileSize = SpawnTileSize;
-	
-	GatherPassParameters->CoverageTexture = CoverageTexture;
-
 	GatherPassParameters->View = SceneView.ViewUniformBuffer;
 	GatherPassParameters->ViewRectMin = FUintVector2(SceneView.UnscaledViewRect.Min.X, SceneView.UnscaledViewRect.Min.Y);
 	GatherPassParameters->ViewRectMax = FUintVector2(SceneView.UnscaledViewRect.Max.X, SceneView.UnscaledViewRect.Max.Y);
 
-	GatherPassParameters->SurfelBudget =  CVarBudget;
+	GatherPassParameters->SurfelBudget = CVarBudget;
 	GatherPassParameters->SurfelRadius = CVarSurfelRadius.GetValueOnRenderThread();
-
 	GatherPassParameters->SurfelCount = GraphBuilder.CreateUAV(SurfelCounterBuffer);
 	GatherPassParameters->SurfelPositionAndRadius = GraphBuilder.CreateUAV(SurfelPositionAndRadiusBuffer);
 	GatherPassParameters->SurfelNormalAndFlags = GraphBuilder.CreateUAV(SurfelNormalAndFlagsBuffer);
-	GatherPassParameters->SurfelAlbedo = GraphBuilder.CreateUAV(SurfelAlbedoBuffer);
 	
 	GatherPassParameters->GBufferTextures = SceneTextureShaderParameters;
 	
 	// Add compute shader pass
-	TShaderMapRef<FGatherSurfelPass> ComputeShader(GetGlobalShaderMap(SceneView.GetFeatureLevel()));
+	TShaderMapRef<FGatherSurfelPass> ComputeShaderGather(GetGlobalShaderMap(SceneView.GetFeatureLevel()));
+	
+	const FIntPoint ViewSizeGather = SceneView.UnscaledViewRect.Size();
+	const FIntPoint GridDispatchSizeGather(ViewSizeGather.X, ViewSizeGather.Y);
+	
+	FComputeShaderUtils::AddPass(GraphBuilder, RDG_EVENT_NAME("Surfel Gather"), ComputeShaderGather, GatherPassParameters, FComputeShaderUtils::GetGroupCount(GridDispatchSizeGather, FIntPoint(16, 16)));
+
+	// For RenderDoc
+	RDG_EVENT_SCOPE(GraphBuilder, "Surfel Spawn Pass");
+
+	// Allocate memory for SpawnPass parameters
+	FSpawnSurfelPass::FParameters* SpawnPassParameters =
+		GraphBuilder.AllocParameters<FSpawnSurfelPass::FParameters>();
+	
+	const float SpawnsPerFrame = static_cast<float>(FMath::Max(CVarSurfelSpawnsPerFrame.GetValueOnRenderThread(), 0));
+	
+	float SpawnChance = SpawnsPerFrame;
+	SpawnPassParameters->SpawnChance = SpawnChance;
+
+	const float SpawnCoverageThreshold = CVarSurfelSpawnCoverageThreshold.GetValueOnRenderThread();
+	SpawnPassParameters->SpawnCoverageThreshold = SpawnCoverageThreshold;
+
+	// Each group reduces a tile as wide as a new Surfels covered disc, not a fixed 16x16
+	// I did this cause otherwise if a Surfel is bigger than the grid size it would cover more grid cells than necessary
+	const uint32 SpawnTileSize = FSpawnSurfelPass::ComputeSpawnTileSize(CVarSurfelRadius.GetValueOnRenderThread(), SpawnCoverageThreshold);
+	SpawnPassParameters->SpawnTileSize = SpawnTileSize;
+	
+	SpawnPassParameters->CoverageTexture = CoverageTexture;
+
+	SpawnPassParameters->View = SceneView.ViewUniformBuffer;
+	SpawnPassParameters->ViewRectMin = FUintVector2(SceneView.UnscaledViewRect.Min.X, SceneView.UnscaledViewRect.Min.Y);
+	SpawnPassParameters->ViewRectMax = FUintVector2(SceneView.UnscaledViewRect.Max.X, SceneView.UnscaledViewRect.Max.Y);
+
+	SpawnPassParameters->SurfelBudget =  CVarBudget;
+	SpawnPassParameters->SurfelRadius = CVarSurfelRadius.GetValueOnRenderThread();
+
+	SpawnPassParameters->SurfelCount = GraphBuilder.CreateUAV(SurfelCounterBuffer);
+	SpawnPassParameters->SurfelPositionAndRadius = GraphBuilder.CreateUAV(SurfelPositionAndRadiusBuffer);
+	SpawnPassParameters->SurfelNormalAndFlags = GraphBuilder.CreateUAV(SurfelNormalAndFlagsBuffer);
+	SpawnPassParameters->SurfelAlbedo = GraphBuilder.CreateUAV(SurfelAlbedoBuffer);
+	
+	SpawnPassParameters->GBufferTextures = SceneTextureShaderParameters;
+	
+	// Add compute shader pass
+	TShaderMapRef<FSpawnSurfelPass> ComputeShader(GetGlobalShaderMap(SceneView.GetFeatureLevel()));
 	
 	const FIntPoint ViewSize = SceneView.UnscaledViewRect.Size();
 	const FIntPoint GridDispatchSize(ViewSize.X, ViewSize.Y);
 	
-	FComputeShaderUtils::AddPass(GraphBuilder, RDG_EVENT_NAME("Surfel Gather"), ComputeShader, GatherPassParameters, FComputeShaderUtils::GetGroupCount(GridDispatchSize, FIntPoint(SpawnTileSize, SpawnTileSize)));
+	FComputeShaderUtils::AddPass(GraphBuilder, RDG_EVENT_NAME("Surfel Spawn"), ComputeShader, SpawnPassParameters, FComputeShaderUtils::GetGroupCount(GridDispatchSize, FIntPoint(SpawnTileSize, SpawnTileSize)));
 
 	// For RenderDoc
 	RDG_EVENT_SCOPE(GraphBuilder, "Surfel Irradiance Pass");
@@ -451,7 +451,7 @@ void FSurfelSceneViewExtension::PostRenderBasePassDeferred_RenderThread(FRDGBuil
 	}
 
 	// A way to hand over the surfel data to the other hook which is the visualization one
-	SurfelFrameDataByViewKey.Add(ViewKey, FSurfelFrameData{ GridCellEntriesBuffer, GridCounterBuffer, GridPassParameters->GridPosition, CoverageTexture, IrradianceTexture, AmbientOcclusionTexture });
+	SurfelFrameDataByViewKey.Add(ViewKey, FSurfelFrameData{ GridCellEntriesBuffer, GridCounterBuffer, ScatterPassParameters->GridPosition, CoverageTexture, IrradianceTexture, AmbientOcclusionTexture });
 
 	// Surfel counter readback for the ImGui budget meter
 	if (!SurfelState.CounterReadback)
@@ -464,7 +464,7 @@ void FSurfelSceneViewExtension::PostRenderBasePassDeferred_RenderThread(FRDGBuil
 	{
 		if (const uint32* Counter = static_cast<const uint32*>(SurfelState.CounterReadback->Lock(sizeof(uint32))))
 		{
-			// Gather can overshoot the budget momentarily before it decrements back
+			// Spawn can overshoot the budget momentarily before it decrements back
 			GSurfelAllocatedCount.store(FMath::Min<int32>(*Counter, CVarBudget), std::memory_order_relaxed);
 		}
 		SurfelState.CounterReadback->Unlock();
@@ -600,7 +600,7 @@ FScreenPassTexture FSurfelSceneViewExtension::RunVisualizePass(
 	PassParameters->bUseGrid       = bUseGrid ? 1u : 0u;
 	PassParameters->SpawnCoverageThreshold = CVarSurfelSpawnCoverageThreshold.GetValueOnRenderThread();
 
-	// Coverage map, for the Coverage visualization. Scatter writes it and Gather reads it
+	// Coverage map, for the Coverage visualization. Gather writes it and Spawn reads it
 	const bool bHasCoverage = bHasFrameData && SurfelFrameData.CoverageTexture != nullptr;
 	PassParameters->CoverageTexture = SurfelFrameData.CoverageTexture;
 	PassParameters->bHasCoverageTexture = bHasCoverage ? 1u : 0u;

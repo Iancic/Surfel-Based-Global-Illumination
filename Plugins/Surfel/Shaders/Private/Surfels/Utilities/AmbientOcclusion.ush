@@ -21,7 +21,7 @@ float SurfelScreenSpaceAO(Texture2D DepthTexture, uint2 PixelPos, float3 Transla
 		return 1.0f; // Sky
 	}
 
-	// World size of one pixel at this depth (same formula as Gather.usf), turns the world radius into a screen radius
+	// World size of one pixel at this depth (same formula as Spawn.usf), turns the world radius into a screen radius
 	float SceneDepth = ConvertFromDeviceZ(DeviceZ);
 	float PixelWorldSize = 2.0f * SceneDepth / (View.ViewToClip[0][0] * View.ViewSizeAndInvSize.x);
 	float RadiusPixels = min(SURFEL_SSAO_RADIUS / PixelWorldSize, SURFEL_SSAO_MAX_PIXELS);

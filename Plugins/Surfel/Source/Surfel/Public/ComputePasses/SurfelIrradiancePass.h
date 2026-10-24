@@ -1,11 +1,11 @@
-﻿#pragma once
+#pragma once
 #include "SceneTexturesConfig.h"
 #include "ShaderParameterStruct.h"
 #include "LightStruct.h"
 
 /**
- * Note: after one scatter and one gather, doing scatter again will be done with the newly spawned surfel
- * meaning the scatter step won't detect that place as unoccupied so it finds the next worse covered spot
+ * Note: after one gather and one spawn, doing gather again will be done with the newly spawned surfel
+ * meaning the gather step won't detect that place as unoccupied so it finds the next worse covered spot
  *
  * 1D Dispatch: runs per surfel
  *

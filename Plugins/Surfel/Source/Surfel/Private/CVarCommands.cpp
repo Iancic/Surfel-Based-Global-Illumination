@@ -84,18 +84,18 @@ TAutoConsoleVariable<float> CVarSurfelRadius(
 
 // Important to have a lower value
 // The surfels clump up together because first frame on a new wall everything is uncovered. 
-// I should delay spawning some so the algorithm can go through the scatter with new surfels. 
+// I should delay spawning some so the algorithm can go through the gather with new surfels. 
 // Not spawning all surfels from one. Thomas talk on PICA PICA
 TAutoConsoleVariable<int32> CVarSurfelSpawnsPerFrame(
 	TEXT("r.Surfel.SpawnsPerFrame"),
 	1,
-	TEXT("Roughly how many surfels Gather may spawn per frame across the screen."),
+	TEXT("Roughly how many surfels the Spawn pass may create per frame across the screen."),
 	ECVF_RenderThreadSafe);
 
 // This avoids over-crowding, sitting next to each other
 // 1 means spaced so for a surfel to spawn that has to be uncovererd fully
 // closer to 0 means touching each other, so covered is considered something in between like a bit covered by another surfel
-// Used by gather after reading the coverage texture
+// Used by spawn after reading the coverage texture
 TAutoConsoleVariable<float> CVarSurfelSpawnCoverageThreshold(
 	TEXT("r.Surfel.SpawnCoverageThreshold"),
 	0.1f,
