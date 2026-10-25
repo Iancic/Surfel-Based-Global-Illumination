@@ -160,6 +160,15 @@ TAutoConsoleVariable<int32> CVarSurfelVisualizeMode(
 	TEXT("9: SSAO - the ambient occlusion buffer on its own\n"),
 	ECVF_RenderThreadSafe);
 
+TAutoConsoleVariable<int32> CVarSurfelColorMode(
+	TEXT("r.Surfel.ColorMode"),
+	0,
+	TEXT("What each surfel disc shows in the Surfels visualization.\n")
+	TEXT("0: Hash - random color per surfel\n")
+	TEXT("1: Albedo - surface color the surfel captured at spawn\n")
+	TEXT("2: Indirect - incoming indirect light the surfel accumulated\n"),
+	ECVF_RenderThreadSafe);
+
 TAutoConsoleVariable<float> CVarSurfelGIIntensity(
 	TEXT("r.Surfel.GIIntensity"),
 	1.0f,

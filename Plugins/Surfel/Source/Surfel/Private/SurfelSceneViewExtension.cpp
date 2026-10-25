@@ -538,12 +538,16 @@ FScreenPassTexture FSurfelSceneViewExtension::RunVisualizePass(
 	FRDGBufferRef SurfelPositionAndRadiusBuffer;
 	FRDGBufferRef SurfelNormalAndFlagsBuffer;
 	FRDGBufferRef SurfelCounterBuffer;
+	FRDGBufferRef SurfelIrradianceBuffer;
+	FRDGBufferRef SurfelAlbedoBuffer;
 
-	if (SurfelState.SurfelPositionAndRadius.IsValid())
+	if (SurfelState.SurfelPositionAndRadius.IsValid() && SurfelState.SurfelIrradiance.IsValid() && SurfelState.SurfelAlbedo.IsValid())
 	{
 		SurfelPositionAndRadiusBuffer = GraphBuilder.RegisterExternalBuffer(SurfelState.SurfelPositionAndRadius);
 		SurfelNormalAndFlagsBuffer    = GraphBuilder.RegisterExternalBuffer(SurfelState.SurfelNormalAndFlags);
 		SurfelCounterBuffer           = GraphBuilder.RegisterExternalBuffer(SurfelState.SurfelCounter);
+		SurfelIrradianceBuffer        = GraphBuilder.RegisterExternalBuffer(SurfelState.SurfelIrradiance);
+		SurfelAlbedoBuffer            = GraphBuilder.RegisterExternalBuffer(SurfelState.SurfelAlbedo);
 	}
 	else // Create them if they are not there
 	{
@@ -560,11 +564,23 @@ FScreenPassTexture FSurfelSceneViewExtension::RunVisualizePass(
 			TEXT("Surfel.Counter"));
 
 		AddClearUAVPass(GraphBuilder, GraphBuilder.CreateUAV(SurfelCounterBuffer), 0u);
+
+		// Counter is 0 here so the shader reads none of these, they only have to exist for binding
+		SurfelIrradianceBuffer = GraphBuilder.CreateBuffer(
+			FRDGBufferDesc::CreateStructuredDesc(sizeof(FVector4f), CVarBudget),
+			TEXT("Surfel.Irradiance"));
+
+		SurfelAlbedoBuffer = GraphBuilder.CreateBuffer(
+			FRDGBufferDesc::CreateStructuredDesc(sizeof(FVector3f), CVarBudget),
+			TEXT("Surfel.Albedo"));
 	}
 
 	PassParameters->SurfelCount = GraphBuilder.CreateUAV(SurfelCounterBuffer);
 	PassParameters->SurfelPositionAndRadius = GraphBuilder.CreateUAV(SurfelPositionAndRadiusBuffer);
 	PassParameters->SurfelNormalAndFlags = GraphBuilder.CreateUAV(SurfelNormalAndFlagsBuffer);
+	PassParameters->SurfelIrradiance = GraphBuilder.CreateUAV(SurfelIrradianceBuffer);
+	PassParameters->SurfelAlbedo = GraphBuilder.CreateUAV(SurfelAlbedoBuffer);
+	PassParameters->SurfelColorMode = static_cast<uint32>(FMath::Clamp(CVarSurfelColorMode.GetValueOnRenderThread(), 0, (int32)ESurfelColorMode::MAX - 1));
 
 	PassParameters->GBufferTextures = Inputs.SceneTextures;
 	

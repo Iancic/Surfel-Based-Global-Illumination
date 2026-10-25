@@ -100,6 +100,17 @@ namespace
 	static_assert((int32)UE_ARRAY_COUNT(GVisualizeModeHelp) == (int32)ESurfelVisualizeMode::MAX,
 		"GVisualizeModeHelp must have one entry per ESurfelVisualizeMode");
 
+	// Same order as ESurfelColorMode
+	const char* const GSurfelColorModeNames[] =
+	{
+		"Hash",
+		"Albedo",
+		"Indirect"
+	};
+
+	static_assert((int32)UE_ARRAY_COUNT(GSurfelColorModeNames) == (int32)ESurfelColorMode::MAX,
+		"GSurfelColorModeNames must have one entry per ESurfelColorMode");
+
 	// Which preset the current CVars correspond to, or Custom if they match none of them.
 	int32 FindPresetForCurrentSettings()
 	{
@@ -488,6 +499,29 @@ void UDevGuiSubsystem::DrawVisualizationSettings()
 		{
 			ImGui::TextColored(ImVec4(1.0f, 0.6f, 0.2f, 1.0f),
 				"r.Lumen.DiffuseIndirect.Allow is 0 (scalability too low?), so Lumen stays off.");
+		}
+	}
+
+	if (VisualizeMode == (int32)ESurfelVisualizeMode::Surfels)
+	{
+		int ColorMode = FMath::Clamp(CVarSurfelColorMode.GetValueOnGameThread(), 0, (int32)ESurfelColorMode::MAX - 1);
+		if (ImGui::Combo("Surfel Color", &ColorMode, GSurfelColorModeNames, (int)ESurfelColorMode::MAX))
+		{
+			CVarSurfelColorMode->Set(ColorMode, ECVF_SetByConsole);
+		}
+		if (ImGui::IsItemHovered())
+		{
+			ImGui::SetTooltip("r.Surfel.ColorMode\nHash: random color per surfel\nAlbedo: surface color captured at spawn\nIndirect: incoming indirect light accumulated by the surfel");
+		}
+
+		// Indirect values are raw light units, so they get the same multiplier the composite uses
+		if (ColorMode == (int32)ESurfelColorMode::Indirect)
+		{
+			float GIIntensity = CVarSurfelGIIntensity.GetValueOnGameThread();
+			if (ImGui::SliderFloat("GI Intensity", &GIIntensity, 0.0f, 4.0f))
+			{
+				CVarSurfelGIIntensity->Set(GIIntensity, ECVF_SetByConsole);
+			}
 		}
 	}
 

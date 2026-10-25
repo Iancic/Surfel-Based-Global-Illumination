@@ -11,6 +11,7 @@ extern TAutoConsoleVariable<int> CVarSurfelBudget;
 extern TAutoConsoleVariable<float> CVarSurfelRadius;
 extern TAutoConsoleVariable<int32> CVarSurfelUseGrid;
 extern TAutoConsoleVariable<int32> CVarSurfelVisualizeMode;
+extern TAutoConsoleVariable<int32> CVarSurfelColorMode;
 extern TAutoConsoleVariable<float> CVarSurfelCoverageScale;
 extern TAutoConsoleVariable<float> CVarSurfelGIIntensity;
 extern TAutoConsoleVariable<int32> CVarSurfelUseAO;
@@ -50,6 +51,15 @@ enum class ESurfelVisualizeMode : int32
 	Irradiance      = 7,
 	IndirectLight   = 8,
 	SSAO            = 9,
+	MAX
+};
+
+// What each surfel disc is colored with in the Surfels visualization. Baked into Visualize.usf as SURFEL_COLOR_* defines.
+enum class ESurfelColorMode : int32
+{
+	Hash     = 0, // Random color per surfel index
+	Albedo   = 1, // Surface color the surfel captured when it spawned
+	Indirect = 2, // Incoming indirect light the surfel has accumulated
 	MAX
 };
 

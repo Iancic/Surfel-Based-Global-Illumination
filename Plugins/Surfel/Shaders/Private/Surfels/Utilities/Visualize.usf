@@ -15,6 +15,9 @@ RWTexture2D<float4> OutRenderTarget;
 RWStructuredBuffer<uint> SurfelCount;
 RWStructuredBuffer<float4> SurfelPositionAndRadius;
 RWStructuredBuffer<float4> SurfelNormalAndFlags;
+RWStructuredBuffer<float4> SurfelIrradiance;
+RWStructuredBuffer<float3> SurfelAlbedo;
+uint SurfelColorMode;
 
 RWStructuredBuffer<uint> GridCellEntries;
 RWStructuredBuffer<uint> GridCounter;
@@ -100,7 +103,22 @@ void TestSurfel(uint SurfelIndex, float3 PixelWorldPosition, float3 PixelNormal,
     }
 }
 
-float3 VisualizeSurfels(float3 SceneColor, float3 PixelWorldPosition, float3 PixelNormal)
+// What one surfel disc is drawn with, picked by r.Surfel.ColorMode
+float3 SurfelColor(uint SurfelIndex)
+{
+    if (SurfelColorMode == SURFEL_COLOR_ALBEDO)
+    {
+        return SurfelAlbedo[SurfelIndex];
+    }
+    if (SurfelColorMode == SURFEL_COLOR_INDIRECT)
+    {
+        // Same convention as the irradiance view: incoming light as radiance, raw with no exposure
+        return SurfelIrradiance[SurfelIndex].rgb / PI * GIIntensity;
+    }
+    return HashColor(SurfelIndex);
+}
+
+float3 VisualizeSurfels(float3 SceneColor,float3 PixelWorldPosition, float3 PixelNormal)
 {
     FSurfelHit Hit;
     Hit.Index = 0xFFFFFFFF;
@@ -133,11 +151,10 @@ float3 VisualizeSurfels(float3 SceneColor, float3 PixelWorldPosition, float3 Pix
 
     if (Hit.Index == 0xFFFFFFFF)
     {
-        return SceneColor;
+        return float3(0.f, 0.f, 0.f);
     }
 
-    // Blend between random color, scene color and an intensity value
-    return lerp(SceneColor, HashColor(Hit.Index), saturate(Intensity));
+    return lerp(SceneColor, SurfelColor(Hit.Index), saturate(Intensity));
 }
 
 float3 VisualizeGrid(float3 SceneColor, float3 PixelWorldPosition)
@@ -305,8 +322,6 @@ void MainCS(uint3 DispatchThreadId : SV_DispatchThreadID)
     {
         Result = VisualizeSSAO(SceneColor.rgb, LoadPos);
     }
-    // Every other mode leaves scene color alone: the lighting-reference modes only
-    // reconfigure the renderer from the game thread, there is nothing to draw here.
 
     OutRenderTarget[PixelPos] = float4(Result, SceneColor.a);
 }

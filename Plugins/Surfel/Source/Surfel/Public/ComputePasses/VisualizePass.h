@@ -19,7 +19,12 @@ public:
 		SHADER_PARAMETER_RDG_BUFFER_UAV(RWStructuredBuffer<uint>, SurfelCount)
 		SHADER_PARAMETER_RDG_BUFFER_UAV(RWStructuredBuffer<float4>, SurfelPositionAndRadius)
 		SHADER_PARAMETER_RDG_BUFFER_UAV(RWStructuredBuffer<float4>, SurfelNormalAndFlags)
-	
+
+		// Per-surfel colors for the Surfels visualization: one of the SURFEL_COLOR_* values below.
+		SHADER_PARAMETER_RDG_BUFFER_UAV(RWStructuredBuffer<float4>, SurfelIrradiance)
+		SHADER_PARAMETER_RDG_BUFFER_UAV(RWStructuredBuffer<float3>, SurfelAlbedo)
+		SHADER_PARAMETER(uint32, SurfelColorMode)
+
 		SHADER_PARAMETER_RDG_TEXTURE(Texture2D, InputSceneColor)
 		SHADER_PARAMETER_STRUCT(FScreenPassTextureViewportParameters, InputViewport)
 		SHADER_PARAMETER(float, Intensity)
@@ -87,7 +92,11 @@ public:
 		OutEnvironment.SetDefine(TEXT("VISUALIZE_MODE_INDIRECT"), (uint32)ESurfelVisualizeMode::IndirectLight);
 		OutEnvironment.SetDefine(TEXT("VISUALIZE_MODE_SSAO"), (uint32)ESurfelVisualizeMode::SSAO);
 
-		OutEnvironment.SetDefine(TEXT("GRID_VIS_WIREFRAME"),  (uint32)ESurfelGridVisFlags::Wireframe);
+		OutEnvironment.SetDefine(TEXT("SURFEL_COLOR_HASH"),     (uint32)ESurfelColorMode::Hash);
+		OutEnvironment.SetDefine(TEXT("SURFEL_COLOR_ALBEDO"),   (uint32)ESurfelColorMode::Albedo);
+		OutEnvironment.SetDefine(TEXT("SURFEL_COLOR_INDIRECT"), (uint32)ESurfelColorMode::Indirect);
+
+		OutEnvironment.SetDefine(TEXT("GRID_VIS_WIREFRAME"), (uint32)ESurfelGridVisFlags::Wireframe);
 		OutEnvironment.SetDefine(TEXT("GRID_VIS_OVERFLOW"),   (uint32)ESurfelGridVisFlags::Overflow);
 		OutEnvironment.SetDefine(TEXT("GRID_VIS_HIDE_EMPTY"), (uint32)ESurfelGridVisFlags::HideEmpty);
 		OutEnvironment.SetDefine(TEXT("GRID_VIS_HEATMAP"),    (uint32)ESurfelGridVisFlags::Heatmap);
