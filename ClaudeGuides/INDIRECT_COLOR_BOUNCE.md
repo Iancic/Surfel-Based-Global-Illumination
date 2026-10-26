@@ -134,3 +134,9 @@ Pick **Surfels** in the visualization combo, then **Surfel Color** (`r.Surfel.Co
 Black on a surface in Albedo mode means no surfel is there, so rays hitting it get zero albedo.
 Indirect mode on a floor next to a colored wall should tint toward the wall color. If it is white or grey, work through
 Causes 1 to 3.
+
+
+
+THis one is still a weird point. Like aren't I adding to much surfel togeher and i looks to blended?
+
+The last step is putting everything togheter. From a certain pixel, using the GBuffer and the camera matrices you can retrieve a world position, using that you can retrieve a grid cell. Using the grid cell index you can retrieve the surfels and sum their radiance to find out how much indirect light is reaching that point.

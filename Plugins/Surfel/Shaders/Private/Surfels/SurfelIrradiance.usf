@@ -216,7 +216,9 @@ void MainCS(uint3 DispatchThreadId : SV_DispatchThreadID)
 	else // Ray miss
 	{
 		// TODO: should be skylight
-		TotalIncomingIrradiance += float3(1.f, 1.f, 1.f);
+		
+		// Send nothing for now
+		TotalIncomingIrradiance += float3(0.15f, 0.15f, 0.15f);
 	}
 	
 	// With cosine-weighted directions, one sample of irradiance is PI times the radiance

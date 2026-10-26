@@ -16,8 +16,8 @@
   <component name="ChangeListManager">
     <list default="true" id="20fab832-f3ef-4372-8e5d-692461982054" name="Changes" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/.idea.Surfels/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/.idea.Surfels/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/DynamicSponza.umap" beforeDir="false" afterPath="$PROJECT_DIR$/Content/DynamicSponza.umap" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Plugins/Surfel/Shaders/Private/Surfels/Utilities/Visualize.usf" beforeDir="false" afterPath="$PROJECT_DIR$/Plugins/Surfel/Shaders/Private/Surfels/Utilities/Visualize.usf" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/ClaudeGuides/INDIRECT_COLOR_BOUNCE.md" beforeDir="false" afterPath="$PROJECT_DIR$/ClaudeGuides/INDIRECT_COLOR_BOUNCE.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Plugins/Surfel/Shaders/Private/Surfels/SurfelIrradiance.usf" beforeDir="false" afterPath="$PROJECT_DIR$/Plugins/Surfel/Shaders/Private/Surfels/SurfelIrradiance.usf" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -174,7 +174,7 @@
     &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
   }
 }</component>
-  <component name="RunManager" selected="C/C++ Project.Surfels">
+  <component name="RunManager" selected="C/C++ Project.Surfels Headless">
     <configuration name="Surfels Headless" type="CppProject" factoryName="C++ Project">
       <configuration_1 setup="1">
         <option name="CONFIGURATION" value="Development_Editor" />
@@ -270,7 +270,8 @@
       <workItem from="1792841614843" duration="128000" />
       <workItem from="1792842679413" duration="1096000" />
       <workItem from="1792843952684" duration="318000" />
-      <workItem from="1792927583183" duration="1284000" />
+      <workItem from="1792927583183" duration="3060000" />
+      <workItem from="1793025941224" duration="1058000" />
     </task>
     <servers />
   </component>
