@@ -25,6 +25,7 @@ private:
 	void DrawSurfelSettings();
 	void DrawBudgetMeter();
 	void DrawVisualizationSettings();
+	void DrawAntiAliasingSettings();
 	void DrawGridSettings();
 	void DrawFreeMovementSection();
 	void DrawScreenshotSection();

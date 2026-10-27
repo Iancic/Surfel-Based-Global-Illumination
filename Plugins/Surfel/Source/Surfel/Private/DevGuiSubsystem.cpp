@@ -13,6 +13,7 @@
 #include "Styling/StarshipCoreStyle.h"
 #include "Engine/Engine.h"
 #include "HAL/FileManager.h"
+#include "SceneUtils.h"
 #include "UnrealClient.h"
 
 // - David
@@ -140,6 +141,32 @@ namespace
 		return FString::Printf(TEXT("Surfel_%s_%s.png"), *ModeName, *FDateTime::Now().ToString(TEXT("%Y%m%d_%H%M%S")));
 	}
 
+	// Same order as EAntiAliasingMethod in SceneUtils.h, the combo index is written straight into the CVar
+	const char* const GAntiAliasingMethodNames[] =
+	{
+		"None",
+		"FXAA",
+		"TAA",
+		"MSAA",
+		"TSR",
+		"SMAA",
+	};
+
+	static_assert((int32)UE_ARRAY_COUNT(GAntiAliasingMethodNames) == (int32)AAM_MAX,
+		"GAntiAliasingMethodNames must have one entry per EAntiAliasingMethod");
+
+	const char* const GAntiAliasingMethodHelp[] =
+	{
+		"No anti-aliasing, raw aliased edges and no temporal smearing over the surfel noise",
+		"Post-process edge blur, cheap, no temporal accumulation",
+		"Temporal Anti-Aliasing, jitters the view and accumulates over frames",
+		"Forward shading only, the deferred renderer this project uses falls back to None",
+		"Temporal Super-Resolution, the UE5 default",
+		"Subpixel Morphological Anti-Aliasing, post-process, no temporal accumulation",
+	};
+
+	static_assert((int32)UE_ARRAY_COUNT(GAntiAliasingMethodHelp) == (int32)AAM_MAX,
+		"GAntiAliasingMethodHelp must have one entry per EAntiAliasingMethod");
 	// Which preset the current CVars correspond to, or Custom if they match none of them.
 	int32 FindPresetForCurrentSettings()
 	{
@@ -282,6 +309,7 @@ void UDevGuiSubsystem::Tick(float DeltaTime)
 	}
 	
 	DrawSurfelSettings();
+	DrawAntiAliasingSettings();
 	DrawScenesSection();
 	DrawCamerasSection();
 	DrawFreeMovementSection();
@@ -361,6 +389,63 @@ void UDevGuiSubsystem::DrawCamerasSection()
 	if (ImGui::Button("Reset To Player Pawn"))
 	{
 		PlayerController->SetViewTargetWithBlend(PlayerController->GetPawn(), CameraBlendTime);
+	}
+}
+
+// Credit Claude Code: the anti-aliasing dropdown is AI written, it is just a utility for switching
+// r.AntiAliasingMethod without the console and nothing in the renderer depends on it.
+// Prompt used:
+	// Can you make a dropdown option for all aliasing methods, I want to turn on TAA or others from the ImGui dropdown.
+void UDevGuiSubsystem::DrawAntiAliasingSettings()
+{
+	ImGui::SeparatorText("Anti-Aliasing");
+
+	// Owned by the Engine module rather than this plugin, so it is looked up by name the same way
+	// ForceGlobalSDFBuild reaches the global SDF CVar.
+	static IConsoleVariable* AntiAliasingMethod = IConsoleManager::Get().FindConsoleVariable(TEXT("r.AntiAliasingMethod"));
+	if (!AntiAliasingMethod)
+	{
+		ImGui::TextDisabled("r.AntiAliasingMethod not found");
+		return;
+	}
+
+	int32 Method = FMath::Clamp(AntiAliasingMethod->GetInt(), 0, (int32)AAM_MAX - 1);
+
+	if (ImGui::BeginCombo("Anti-Aliasing Method", GAntiAliasingMethodNames[Method]))
+	{
+		for (int32 Index = 0; Index < (int32)AAM_MAX; ++Index)
+		{
+			const bool bSelected = Method == Index;
+			if (ImGui::Selectable(GAntiAliasingMethodNames[Index], bSelected))
+			{
+				// Views read the CVar when they are set up, so this lands on the next frame.
+				AntiAliasingMethod->Set(Index, ECVF_SetByConsole);
+				Method = Index;
+			}
+			if (ImGui::IsItemHovered())
+			{
+				ImGui::SetTooltip("%s", GAntiAliasingMethodHelp[Index]);
+			}
+			if (bSelected)
+			{
+				ImGui::SetItemDefaultFocus();
+			}
+		}
+		ImGui::EndCombo();
+	}
+	if (ImGui::IsItemHovered())
+	{
+		ImGui::SetTooltip("r.AntiAliasingMethod\nA Post Process Volume or camera in the level can still override this per view.");
+	}
+
+	// The renderer quietly substitutes a method it cannot run, so show what actually ends up being
+	// used rather than letting the combo claim MSAA while the image is aliased.
+	const UWorld* World = GetWorld();
+	const EAntiAliasingMethod Effective = GetDefaultAntiAliasingMethod(World ? World->GetFeatureLevel() : GMaxRHIFeatureLevel);
+	if ((int32)Effective != Method)
+	{
+		ImGui::TextColored(ImVec4(0.85f, 0.65f, 0.15f, 1.0f), "Not supported here, the renderer falls back to %s",
+			GAntiAliasingMethodNames[(int32)Effective]);
 	}
 }
 
