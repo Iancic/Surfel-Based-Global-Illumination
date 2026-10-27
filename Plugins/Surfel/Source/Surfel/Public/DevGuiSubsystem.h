@@ -26,7 +26,13 @@ private:
 	void DrawBudgetMeter();
 	void DrawVisualizationSettings();
 	void DrawGridSettings();
+	void DrawScreenshotSection();
 
+
+	// Screenshot the viewport is handed to the engine and only lands on disk a frame later,
+	// so the path is held until then to report where it ended up.
+	FString PendingScreenshotPath;
+	FString ScreenshotStatus;
 
 	int32 QualityPresetIndex = 0;
 	float CameraBlendTime = 0.5f;

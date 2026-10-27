@@ -16,8 +16,6 @@
   <component name="ChangeListManager">
     <list default="true" id="20fab832-f3ef-4372-8e5d-692461982054" name="Changes" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/.idea.Surfels/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/.idea.Surfels/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/ClaudeGuides/INDIRECT_COLOR_BOUNCE.md" beforeDir="false" afterPath="$PROJECT_DIR$/ClaudeGuides/INDIRECT_COLOR_BOUNCE.md" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Plugins/Surfel/Shaders/Private/Surfels/SurfelIrradiance.usf" beforeDir="false" afterPath="$PROJECT_DIR$/Plugins/Surfel/Shaders/Private/Surfels/SurfelIrradiance.usf" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -271,7 +269,7 @@
       <workItem from="1792842679413" duration="1096000" />
       <workItem from="1792843952684" duration="318000" />
       <workItem from="1792927583183" duration="3060000" />
-      <workItem from="1793025941224" duration="1058000" />
+      <workItem from="1793025941224" duration="4365000" />
     </task>
     <servers />
   </component>

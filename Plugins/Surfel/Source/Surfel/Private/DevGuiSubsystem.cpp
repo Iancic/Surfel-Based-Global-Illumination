@@ -11,6 +11,9 @@
 #include "Misc/Paths.h"
 #include "Misc/ScopeExit.h"
 #include "Styling/StarshipCoreStyle.h"
+#include "Engine/Engine.h"
+#include "HAL/FileManager.h"
+#include "UnrealClient.h"
 
 // - David
 // Credit AI Usage: After I laid out some general scaffolding and to do ideas, I used Claude Code to generate most of the visualization code
@@ -110,6 +113,31 @@ namespace
 
 	static_assert((int32)UE_ARRAY_COUNT(GSurfelColorModeNames) == (int32)ESurfelColorMode::MAX,
 		"GSurfelColorModeNames must have one entry per ESurfelColorMode");
+
+	// Where the screenshot utility drops its PNGs, next to the project rather than in Saved/ so the
+	// shots are easy to pick up for the report.
+	FString GetScreenshotDirectory()
+	{
+		return FPaths::ConvertRelativePathToFull(FPaths::ProjectDir() / TEXT("Assets"));
+	}
+
+	// Mode name straight from the combo, trimmed down to something safe to put in a filename.
+	FString MakeScreenshotFilename()
+	{
+		int32 VisualizeMode = CVarSurfelVisualizeMode.GetValueOnGameThread();
+		VisualizeMode = FMath::Clamp(VisualizeMode, 0, (int32)ESurfelVisualizeMode::MAX - 1);
+
+		FString ModeName = ANSI_TO_TCHAR(GVisualizeModeNames[VisualizeMode]);
+		for (TCHAR& Character : ModeName)
+		{
+			if (!FChar::IsAlnum(Character))
+			{
+				Character = TEXT('_');
+			}
+		}
+
+		return FString::Printf(TEXT("Surfel_%s_%s.png"), *ModeName, *FDateTime::Now().ToString(TEXT("%Y%m%d_%H%M%S")));
+	}
 
 	// Which preset the current CVars correspond to, or Custom if they match none of them.
 	int32 FindPresetForCurrentSettings()
@@ -255,6 +283,7 @@ void UDevGuiSubsystem::Tick(float DeltaTime)
 	DrawSurfelSettings();
 	DrawScenesSection();
 	DrawCamerasSection();
+	DrawScreenshotSection();
 
 	ImGui::End();
 }
@@ -330,6 +359,63 @@ void UDevGuiSubsystem::DrawCamerasSection()
 	if (ImGui::Button("Reset To Player Pawn"))
 	{
 		PlayerController->SetViewTargetWithBlend(PlayerController->GetPawn(), CameraBlendTime);
+	}
+}
+
+// Credit Claude Code: the screenshot section below is AI written, it is only a utility for grabbing
+// comparison shots of the visualization modes and nothing in the renderer depends on it.
+// Prompt used:
+	// I want a dev button that screenshots the framebuffer and saves the result as png in assets.
+	// Screenshot without the ImGui window somehow.
+void UDevGuiSubsystem::DrawScreenshotSection()
+{
+	ImGui::SeparatorText("Screenshot");
+
+	// The engine only services the request on the next viewport draw, so the previous one is
+	// resolved here rather than at the call site.
+	if (!PendingScreenshotPath.IsEmpty() && !FScreenshotRequest::IsScreenshotRequested())
+	{
+		const bool bSaved = IFileManager::Get().FileExists(*PendingScreenshotPath);
+		ScreenshotStatus = bSaved
+			? FString::Printf(TEXT("Saved %s"), *PendingScreenshotPath)
+			: FString::Printf(TEXT("Failed to write %s"), *PendingScreenshotPath);
+
+		UE_LOG(LogTemp, Log, TEXT("DevGui: %s"), *ScreenshotStatus);
+		PendingScreenshotPath.Reset();
+	}
+
+	const bool bHasViewport = GEngine != nullptr && GEngine->GameViewport != nullptr;
+
+	ImGui::BeginDisabled(!bHasViewport || !PendingScreenshotPath.IsEmpty());
+	if (ImGui::Button("Capture PNG"))
+	{
+		const FString Directory = GetScreenshotDirectory();
+		IFileManager::Get().MakeDirectory(*Directory, true);
+
+		PendingScreenshotPath = Directory / MakeScreenshotFilename();
+
+		// bShowUI false is what keeps this window out of the shot: the viewport render target is
+		// read back right after the scene is drawn, before Slate composites any widget on top of
+		// it, so ImGui never makes it into the pixels. The path contains a slash, so the engine
+		// writes exactly there instead of redirecting into the screenshot directory.
+		FScreenshotRequest::RequestScreenshot(PendingScreenshotPath, /*bShowUI*/ false, /*bAddFilenameSuffix*/ false);
+	}
+	ImGui::EndDisabled();
+
+	if (ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenDisabled))
+	{
+		ImGui::SetTooltip("Writes the viewport without any ImGui or Slate UI to:\n%s", TCHAR_TO_UTF8(*GetScreenshotDirectory()));
+	}
+
+	if (!PendingScreenshotPath.IsEmpty())
+	{
+		ImGui::SameLine();
+		ImGui::TextDisabled("Capturing...");
+	}
+	else if (!ScreenshotStatus.IsEmpty())
+	{
+		ImGui::SameLine();
+		ImGui::TextDisabled("%s", TCHAR_TO_UTF8(*ScreenshotStatus));
 	}
 }
 
