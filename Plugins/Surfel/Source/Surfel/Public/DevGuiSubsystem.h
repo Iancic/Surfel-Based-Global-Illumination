@@ -26,6 +26,7 @@ private:
 	void DrawBudgetMeter();
 	void DrawVisualizationSettings();
 	void DrawGridSettings();
+	void DrawFreeMovementSection();
 	void DrawScreenshotSection();
 
 

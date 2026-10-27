@@ -16,6 +16,10 @@
   <component name="ChangeListManager">
     <list default="true" id="20fab832-f3ef-4372-8e5d-692461982054" name="Changes" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/.idea.Surfels/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/.idea.Surfels/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Config/DefaultEditor.ini" beforeDir="false" afterPath="$PROJECT_DIR$/Config/DefaultEditor.ini" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/StaticSponza.umap" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Plugins/Surfel/Source/Surfel/Private/DevGuiSubsystem.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Plugins/Surfel/Source/Surfel/Private/DevGuiSubsystem.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Plugins/Surfel/Source/Surfel/Public/DevGuiSubsystem.h" beforeDir="false" afterPath="$PROJECT_DIR$/Plugins/Surfel/Source/Surfel/Public/DevGuiSubsystem.h" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -172,7 +176,7 @@
     &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
   }
 }</component>
-  <component name="RunManager" selected="C/C++ Project.Surfels Headless">
+  <component name="RunManager" selected="C/C++ Project.Surfels">
     <configuration name="Surfels Headless" type="CppProject" factoryName="C++ Project">
       <configuration_1 setup="1">
         <option name="CONFIGURATION" value="Development_Editor" />
@@ -269,7 +273,8 @@
       <workItem from="1792842679413" duration="1096000" />
       <workItem from="1792843952684" duration="318000" />
       <workItem from="1792927583183" duration="3060000" />
-      <workItem from="1793025941224" duration="4365000" />
+      <workItem from="1793025941224" duration="7631000" />
+      <workItem from="1793129509347" duration="332000" />
     </task>
     <servers />
   </component>

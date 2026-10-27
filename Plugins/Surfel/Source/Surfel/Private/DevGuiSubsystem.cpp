@@ -38,10 +38,11 @@ namespace
 
 	const FDevScene GDevScenes[] =
 	{
-		{ "Static Sponza",  TEXT("/Game/StaticSponza") },
-		{ "Dynamic Sponza", TEXT("/Game/DynamicSponza") },
-		{ "Cornell Box",    TEXT("/Game/CornellBox") },
-		{ "Dragon",        TEXT("/Game/Dragon") },
+		{ "Sponza",          TEXT("/Game/DynamicSponza") },
+		{ "Cornell Box",     TEXT("/Game/CornellBox") },
+		{ "Dragon",          TEXT("/Game/Dragon") },
+		{ "Conference Room", TEXT("/Game/ConferenceRoom") },
+		{ "Living Room",     TEXT("/Game/LivingRoom") },
 	};
 
 	struct FSurfelQualityPreset
@@ -283,6 +284,7 @@ void UDevGuiSubsystem::Tick(float DeltaTime)
 	DrawSurfelSettings();
 	DrawScenesSection();
 	DrawCamerasSection();
+	DrawFreeMovementSection();
 	DrawScreenshotSection();
 
 	ImGui::End();
@@ -360,6 +362,44 @@ void UDevGuiSubsystem::DrawCamerasSection()
 	{
 		PlayerController->SetViewTargetWithBlend(PlayerController->GetPawn(), CameraBlendTime);
 	}
+}
+
+// Credit Claude Code: the free movement button is AI written, it is just a utility for flying around a
+// scene while comparing visualization modes and nothing in the renderer depends on it.
+// Prompt used:
+	// Add a button that will allow me to move freely in the scene.
+void UDevGuiSubsystem::DrawFreeMovementSection()
+{
+	ImGui::SeparatorText("Free Movement");
+
+	UWorld* World = GetWorld();
+	APlayerController* PlayerController = World ? World->GetFirstPlayerController() : nullptr;
+
+	if (!PlayerController)
+	{
+		ImGui::TextDisabled("No player controller (not in PIE?)");
+		return;
+	}
+
+	if (ImGui::Button("Fly The Scene"))
+	{
+		// Two separate things pin you in place. Looking through a CameraActor locks the view, so the
+		// pawn gets it back first.
+		PlayerController->SetViewTargetWithBlend(PlayerController->GetPawn(), CameraBlendTime);
+
+		// And ImGui holds the mouse and keyboard the whole time its input is on, which is what stops
+		// WASD and mouse look from ever reaching the pawn. Releasing it hands input back to the game.
+		FImGuiModule::Get().GetProperties().SetInputEnabled(false);
+	}
+	if (ImGui::IsItemHovered())
+	{
+		ImGui::SetTooltip("Hands input back to the game so the default pawn can fly:\n"
+			"WASD to move, E and Q for up and down, mouse to look.\n"
+			"F1 (or the ImGui.ToggleInput command) brings this window back.");
+	}
+
+	ImGui::SameLine();
+	ImGui::TextDisabled("F1 returns to the GUI");
 }
 
 // Credit Claude Code: the screenshot section below is AI written, it is only a utility for grabbing
