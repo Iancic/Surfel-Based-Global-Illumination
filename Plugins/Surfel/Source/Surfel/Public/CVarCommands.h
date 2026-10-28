@@ -22,6 +22,8 @@ extern TAutoConsoleVariable<float> CVarMaxTraceDistance;
 extern TAutoConsoleVariable<float> CVarStepFactor;
 extern TAutoConsoleVariable<float> CVarMinStepFactor;
 extern TAutoConsoleVariable<float> CVarMaxSamples;
+extern TAutoConsoleVariable<int32> CVarMaxBounces;
+extern TAutoConsoleVariable<int32> CVarRaysPerSurfel;
 extern TAutoConsoleVariable<int32> CVarSurfelGridCellResolution;
 extern TAutoConsoleVariable<int32> CVarSurfelGridCellSize;
 extern TAutoConsoleVariable<int32> CVarSurfelGridCellCapacity;

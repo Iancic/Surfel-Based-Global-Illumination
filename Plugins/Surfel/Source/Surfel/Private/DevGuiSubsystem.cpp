@@ -39,7 +39,7 @@ namespace
 
 	const FDevScene GDevScenes[] =
 	{
-		{ "Sponza",          TEXT("/Game/DynamicSponza") },
+		{ "Sponza",          TEXT("/Game/Sponza") },
 		{ "Cornell Box",     TEXT("/Game/CornellBox") },
 		{ "Dragon",          TEXT("/Game/Dragon") },
 		{ "Conference Room", TEXT("/Game/ConferenceRoom") },
@@ -614,6 +614,26 @@ void UDevGuiSubsystem::DrawSurfelSettings()
 	if (ImGui::IsItemHovered())
 	{
 		ImGui::SetTooltip("r.Surfel.MaxSamples\nHow many frames of rays each surfel averages over.\nHigher = less noise, slower to react to moving lights.");
+	}
+
+	int MaxBounces = CVarMaxBounces.GetValueOnGameThread();
+	if (ImGui::SliderInt("Bounces", &MaxBounces, 1, 8))
+	{
+		CVarMaxBounces->Set(MaxBounces, ECVF_SetByConsole);
+	}
+	if (ImGui::IsItemHovered())
+	{
+		ImGui::SetTooltip("r.Surfel.MaxBounces\nSegments each surfel ray path follows per frame, adding the light of every hit.\n1 = single hop, the surfel cache fills in later bounces over time.\nEach extra bounce costs another ray march per surfel.");
+	}
+
+	int RaysPerSurfel = CVarRaysPerSurfel.GetValueOnGameThread();
+	if (ImGui::SliderInt("Rays Per Surfel", &RaysPerSurfel, 1, 16))
+	{
+		CVarRaysPerSurfel->Set(RaysPerSurfel, ECVF_SetByConsole);
+	}
+	if (ImGui::IsItemHovered())
+	{
+		ImGui::SetTooltip("r.Surfel.RaysPerSurfel\nIndependent ray paths per surfel each frame, averaged together.\nLess noise and splotchiness, cost scales linearly.");
 	}
 
 	DrawBudgetMeter();

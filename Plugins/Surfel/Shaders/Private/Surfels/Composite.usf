@@ -15,7 +15,7 @@ uint2 ViewRectMax;
 
 // One important note
 // The Surfel GI lacks high frequency detail
-// Combine with a Screen Space AO solution like GTAO
+// Combine with a Screen Space AO
 
 [numthreads(THREADS_X, THREADS_Y, THREADS_Z)]
 void MainCS(uint3 DispatchThreadId : SV_DispatchThreadID)

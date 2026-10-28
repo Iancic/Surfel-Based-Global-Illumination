@@ -26,6 +26,10 @@
 		{
 			"Name": "ImGui",
 			"Enabled": true
+		},
+		{
+			"Name": "PythonScriptPlugin",
+			"Enabled": true
 		}
 	]
 }

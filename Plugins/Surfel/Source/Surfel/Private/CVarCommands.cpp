@@ -34,9 +34,26 @@ TAutoConsoleVariable<float> CVarMinStepFactor(
 
 TAutoConsoleVariable<float> CVarMaxSamples(
 	TEXT("r.Surfel.MaxSamples"),
-	64.f,
+	128.f,
 	TEXT("MaxSamples.\n")
 	TEXT("MaxSamples."),
+	ECVF_RenderThreadSafe
+	);
+
+TAutoConsoleVariable<int32> CVarMaxBounces(
+	TEXT("r.Surfel.MaxBounces"),
+	4,
+	TEXT("Bounces each surfel ray path follows per frame (1-8).\n")
+	TEXT("1: one hop, the surfel cache supplies the rest over time.\n")
+	TEXT("More: every extra hop adds light explicitly, at the cost of one more ray march per surfel."),
+	ECVF_RenderThreadSafe
+	);
+
+TAutoConsoleVariable<int32> CVarRaysPerSurfel(
+	TEXT("r.Surfel.RaysPerSurfel"),
+	4,
+	TEXT("Independent ray paths each surfel traces per frame and averages (1-16).\n")
+	TEXT("More rays = less noise and splotchiness per frame, cost scales linearly."),
 	ECVF_RenderThreadSafe
 	);
 
@@ -67,17 +84,16 @@ TAutoConsoleVariable<float> CVarSurfelDepthScale(
 	TEXT("Far distance in world units mapped to white in depth visualization."),
 	ECVF_RenderThreadSafe);
 
-// 12k is a base default I found that works well enough with the rest of the settings
 TAutoConsoleVariable<int> CVarSurfelBudget(
 	TEXT("r.Surfel.Budget"),
-	12000,
+	20000,
 	TEXT("Surfel Budget."),
 	ECVF_RenderThreadSafe
 	);
 
 TAutoConsoleVariable<float> CVarSurfelRadius(
 	TEXT("r.Surfel.Radius"),
-	25.0f,
+	46.0f,
 	TEXT("Surfel radius in screen pixels at spawn time, also used as the minimum world radius (cm)."),
 	ECVF_RenderThreadSafe
 	);
@@ -98,25 +114,25 @@ TAutoConsoleVariable<int32> CVarSurfelSpawnsPerFrame(
 // Used by spawn after reading the coverage texture
 TAutoConsoleVariable<float> CVarSurfelSpawnCoverageThreshold(
 	TEXT("r.Surfel.SpawnCoverageThreshold"),
-	0.1f,
+	0.6f,
 	TEXT("Pixels with coverage at or above this are considered covered and never spawn a surfel."),
 	ECVF_RenderThreadSafe);
 
 TAutoConsoleVariable<int32> CVarSurfelGridCellResolution(
 	TEXT("r.Surfel.Grid.CellResolution"),
-	64,
+	128,
 	TEXT("Cells along each axis of the camera."),
 	ECVF_RenderThreadSafe);
 
 TAutoConsoleVariable<int32> CVarSurfelGridCellSize(
 	TEXT("r.Surfel.Grid.CellSize"),
-	64,
+	128,
 	TEXT("Edge length of one grid cell, in world units (cm)."),
 	ECVF_RenderThreadSafe);
 
 TAutoConsoleVariable<int32> CVarSurfelGridCellCapacity(
 	TEXT("r.Surfel.Grid.CellCapacity"),
-	512,
+	1024,
 	TEXT("Max surfels one cell can reference."),
 	ECVF_RenderThreadSafe);
 
@@ -177,7 +193,7 @@ TAutoConsoleVariable<float> CVarSurfelGIIntensity(
 
 TAutoConsoleVariable<int32> CVarSurfelUseAO(
 	TEXT("r.Surfel.UseAO"),
-	1,
+	0,
 	TEXT("1: multiply ambient occlusion onto the composited surfel indirect light.\n")
 	TEXT("0: skip it, so the composite shows the raw indirect light (for comparison)."),
 	ECVF_RenderThreadSafe);

@@ -40,6 +40,8 @@ float MaxTraceDistance;
 float StepFactor;
 float MinStepFactor;
 float MaxSamples; 
+uint MaxBounces;
+uint RaysPerSurfel;
 
 float3 EvaluateSurfelLight(FSurfelLightStruct Light, float3 TranslatedPos, out float3 L, out float ShadowDistance)
 {
@@ -109,8 +111,13 @@ float3 ComputeDirectLight(float3 TranslatedPos, float3 Normal)
 	return Irradiance;
 }
 
-float3 SampleRadianceAt(float3 WorldPosition, float3 HitNormal)
+// bIncludeCache: add the stored surfel irradiance at the hit. The cache already holds every later bounce,
+// so it may only be added at the LAST hop of a path. Adding it at intermediate hops too counts those bounces
+// twice, the feedback gain goes above 1 for bright albedo (white walls) and the scene blows out over time.
+float3 SampleRadianceAt(float3 WorldPosition, float3 HitNormal, bool bIncludeCache, out float3 OutHitAlbedo)
 {
+	OutHitAlbedo = 0;
+
 	// Step 1: Direct light (how much light reaches this surface)
 	float3 PreViewTranslation = DFHackToFloat(PrimaryView.PreViewTranslation);
 	float3 TranslatedPosition = WorldPosition + PreViewTranslation;
@@ -162,7 +169,8 @@ float3 SampleRadianceAt(float3 WorldPosition, float3 HitNormal)
 	float3 IndirectIrradiance = WeightSum > 0.0f ? (IrradianceSum) / WeightSum : 0;
 	float3 HitAlbedo = WeightSum > 0.0f ? (AlbedoSum) / WeightSum : 0;
 	
-	return HitAlbedo / PI * (IndirectIrradiance +  DirectIrradiance);
+	OutHitAlbedo = HitAlbedo;
+	return HitAlbedo / PI * ((bIncludeCache ? IndirectIrradiance : 0.0f) + DirectIrradiance);
 }
 
 [numthreads(THREADS_X, THREADS_Y, THREADS_Z)]
@@ -173,54 +181,83 @@ void MainCS(uint3 DispatchThreadId : SV_DispatchThreadID)
 	if (SurfelIdx >= min(SurfelCount[0], SurfelBudget)) return;
 	
 	float4 PositionAndRadius = SurfelPositionAndRadius[SurfelIdx];
-	float3 Normal = SurfelNormalAndFlags[SurfelIdx].xyz;
-	float3 Position = PositionAndRadius.xyz;
-
-	// Get Random Hemisphere Ray Direction
-	// Random values are normalized directions
-	uint3 Hash = Rand3DPCG16(int3(SurfelIdx, View.StateFrameIndex, 0));
-	float Random1 = Hash.x / 65535.0f;
-	float Random2 = Hash.y / 65535.0f;
-	
-	// Weighted by normal
-	float3 Direction = SampleHemisphereCosWeighted(Normal.xyz, Random1, Random2);
-
-	// The global SDF lives in translated world space (world + PreViewTranslation)
-	// Surfels are stored in world space, so convert
-	float3 PreViewTranslation = DFHackToFloat(PrimaryView.PreViewTranslation);
-	float3 TranslatedPosition = Position + PreViewTranslation;
-
-	// Offset the origin one voxel along the normal to avoid self-intersection
-	const float VoxelExtent = GlobalVolumeTranslatedCenterAndExtent[0].w * GlobalVolumeTexelSize;
-	float3 Origin = TranslatedPosition + Normal * VoxelExtent;
-
-	// Ray-march SDF using Unreal Utilities
-	FGlobalSDFTraceInput TraceInput = SetupGlobalSDFTraceInput(Origin, Direction, MinTraceDistance, MaxTraceDistance, StepFactor, MinStepFactor);
-	FGlobalSDFTraceResult TraceResult = RayTraceGlobalDistanceField(TraceInput);
-	
 	float3 TotalIncomingIrradiance = float3(0.f, 0.f, 0.f);
-	if (GlobalSDFTraceResultIsHit(TraceResult))
-	{
-		// Hit position is in translated world space
-		float3 TranslatedHitPosition = Origin + Direction * TraceResult.HitTime;
-		
-		// the SDF normal lookup expects
-		float3 HitNormal = ComputeGlobalDistanceFieldNormal(TranslatedHitPosition, TraceResult.HitClipmapIndex, -Direction);
 
-		// The grid is in world space, so convert back before looking up surfels
-		float3 WorldHitPosition = TranslatedHitPosition - PreViewTranslation;
-		
-		// Get radiance from this point (nearby surfel and direct lights)
-		TotalIncomingIrradiance = SampleRadianceAt(WorldHitPosition, HitNormal);
-	}
-	else // Ray miss
+	const uint NumRays = max(RaysPerSurfel, 1u);
+	for (uint Ray = 0; Ray < NumRays; ++Ray)
 	{
-		// TODO: should be skylight
-		
-		// Send nothing for now
-		TotalIncomingIrradiance += float3(0.15f, 0.15f, 0.15f);
-	}
+		// Each ray is its own path, restart from the surfel
+		float3 Position = PositionAndRadius.xyz;
+		float3 Normal = SurfelNormalAndFlags[SurfelIdx].xyz;
+		float3 PathIrradiance = float3(0.f, 0.f, 0.f);
+		float3 Throughput = float3(1.f, 1.f, 1.f);
+
+		// Multi bounce: every extra bounce traces from the previous hit and adds its light on top
+		for (uint Bounce = 0; Bounce < max(MaxBounces, 1u); ++Bounce)
+		{
+			// Get Random Hemisphere Ray Direction
+			// Random values are normalized directions
+			uint3 Hash = Rand3DPCG16(int3(SurfelIdx, View.StateFrameIndex, Ray * 8 + Bounce));
+			float Random1 = Hash.x / 65535.0f;
+			float Random2 = Hash.y / 65535.0f;
 	
+			// Weighted by normal
+			float3 Direction = SampleHemisphereCosWeighted(Normal.xyz, Random1, Random2);
+
+			// The global SDF lives in translated world space (world + PreViewTranslation)
+			// Surfels are stored in world space, so convert
+			float3 PreViewTranslation = DFHackToFloat(PrimaryView.PreViewTranslation);
+			float3 TranslatedPosition = Position + PreViewTranslation;
+
+			// Offset the origin one voxel along the normal to avoid self-intersection
+			const float VoxelExtent = GlobalVolumeTranslatedCenterAndExtent[0].w * GlobalVolumeTexelSize;
+			float3 Origin = TranslatedPosition + Normal * VoxelExtent;
+
+			// Ray-march SDF using Unreal Utilities
+			FGlobalSDFTraceInput TraceInput = SetupGlobalSDFTraceInput(Origin, Direction, MinTraceDistance, MaxTraceDistance, StepFactor, MinStepFactor);
+			FGlobalSDFTraceResult TraceResult = RayTraceGlobalDistanceField(TraceInput);
+	
+			if (GlobalSDFTraceResultIsHit(TraceResult))
+			{
+				// Hit position is in translated world space
+				float3 TranslatedHitPosition = Origin + Direction * TraceResult.HitTime;
+		
+				// the SDF normal lookup expects
+				float3 HitNormal = ComputeGlobalDistanceFieldNormal(TranslatedHitPosition, TraceResult.HitClipmapIndex, -Direction);
+
+				// The grid is in world space, so convert back before looking up surfels
+				float3 WorldHitPosition = TranslatedHitPosition - PreViewTranslation;
+		
+				// Get radiance from this point (nearby surfel and direct lights)
+				// Intermediate hops only gather direct light, the last hop also reads the cache (see SampleRadianceAt)
+				const bool bLastHop = (Bounce + 1) >= max(MaxBounces, 1u);
+				float3 HitAlbedo;
+				PathIrradiance += Throughput * SampleRadianceAt(WorldHitPosition, HitNormal, bLastHop, HitAlbedo);
+		
+				// The next bounce continues from this hit, carrying what this surface didn't absorb
+				Throughput *= HitAlbedo;
+				Position = WorldHitPosition;
+				Normal = HitNormal;
+
+				// Nothing left to carry (no surfel around this hit to give a surface color), more bounces add nothing
+				if (all(Throughput <= 0.0f)) break;
+			}
+			else // Ray miss
+			{
+				// TODO: should be skylight
+		
+				// Send nothing for now
+				PathIrradiance += Throughput * float3(0.15f, 0.15f, 0.15f);
+				break;
+			}
+		}
+
+		TotalIncomingIrradiance += PathIrradiance;
+	}
+
+	// Average of all rays
+	TotalIncomingIrradiance /= NumRays;
+
 	// With cosine-weighted directions, one sample of irradiance is PI times the radiance
 	TotalIncomingIrradiance *= PI;
 	

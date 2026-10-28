@@ -1,6 +1,9 @@
 #pragma once
 // Gather writes this for pixels whose surface lies outside the grid.
 #define SURFEL_COVERAGE_OUT_OF_GRID 1e20f
+// Gather writes this for pixels whose grid cell has no room left, so Spawn doesn't pile more surfels into it.
+// Below OUT_OF_GRID so the Coverage visualization still shows it as saturated heat instead of the out-of-grid color.
+#define SURFEL_COVERAGE_CELL_FULL 1e10f
 
 // Unreal probably has something as well for the following functions
 // The following 3 functions (Basis, SphericalToCartesian, Hemisphere) are taken from: https://www.shadertoy.com/view/ldBcDt

@@ -16,10 +16,23 @@
   <component name="ChangeListManager">
     <list default="true" id="20fab832-f3ef-4372-8e5d-692461982054" name="Changes" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/.idea.Surfels/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/.idea.Surfels/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Config/DefaultEditor.ini" beforeDir="false" afterPath="$PROJECT_DIR$/Config/DefaultEditor.ini" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/StaticSponza.umap" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/ConferenceRoom.umap" beforeDir="false" afterPath="$PROJECT_DIR$/Content/ConferenceRoom.umap" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/CornellBox.umap" beforeDir="false" afterPath="$PROJECT_DIR$/Content/CornellBox.umap" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/Dragon.umap" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Dragon.umap" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/DynamicSponza.umap" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/DynamicSponzaSequence.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/LivingRoom.umap" beforeDir="false" afterPath="$PROJECT_DIR$/Content/LivingRoom.umap" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Plugins/Surfel/Shaders/Private/Surfels/Composite.usf" beforeDir="false" afterPath="$PROJECT_DIR$/Plugins/Surfel/Shaders/Private/Surfels/Composite.usf" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Plugins/Surfel/Shaders/Private/Surfels/Gather.usf" beforeDir="false" afterPath="$PROJECT_DIR$/Plugins/Surfel/Shaders/Private/Surfels/Gather.usf" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Plugins/Surfel/Shaders/Private/Surfels/SurfelIrradiance.usf" beforeDir="false" afterPath="$PROJECT_DIR$/Plugins/Surfel/Shaders/Private/Surfels/SurfelIrradiance.usf" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Plugins/Surfel/Shaders/Private/Surfels/Utilities/SurfelCommon.ush" beforeDir="false" afterPath="$PROJECT_DIR$/Plugins/Surfel/Shaders/Private/Surfels/Utilities/SurfelCommon.ush" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Plugins/Surfel/Shaders/Shared/LightStruct.h" beforeDir="false" afterPath="$PROJECT_DIR$/Plugins/Surfel/Shaders/Shared/LightStruct.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Plugins/Surfel/Source/Surfel/Private/CVarCommands.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Plugins/Surfel/Source/Surfel/Private/CVarCommands.cpp" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Plugins/Surfel/Source/Surfel/Private/DevGuiSubsystem.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Plugins/Surfel/Source/Surfel/Private/DevGuiSubsystem.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Plugins/Surfel/Source/Surfel/Public/DevGuiSubsystem.h" beforeDir="false" afterPath="$PROJECT_DIR$/Plugins/Surfel/Source/Surfel/Public/DevGuiSubsystem.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Plugins/Surfel/Source/Surfel/Private/SurfelSceneViewExtension.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Plugins/Surfel/Source/Surfel/Private/SurfelSceneViewExtension.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Plugins/Surfel/Source/Surfel/Public/CVarCommands.h" beforeDir="false" afterPath="$PROJECT_DIR$/Plugins/Surfel/Source/Surfel/Public/CVarCommands.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Plugins/Surfel/Source/Surfel/Public/ComputePasses/SurfelIrradiancePass.h" beforeDir="false" afterPath="$PROJECT_DIR$/Plugins/Surfel/Source/Surfel/Public/ComputePasses/SurfelIrradiancePass.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Surfels.uproject" beforeDir="false" afterPath="$PROJECT_DIR$/Surfels.uproject" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -274,7 +287,12 @@
       <workItem from="1792843952684" duration="318000" />
       <workItem from="1792927583183" duration="3060000" />
       <workItem from="1793025941224" duration="7631000" />
-      <workItem from="1793129509347" duration="332000" />
+      <workItem from="1793129509347" duration="1615000" />
+      <workItem from="1793180984703" duration="10033000" />
+      <workItem from="1793201390931" duration="835000" />
+      <workItem from="1793202754865" duration="1113000" />
+      <workItem from="1793205137453" duration="2248000" />
+      <workItem from="1793207867050" duration="888000" />
     </task>
     <servers />
   </component>

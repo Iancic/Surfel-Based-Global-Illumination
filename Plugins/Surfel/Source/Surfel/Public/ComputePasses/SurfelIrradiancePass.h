@@ -36,6 +36,8 @@ public:
 		SHADER_PARAMETER(float, StepFactor)
 		SHADER_PARAMETER(float, MinStepFactor)
 		SHADER_PARAMETER(float, MaxSamples)
+		SHADER_PARAMETER(uint32, MaxBounces)
+		SHADER_PARAMETER(uint32, RaysPerSurfel)
 	
 		// Lights
 		SHADER_PARAMETER_RDG_BUFFER_SRV(StructuredBuffer<FSurfelLightStruct>, SurfelLights)

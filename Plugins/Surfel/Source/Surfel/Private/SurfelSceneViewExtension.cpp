@@ -377,6 +377,8 @@ void FSurfelSceneViewExtension::PostRenderBasePassDeferred_RenderThread(FRDGBuil
 	IrradiancePassParameters->StepFactor = CVarStepFactor.GetValueOnRenderThread();
 	IrradiancePassParameters->MinStepFactor = CVarMinStepFactor.GetValueOnRenderThread();
 	IrradiancePassParameters->MaxSamples = CVarMaxSamples.GetValueOnRenderThread();
+	IrradiancePassParameters->MaxBounces = static_cast<uint32>(FMath::Clamp(CVarMaxBounces.GetValueOnRenderThread(), 1, 8));
+	IrradiancePassParameters->RaysPerSurfel = static_cast<uint32>(FMath::Clamp(CVarRaysPerSurfel.GetValueOnRenderThread(), 1, 16));
 	
 	// Add Irradiance pass
 	TShaderMapRef<FSurfelIrradiancePass> IrradianceComputeShader(GetGlobalShaderMap(SceneView.GetFeatureLevel()));
