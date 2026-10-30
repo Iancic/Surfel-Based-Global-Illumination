@@ -15,6 +15,8 @@
 #include "HAL/FileManager.h"
 #include "SceneUtils.h"
 #include "UnrealClient.h"
+#include "DynamicRHI.h"
+#include "SurfelGPUStats.h"
 
 // - David
 // Credit AI Usage: After I laid out some general scaffolding and to do ideas, I used Claude Code to generate most of the visualization code
@@ -259,6 +261,64 @@ namespace
 		}
 		return nullptr;
 	}
+
+	// GPU times for the surfel passes, next to the whole GPU frame so switching Lumen / Surfel visualize modes
+	// shows what each costs. The per pass numbers come from the stats in SurfelGPUStats.h and arrive a few frames late.
+	// In Lumen GI mode the surfel passes don't run, so it shows Lumen's total instead (see SurfelLumenGPUTime).
+	void DrawGPUTimings()
+	{
+#if HAS_GPU_STATS
+		ImGui::SeparatorText("GPU Timings");
+
+		static float SmoothedFrameMs = 0.0f;
+		const float FrameMs = static_cast<float>(FPlatformTime::ToMilliseconds(RHIGetGPUFrameCycles()));
+		SmoothedFrameMs = SmoothedFrameMs <= 0.0f ? FrameMs : FMath::Lerp(SmoothedFrameMs, FrameMs, 0.1f);
+		ImGui::Text("GPU frame: %.2f ms", SmoothedFrameMs);
+
+		// Surfel passes are skipped in Lumen GI mode, show Lumen's cost instead
+		const bool bLumenMode = CVarSurfelVisualizeMode.GetValueOnGameThread() == (int32)ESurfelVisualizeMode::LumenGI;
+#if STATS
+		if (bLumenMode)
+		{
+			SurfelLumenGPUTime::Start();
+		}
+		else
+		{
+			SurfelLumenGPUTime::Stop();
+		}
+#endif
+		if (bLumenMode)
+		{
+#if STATS
+			const float LumenMs = SurfelLumenGPUTime::SmoothedMs.load(std::memory_order_relaxed);
+			ImGui::Text("Lumen GI: %.3f ms (%.0f%% of frame)", LumenMs, SmoothedFrameMs > 0.0f ? 100.0f * LumenMs / SmoothedFrameMs : 0.0f);
+#else
+			ImGui::TextDisabled("Lumen GI: needs a build with stats");
+#endif
+			return;
+		}
+
+		if (CVarSurfelEnable.GetValueOnGameThread() == 0)
+		{
+			ImGui::TextDisabled("Surfels disabled");
+			return;
+		}
+
+		const float TotalMs = GPUStat_SurfelTotal.SmoothedMs.load(std::memory_order_relaxed);
+		ImGui::Text("Surfel GI: %.3f ms (%.0f%% of frame)", TotalMs, SmoothedFrameMs > 0.0f ? 100.0f * TotalMs / SmoothedFrameMs : 0.0f);
+
+		if (ImGui::TreeNode("Per pass"))
+		{
+			// Skip index 0, that is the total shown above
+			for (int32 Index = 1; Index < UE_ARRAY_COUNT(GSurfelGPUStats); ++Index)
+			{
+				const FSurfelGPUStat* Stat = GSurfelGPUStats[Index];
+				ImGui::Text("%s: %.3f ms", TCHAR_TO_UTF8(Stat->DisplayName), Stat->SmoothedMs.load(std::memory_order_relaxed));
+			}
+			ImGui::TreePop();
+		}
+#endif
+	}
 }
 
 void UDevGuiSubsystem::Initialize(FSubsystemCollectionBase& Collection)
@@ -269,6 +329,16 @@ void UDevGuiSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 	FImGuiModule::Get().GetProperties().SetInputEnabled(true);
 
 	RegisterSlateFont();
+}
+
+void UDevGuiSubsystem::Deinitialize()
+{
+#if STATS
+	// Drop the stats collection request from the Lumen GPU timing readout
+	SurfelLumenGPUTime::Stop();
+#endif
+
+	Super::Deinitialize();
 }
 
 void UDevGuiSubsystem::Tick(float DeltaTime)
@@ -309,6 +379,7 @@ void UDevGuiSubsystem::Tick(float DeltaTime)
 	}
 	
 	DrawSurfelSettings();
+	DrawGPUTimings();
 	DrawAntiAliasingSettings();
 	DrawScenesSection();
 	DrawCamerasSection();

@@ -9,6 +9,7 @@ class UDevGuiSubsystem : public UGameInstanceSubsystem, public FTickableGameObje
 public:
 
 	virtual void Initialize(FSubsystemCollectionBase& Collection) override;
+	virtual void Deinitialize() override;
 
 	virtual UWorld* GetTickableGameObjectWorld() const override { return GetWorld(); }
 	virtual void Tick(float DeltaTime) override;

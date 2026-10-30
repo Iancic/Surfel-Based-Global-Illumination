@@ -17,6 +17,7 @@ public:
 	BEGIN_SHADER_PARAMETER_STRUCT(FParameters, )
 		SHADER_PARAMETER_RDG_TEXTURE_UAV(RWTexture2D<float4>, IrradianceTexture)
 		SHADER_PARAMETER_RDG_TEXTURE_UAV(RWTexture2D<float>, AmbientOcclusionTexture)
+		SHADER_PARAMETER(uint32, bUseAO) // 0 = skip the SSAO taps and write 1, so the timing doesn't include AO
 
 		// Surfel related parameters
 		SHADER_PARAMETER_RDG_BUFFER_UAV(RWStructuredBuffer<float4>, SurfelPositionAndRadius)

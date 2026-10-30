@@ -6,6 +6,7 @@
 
 RWTexture2D<float4> IrradianceTexture;
 RWTexture2D<float> AmbientOcclusionTexture;
+uint bUseAO; // 0 = AO off in the DevGui, skip it so it doesn't cost anything
 
 RWStructuredBuffer<float4> SurfelPositionAndRadius;
 RWStructuredBuffer<float4> SurfelNormalAndFlags;
@@ -76,7 +77,13 @@ void MainCS(uint3 DispatchThreadId : SV_DispatchThreadID)
 
 	// Surfel light, what the surfels gathered
 	IrradianceTexture[PixelPos] = float4(Irradiance, WeightSum);
-	
+
+	if (bUseAO == 0)
+	{
+		AmbientOcclusionTexture[PixelPos] = 1.0f;
+		return;
+	}
+
 	// Small surfel contact points between meshes the surfels are too coarse to see so I use SSAO for details
 	float ScreenSpaceAO = SurfelScreenSpaceAO(SceneTexturesStruct.SceneDepthTexture, PixelPos, TranslatedWorldPosition, WorldNormalAtPixel, ViewRectMin, ViewRectMax);
 	float MaterialAO = GetGBufferDataUint(PixelPos).GBufferAO;
